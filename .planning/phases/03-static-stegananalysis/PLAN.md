@@ -1,129 +1,161 @@
-# Phase 03 — Static Steganalysis — PLAN
+# Phase 3 — Static Steganalysis
 
-**Source of truth:** `AI_Model_Scanner_FINAL_MASTER_DISCOVERY_GRAPH.md`
-**Owner:** P1 — Eyes (`src/p1_static_engine/analyzer.py`)
-**Status:** FROZEN FOR EXECUTION — implement only what is specified below.
+## Status
 
-## 0. Purpose and Scope
+**Owner:** P1 — Eyes  
+**Checkpoint:** CP3  
+**Prerequisite:** CP2 = APPROVED  
+**Branch:** `phase-3/static-stegananalysis`
 
-This phase implements and verifies **real** static feature extraction, following the
-finalized format-adaptive design in the Master Graph (§5, §11 Phase 3). This is the
-**critical handoff to P3**: the exact feature names, semantics, representation, and
-order produced here become the frozen training/inference contract for Phase 04.
+Phase 3 produces the first verified real `features.json` using the verified Phase-2 intake path.
 
-This plan does not redesign the pipeline, does not invent a feature-vector
-dimensionality, and does not resolve any item marked DECISION REQUIRED in the
-Master Graph — those are carried forward unresolved, not silently answered.
+## 1. Agent Execution Control
 
-## 1. Inputs
+If CP2 is not APPROVED, the agent is BLOCKED for real static implementation.
 
-- Trusted, weight-loaded graph (from P1 Zero-Trust Intake, Phase 02)
-- `input_domain` (VISION / NLP)
-- `is_quantized` (boolean, derived from SafeTensors dtype: INT8/FP8 → TRUE, otherwise FALSE)
+The agent may prepare tests and isolated scaffolding while waiting, but must not mark any feature artifact VERIFIED-REAL.
 
-## 2. Format-Adaptive Static Analysis Design
+The agent must inspect the merged Phase-2 state before starting.
 
-The static analysis path is selected per-layer/per-tensor based on `is_quantized`.
-This is a binary format gate, not a spectrum — no intermediate or inferred formats
-are introduced.
+## 2. Allowed / Forbidden Files
 
-### 2.1 Quantized path (`is_quantized = TRUE`)
+Allowed:
 
-- Apply **whole-weight KS statistic only**.
-- Mantissa/LSB-specific tests are **explicitly skipped** — do not apply FP-specific
-  bit-level assumptions (byte-position entropy, PoV chi-square, LSB KL-divergence)
-  to quantized weight representations, since those assumptions are not valid for
-  INT8/FP8 layouts.
+- `src/p1_static_engine/analyzer.py`
+- Phase-3 tests/fixtures under `tests/...`
+- approved feature-output implementation files if already part of P1 scope
 
-### 2.2 FP32/FP16 path (`is_quantized = FALSE`)
+Forbidden:
 
-Compute, per layer/tensor:
+- P2 implementation;
+- P3 implementation;
+- unauthorized `scan_model.py`;
+- planning governance files;
+- Master Graph.
 
-- Byte-position Shannon entropy
-- PoV (plane-of-value) chi-square
-- LSB KL-divergence
-- KS statistic
-- Statistical moments/descriptors:
-  - mean
-  - standard deviation
-  - skewness
-  - kurtosis
-  - sparsity
-  - outlier percentage
+Shared utility changes require explicit cross-owner authorization, impact analysis, affected-owner notification, and reverification.
 
-No additional statistical tests are introduced beyond this list. No test in this
-list is dropped for the FP32/FP16 path.
+## 3. Feature Semantics
 
-## 3. Intra-Model Baseline
+For FP32/FP16, implement the finalized feature family:
 
-- Baseline comparison is **intra-model, layer-vs-layer**.
-- **No external clean reference model is required at runtime.**
-- Each layer's statistics are evaluated against a baseline derived from other
-  comparable layers within the same model.
+- byte-position Shannon entropy;
+- PoV chi-square;
+- LSB KL-divergence;
+- KS statistic;
+- mean;
+- standard deviation;
+- skewness;
+- kurtosis;
+- sparsity;
+- outlier percentage.
 
-### 3.1 Edge case — insufficient comparable layers
+For quantized models:
 
-The Master Graph explicitly preserves this limitation (§9, MAD edge case) and
-registers it as **D7 — DECISION REQUIRED**:
+- whole-weight KS only;
+- mantissa/LSB-specific tests are skipped.
 
-> Guard behavior for degenerate MAD / insufficient layer count is not finalized.
+Baseline is intra-model, layer-vs-layer. No external clean reference is required at runtime.
 
-This plan does **not** invent a minimum layer-count threshold or a fallback
-baseline strategy. Implementation must:
+## 4. Statistical Definition Lock
 
-- Detect when too few comparable layers exist to establish a statistically
-  meaningful intra-model baseline.
-- Surface this condition explicitly (e.g., as a flag/limitation on the affected
-  layer's evidence) rather than silently producing a numerically stable but
-  semantically meaningless baseline.
-- Leave the exact guard behavior (skip, warn, degrade gracefully, minimum-N
-  threshold, etc.) as an open decision pending D7 resolution.
+The implementation MUST NOT use "standard formula" as permission to choose materially different semantics.
 
-## 4. Feature Semantics — Stability Contract for P3
+Where downstream feature meaning can change, the project must explicitly establish:
 
-Because Phase 04 (P3) trains and infers using the **same extraction code/semantics**
-as this phase (Master Graph §7, Hidden Dependency #1–2), this plan requires:
+- mathematical definition;
+- population/sample estimator;
+- binning method;
+- normalization;
+- NaN/Inf handling;
+- empty/small-sample behavior;
+- constant-array behavior;
+- feature ordering.
 
-- Each emitted feature has a **stable, exact name**.
-- Each emitted feature has **stable, exact semantics** (what it measures, on what
-  unit/scale, over what population — e.g., per-layer vs per-tensor).
-- Feature **order/representation** is deterministic and consistent across runs.
-- The quantized-path feature set and the FP32/FP16-path feature set are **not**
-  assumed to be the same shape — the format-adaptive design means these are
-  distinct feature sets, and downstream consumers (P3) must be able to identify
-  which path produced a given feature set.
-- **No arbitrary feature-vector dimensionality is defined by this plan.** The
-  exact field list, types, and layout are governed by `features.schema.json`,
-  which is currently EMPTY and registered as **D1 — DECISION REQUIRED** in the
-  Master Graph. This plan does not populate that schema or invent field counts
-  (e.g., no assumed "18-D" or similar fixed-size vector).
-- Layer identity must remain attached to each feature record, independent of
-  TreeSHAP attribution, to support the separate highest-risk-layer path (§6B of
-  the Master Graph) in later phases.
+If a required semantic choice remains unresolved, the affected feature contract is BLOCKED.
 
-## 5. Outputs
+Do not invent epsilon values, bins, thresholds, or fallbacks.
 
-- `data/outputs/features.json` — populated with real (non-mock) static features,
-  per the field layout to be agreed under D1.
-- Conformance to `features.schema.json` once that schema is finalized (D1).
+## 5. D7 — MAD Guard
 
-## 6. Explicit Non-Goals for This Phase
+Detection of degenerate MAD or insufficient comparable layers is allowed.
 
-- Do not implement P2 behavioral probing.
-- Do not implement P3 LightGBM/TreeSHAP.
-- Do not define the per-layer → model-level aggregation method (D5) — that is
-  P2 Risk Aggregation's concern downstream, not this phase's output shape.
-- Do not define the highest-risk-layer aggregation mechanism (D6) — this phase
-  only guarantees layer identity is preserved and available.
-- Do not resolve D1 (contract schema fields) unilaterally; surface for team
-  agreement per Master Graph §19 execution sequence.
+Choosing an unapproved numerical fallback is forbidden.
 
-## 7. Carried-Forward Unresolved Decisions (Not Invented Here)
+Until D7 is resolved:
 
-| ID | Item |
-|---|---|
-| D1 | Exact `features.schema.json` fields/types/layout |
-| D7 | MAD / baseline degenerate-case guard behavior (zero/near-zero MAD, low layer count) |
+```text
+condition detected
+→ record condition
+→ do not invent fallback
+→ final risk evidence BLOCKED
+```
 
-These remain open per the Master Graph Decision-Required Register (§16) and must
-not be silently resolved during implementation of this phase.
+Do not silently replace zero MAD with an arbitrary epsilon.
+
+## 6. Mock / Real Lifecycle
+
+Mock/static fixtures may be used for algorithm tests.
+
+They are not authoritative.
+
+A real feature artifact becomes VERIFIED-REAL only after:
+
+1. real Phase-2 intake;
+2. real feature extraction;
+3. approved semantics;
+4. schema validation;
+5. provenance verification;
+6. Phase-3 verification PASS.
+
+## 7. Provenance
+
+`features.json` must be traceable to:
+
+- source model/run;
+- producer version/commit;
+- feature semantic version/commit;
+- contract version;
+- mock/real state;
+- generation run/time identifier where available.
+
+Any mismatch or unknown provenance makes the artifact STALE or BLOCKED.
+
+## 8. Handoff to P3
+
+CP3 is the critical handoff.
+
+P3 may use the real feature extractor only after CP3 approval.
+
+If feature name, meaning, representation, ordering, or extraction semantics change later, downstream P3 artifacts become STALE and require retraining/reverification.
+
+## 9. Commit / PR / Merge
+
+Branch: `phase-3/static-stegananalysis`.
+
+Commit only Phase-3-authorized changes.
+
+PR only after evidence is complete.
+
+Agent MUST NOT self-merge.
+
+Merge requires verification PASS and required review/CP3 approval.
+
+## 10. Exact CP3 Gate
+
+CP3 PASS requires:
+
+- real intake path;
+- verified static features;
+- exact approved semantics;
+- format-adaptive quantization behavior;
+- intra-model baseline;
+- layer identity;
+- feature contract;
+- provenance;
+- mandatory adversarial tests;
+- evidence.
+
+Any unresolved required semantic decision = BLOCKED.
+
+Only CP3 APPROVED permits P3 final real training work.
