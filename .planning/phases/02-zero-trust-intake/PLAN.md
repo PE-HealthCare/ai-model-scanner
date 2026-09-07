@@ -1,69 +1,190 @@
-# Phase 02 — Zero-Trust Intake — PLAN
+# Phase 2 — Zero-Trust Intake
 
-**Owner:** P1 (`src/p1_static_engine/analyzer.py`)
-**Dependency:** Phase 01 (CP1) gate passed; dependencies installed.
+## Status
 
-## Objective
+**Owner:** P1 — Eyes  
+**Checkpoint:** CP2  
+**Prerequisite:** CP1 = APPROVED  
+**Branch:** `phase-2/zero-trust-intake`
 
-Implement real, bounded, zero-trust intake of an untrusted `.safetensors` file plus its declared architecture, producing a trusted graph and associated metadata (`input_domain`, `is_quantized`) for downstream stages. This phase does not perform static feature extraction (Phase 3) or any classification/probing.
+Phase 2 implements the real zero-trust model intake boundary. It must consume only the approved Phase 1 contract state and must fail closed on untrusted or structurally inconsistent input.
 
-## Scope of Implementation
+## 1. Agent Execution Control
 
-### Bounded SafeTensors Header Parsing
+Before changing code, the agent MUST:
 
-- Parse the SafeTensors header only within defined bounds; do not treat header content as trusted beyond what is needed to identify tensor names, shapes, and dtypes.
-- Use `safetensors.safe_open` for weight access, per the frozen security boundary — this avoids unrestricted deserialization.
+1. Verify CP1 is explicitly APPROVED.
+2. Inspect the current merged Phase-1 state.
+3. Confirm no required Phase-2 decision/dependency is unresolved.
+4. Create/use `phase-2/zero-trust-intake`.
+5. Modify only authorized Phase-2 files.
+6. Record evidence for every verification criterion.
 
-### No Pickle
+If CP1 is not APPROVED, Phase 2 is **BLOCKED**. The agent may inspect code and prepare non-authoritative design notes, but must not implement real intake against an unapproved contract.
 
-- **No Pickle-based loading is used anywhere in intake.** This is a hard constraint carried from the Master Graph's security boundary (Section 1: "No unrestricted pickle loading is used").
+## 2. Ownership and File Scope
 
-### Uploader-Declared Recognizable Architecture
+### Allowed
 
-- The uploader declares an architecture; P1 does not attempt to infer an arbitrary/unknown architecture.
-- **Do not assume automatic architecture detection for arbitrary unlabeled models.** If the declared architecture is not recognizable against the trusted, standard-library set, intake must fail closed rather than guessing.
+- `src/p1_static_engine/analyzer.py`
+- Phase-2-specific tests under `tests/...`
+- Phase-2-approved configuration/test fixtures only
 
-### Trusted Graph Instantiation from Standard Libraries
+### Forbidden
 
-- Only trusted, standard-library architecture definitions are instantiated (per the Security Boundary diagram in the Master Graph, Section 1).
-- Weights from the SafeTensors file are mapped onto this trusted graph; the graph structure itself is never derived by executing any uploader-supplied code.
+- `src/p2_behavioral_risk/...`
+- `src/p3_ml_dashboard/...`
+- `scan_model.py`
+- `.planning/...`
+- `PROJECT.md`
+- `ROADMAP.md`
+- `REQUIREMENTS.md`
+- `STATE.md`
+- `AI_Model_Scanner_FINAL_MASTER_DISCOVERY_GRAPH.md`
 
-### Tensor Shape/Dtype Extraction
+Shared `src/common/utils.py` is cross-boundary. Changes require explicit authorization, impact analysis, affected-owner notification, and reverification.
 
-- Extract tensor shape and dtype metadata for each tensor as part of intake, needed both for trusted-graph weight mapping and for downstream quantization/domain tagging.
+## 3. Dependency / Wait Rules
 
-### INT8/FP8 Quantization Tagging
+Phase 2 requires:
 
-- Set `is_quantized = TRUE` when SafeTensors dtype indicates INT8 or FP8; otherwise `is_quantized = FALSE`, per the Master Graph's Intake feature/semantic graph (Section 5).
+- CP1 approved;
+- approved contract fields;
+- required dependencies available under approved/pinned policy.
 
-### mmap/Streaming Weight Access
+The agent MUST WAIT/BLOCK if any required prerequisite is missing.
 
-- Weight access should use mmap/streaming access patterns (consistent with the Master Graph's Practical Feasibility evaluation criterion: "SafeTensors mmap-based access, bounded inference"), rather than loading the full file into memory at once where avoidable.
+The agent MUST NOT resolve D1 or D9 by guessing.
 
-### Vision/NLP Domain Tagging
+## 4. Security Boundary
 
-- Determine `input_domain` from the model's input shape/type characteristics, per the agreed canonical wording in the Master Graph (Section 5):
-  - **VISION:** 4D float tensors
-  - **NLP:** 2D/3D integer token tensors
-- This tagging must use the input shape/type characteristics as the sole basis, not an inferred guess from architecture name or metadata not specified by the finalized pipeline.
+The implementation SHALL use `safetensors.safe_open` for SafeTensors access unless the team explicitly reopens the architecture.
 
-### Trusted Graph and Metadata Handoff to Downstream Stages
+No agent may introduce an alternative loader under the label "equivalent."
 
-- Hand off the trusted graph, `input_domain`, and `is_quantized` to the P1 Static Steganalysis stage (Phase 3) and, per the pipeline, ultimately to P2 for domain-aware probing (Phase 5).
-- **The exact in-process mechanism for handing off the trusted graph from P1 to P2 through `scan_model.py` is DECISION REQUIRED (D2).** This plan does not invent that mechanism; it flags it for team resolution before P2's real integration (Phase 5) can rely on it.
+The intake boundary MUST NOT:
 
-## Explicit Security Boundary (Preserved)
+- execute uploader-supplied `model.py`;
+- execute arbitrary model code;
+- use unrestricted pickle loading;
+- import uploader-controlled modules;
+- deserialize untrusted executable objects;
+- make unauthorized external network requests.
 
-- **Never execute arbitrary uploaded model code.** No uploader-supplied `model.py` is executed under any circumstance in this phase.
-- Only the declared architecture (used to select a trusted, standard-library definition) and the SafeTensors weight bytes are treated as untrusted input; both are handled via bounded parsing, never execution.
+## 5. Resource-Boundary Rule
 
-## Explicit Non-Goals for This Phase
+SafeTensors processing MUST enforce approved finite resource limits covering, as applicable:
 
-- No static feature extraction (entropy, chi-square, KL-divergence, KS, moments) — that is Phase 3.
-- No ML classification or TreeSHAP — that is Phase 4.
-- No behavioral probing — that is Phase 5.
-- No redesign of the trusted-graph or security-boundary architecture.
+- maximum header bytes;
+- maximum tensor count;
+- maximum metadata size;
+- maximum tensor dimensions;
+- maximum model/file size;
+- maximum memory/resource use;
+- maximum processing time.
 
-## Preserved Unresolved Decision
+If exact limits are not approved, the agent MUST NOT invent production values. The affected behavior is BLOCKED until the limit is resolved.
 
-- **D2 — Trusted graph handoff:** exact in-process mechanism between P1 and P2 through `scan_model.py` remains DECISION REQUIRED and must not be silently invented during this phase's implementation.
+A test may use a fixture-specific bound only when that bound is explicitly identified as a test fixture limit and not represented as the production policy.
+
+## 6. Architecture Trust
+
+The uploader's declared architecture is only an input claim.
+
+The implementation MUST validate:
+
+```text
+declared architecture
++
+actual SafeTensors tensor names/shapes/dtypes
++
+trusted architecture definition
+        ↓
+compatibility validation
+        ↓
+trusted graph
+```
+
+Unknown architecture, malformed structure, or architecture/tensor mismatch MUST fail closed.
+
+Best-effort mapping, silent tensor omission, silent shape correction, or fallback architecture selection is forbidden.
+
+## 7. Domain and Quantization
+
+The implementation must preserve the Master Graph semantics:
+
+- `input_domain` is determined from model input shape/type characteristics;
+- VISION uses 4D float input characteristics;
+- NLP uses 2D/3D integer token input characteristics;
+- `is_quantized = TRUE` for INT8/FP8;
+- otherwise `is_quantized = FALSE`.
+
+Do not silently redefine these semantics.
+
+## 8. Mock / Real Lifecycle
+
+Phase 2 may use fixtures for security tests, but test fixtures are not authoritative model artifacts.
+
+Required lifecycle:
+
+```text
+fixture/mock
+→ security test only
+→ real SafeTensors intake
+→ verification
+→ VERIFIED-REAL intake
+```
+
+Production execution MUST NOT identify a test fixture as a verified real model.
+
+## 9. Required Outputs / Handoff
+
+A successful intake must make available the trusted graph and approved metadata required by Phase 3 and downstream consumers.
+
+The trusted graph MUST NOT be independently reloaded unsafely by downstream phases.
+
+The exact P1→P2 handoff mechanism remains governed by D2. Do not invent a cross-process or serialization mechanism.
+
+## 10. Failure Behavior
+
+Any intake failure MUST:
+
+- identify the failure;
+- stop dependent processing;
+- return a failure/non-success status;
+- produce no authoritative downstream artifact.
+
+No best-effort architecture mapping or fabricated metadata is permitted.
+
+## 11. Commit / PR / Merge
+
+Commit only authorized Phase-2 changes.
+
+Before commit:
+
+- inspect `git status`;
+- inspect `git diff`;
+- run required tests;
+- record evidence.
+
+Open a PR only after Phase-2 verification evidence is complete.
+
+The implementing agent MUST NOT merge its own PR.
+
+Merge requires:
+
+- Phase 2 verification = PASS;
+- required evidence recorded;
+- no unresolved required blocker;
+- required independent/human review;
+- CP2 approval.
+
+## 12. Exact CP2 Gate
+
+CP2 = PASS only when all required intake/security criteria are evidenced and PASS.
+
+CP2 = BLOCKED when a required decision, dependency, approved resource limit, contract, or security prerequisite is unresolved.
+
+CP2 = FAIL when implemented behavior violates the approved requirement.
+
+Only **CP2 = APPROVED** permits Phase 3 real static implementation.
