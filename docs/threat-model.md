@@ -1,78 +1,986 @@
 # AI Model Scanner — Threat Model
 
-**Status:** FROZEN FOR EXECUTION
-**Source of truth:** `AI_Model_Scanner_FINAL_MASTER_DISCOVERY_GRAPH.md`
+**Project:** Precision Care Challenge 2026 — Detection of Steganographic Malware Hidden in AI Model Weights
+**Status:** **FROZEN FOR EXECUTION**
+**Primary Source of Truth:** `AI_Model_Scanner_FINAL_MASTER_DISCOVERY_GRAPH.md`
 
-## Scope
+---
 
-This document describes the defensive threat model the scanner is designed against, as established in the Master Graph. It does not introduce new capabilities, claims, or guarantees beyond what the frozen pipeline defines.
+# 1. Purpose
 
-## Threat Class: AI Model Supply-Chain Threats
+This document defines the defensive threat model for the AI Model Scanner.
 
-The scanner addresses the risk that an AI model weight file, obtained from an external or otherwise untrusted source, has been tampered with to covertly carry malicious content or hidden data before being loaded into a production or downstream system. The weight file is treated as an untrusted artifact from the moment it enters the pipeline.
+It describes:
 
-## Untrusted `.safetensors` Input
+* what is considered untrusted;
+* what an attacker may attempt;
+* what the scanner is designed to defend against;
+* what controls are required;
+* what verification evidence is required;
+* what remains outside the detection scope.
 
-The `.safetensors` file and its declared architecture are the untrusted inputs to the system. Intake is bounded: the SafeTensors header is parsed in a bounded manner, and a trusted, standard-library architecture is instantiated from the declared architecture rather than trusting or executing anything embedded in the uploaded artifact itself.
+This document does not authorize new capabilities.
 
-## Static Steganographic Payloads Hidden in Model Weights
+It does not override the Master Graph.
 
-The primary threat modeled is steganographic hiding of payloads within the numeric byte patterns of model weight tensors — exploiting the fact that weight data is large, high-entropy-tolerant, and not routinely inspected the way executable code is.
+It does not convert limitations into future implementation requirements.
 
-### Mantissa/LSB-Based Hiding
+---
 
-For FP32/FP16 weights, the scanner specifically targets least-significant-bit and mantissa-level hiding techniques, using byte-position Shannon entropy, PoV chi-square, LSB KL-divergence, KS statistic, and statistical moments (mean, standard deviation, skewness, kurtosis, sparsity, outlier percentage) computed against an intra-model, layer-vs-layer baseline (no external clean reference required at runtime).
+# 2. Security Objective
 
-### Format Differences: FP32/FP16 vs. Quantized
+The scanner is designed to provide defensive evidence about potentially tampered AI model weight artifacts before downstream deployment.
 
-The static analysis is format-adaptive:
+The primary security objectives are:
 
-- **FP32/FP16:** full feature set above, including mantissa/LSB-specific tests.
-- **Quantized (INT8/FP8):** mantissa/LSB-specific tests are skipped; only whole-weight KS statistic is used, reflecting that quantized representations do not carry the same mantissa structure.
+1. prevent the model artifact from gaining arbitrary code execution inside the scanner;
+2. safely inspect untrusted `.safetensors` metadata and weights;
+3. detect statistical evidence associated with weight-level steganographic manipulation;
+4. detect selected behavioral anomalies through bounded probing;
+5. combine independent evidence into a risk score;
+6. produce explainable evidence rather than an unexplained binary label;
+7. fail closed when safe scanning cannot be completed.
 
-## Static Anomaly Detection vs. Behavioral Evidence
+---
 
-The threat model separates two distinct evidence types, which are combined only at the risk-aggregation stage:
+# 3. Security Boundary
 
-- **Static anomaly evidence:** derived from per-layer statistical analysis of weight bytes (P1 → P3 classification), producing `P_tamper` with TreeSHAP feature attribution.
-- **Behavioral evidence:** derived from observing the model's inference-time output behavior under bounded probing (P2), producing `S_behavior`.
+The uploaded model is untrusted.
 
-Neither is treated as sufficient alone; both feed into MAD-calibrated risk aggregation with `S_static`, `P_tamper`, and `S_behavior` combined into the MRS.
+The security boundary is:
 
-## Domain-Aware Behavioral Probing
+```text
+                UNTRUSTED
+┌────────────────────────────────────┐
+│ Declared architecture              │
+│ SafeTensors file                   │
+│ Tensor names/shapes/dtypes         │
+│ Weight bytes                       │
+└─────────────────┬──────────────────┘
+                  │
+                  ▼
+         VALIDATION / BOUNDARY
+                  │
+                  ▼
+┌────────────────────────────────────┐
+│ Trusted architecture definitions   │
+│ Bounded parser                     │
+│ Scanner-controlled execution      │
+│ Bounded inference                  │
+└────────────────────────────────────┘
+                TRUSTED
+```
 
-Behavioral probing is gated by `input_domain` and `is_quantized`:
+No uploaded file is trusted merely because its extension is `.safetensors`.
 
-- **VISION** models are probed with float/image-noise inputs.
-- **NLP** models are probed with integer token-ID inputs.
-- Probing is a bounded number of inference-only passes (e.g. 32), producing softmax entropy `H_STRIP`, compared against a baseline and normalized to `S_behavior ∈ [0,1]`.
-- **Quantized models skip behavioral probing entirely** under the finalized format-adaptive design, and use a quantized-specific MRS formula (`S_static` and `P_tamper` only) instead.
+---
 
-The exact STRIP entropy baseline and the exact `H_STRIP → S_behavior` normalization are **DECISION REQUIRED** and are not yet finalized.
+# 4. Threat Actor Model
 
-## Defensive Security Boundary
+The threat actor is assumed to control or influence the untrusted model artifact.
 
-The scanner's own execution boundary is a core part of its threat model:
+The actor may attempt to:
 
-- **No arbitrary uploaded-code execution.** No uploader-supplied `model.py` is executed, and no unrestricted pickle loading is used.
-- Only a **trusted, standard-library** architecture definition is instantiated; the declared architecture and SafeTensors weight bytes are the only untrusted inputs consumed, and are handled through bounded parsing rather than execution.
-- Behavioral probing itself is bounded inference-only (no core-model backpropagation), limiting the scanner's own attack surface when interacting with a potentially tampered model.
+* modify model weights;
+* embed hidden information in weight representations;
+* manipulate LSB/mantissa patterns;
+* create localized statistical anomalies;
+* construct malformed tensor metadata;
+* provide inconsistent architecture declarations;
+* create resource-exhaustion inputs;
+* attempt to exploit unsafe deserialization;
+* attempt to trigger unsupported execution paths;
+* exploit scanner implementation weaknesses.
 
-## Recognizable Declared Architecture Assumption
+The attacker is NOT assumed to control:
 
-The threat model assumes the uploader declares a recognizable architecture that the scanner can instantiate using trusted, standard-library definitions. The scanner does not attempt to detect or defend against threats that would require executing or interpreting an unknown, self-describing, or uploader-supplied architecture implementation.
+* the trusted scanner source at runtime;
+* approved standard-library architecture definitions;
+* the scanner's verification infrastructure;
+* protected credentials;
+* the scanner's policy configuration.
 
-## Known Limitations
+If those assumptions change, the threat model must be revisited.
 
-The following limitations are carried over from the Master Graph and are preserved as-is, not resolved or expanded:
+---
 
-- The static baseline is intra-model (layer-vs-layer) and can be **weak when a model has very few layers** — the exact degenerate/near-zero MAD guard behavior is DECISION REQUIRED (D7).
-- TreeSHAP explains feature contribution to the classifier's prediction; it does **not**, by itself, determine the highest-risk neural-network layer — feature-to-layer and per-layer-to-model-level aggregation mechanisms are separate and are DECISION REQUIRED (D5, D6).
-- The exact STRIP baseline and behavioral normalization are DECISION REQUIRED (D3, D4).
-- The exact P1→P2 trusted-graph handoff mechanism is DECISION REQUIRED (D2).
-- `lightgbm_model.txt` can become stale if P1 feature semantics change after training, and this can fail silently since LightGBM may still run; whether a staleness check is added is DECISION REQUIRED (D8).
-- **A PASS verdict communicates evidence of manipulation within the tool's detection scope only. It is not a guarantee of absolute security.**
+# 5. Primary Threat: Weight-Level Steganography
 
-## Explicit Non-Claims
+### Threat
 
-Consistent with the frozen scope of this pipeline, this scanner does **not** claim to universally detect all forms of backdoors or steganographic hiding. In particular, the frozen detection methods are statistical/entropy-based static analysis plus bounded behavioral probing; they are not designed around, and no claim is made regarding detection of, spread-spectrum or LDPC-style encoding schemes engineered to evade byte-level statistical tests, nor data/label poisoning attacks that manipulate model behavior through training data rather than through post-hoc weight-level tampering. These remain outside the detection scope established by the Master Graph and are noted here as a limitation, not as a roadmap item to be silently resolved.
+An attacker embeds hidden data or malicious content inside numeric weight representations while preserving enough model functionality to avoid obvious detection.
+
+### Relevant representations
+
+For FP32/FP16:
+
+* mantissa bits;
+* least-significant bits;
+* byte distributions.
+
+### Potential effects
+
+* altered LSB entropy;
+* artificial bit equalization;
+* abnormal divergence;
+* distributional anomalies;
+* localized layer anomalies.
+
+### Controls
+
+P1 performs:
+
+* byte-position Shannon entropy;
+* PoV Chi-Square;
+* LSB KL-Divergence;
+* KS statistics;
+* distributional moments;
+* intra-model comparison.
+
+### Verification
+
+Security tests must confirm that controlled synthetic tampering produces expected feature changes where the frozen detection methods are designed to respond.
+
+---
+
+# 6. Quantized Representation Threat
+
+### Threat
+
+An attacker targets quantized weights where floating-point mantissa assumptions no longer apply.
+
+### Control
+
+The scanner uses a format-adaptive branch:
+
+```text
+FP32 / FP16
+    ↓
+mantissa + LSB analysis
+
+INT8 / FP8
+    ↓
+whole-weight KS path
+```
+
+Mantissa/LSB-specific tests MUST NOT be applied indiscriminately to quantized representations.
+
+### Verification
+
+Tests must confirm:
+
+* quantized models enter the quantized path;
+* mantissa/LSB tests are skipped;
+* whole-weight KS is used;
+* behavioral probing is bypassed;
+* quantized MRS formula is used.
+
+---
+
+# 7. Malformed Header Threat
+
+### Threat
+
+An attacker provides a malformed or hostile SafeTensors header intended to cause:
+
+* parser failure;
+* excessive allocation;
+* memory exhaustion;
+* CPU exhaustion;
+* invalid offset handling;
+* denial of service.
+
+### Controls
+
+* bounded parsing;
+* explicit resource limits;
+* validation before use;
+* no unsafe fallback parser;
+* fail-closed behavior.
+
+### Verification
+
+Regression tests MUST include:
+
+* malformed JSON/header;
+* truncated header;
+* oversized header;
+* invalid offsets;
+* overlapping/invalid tensor regions;
+* invalid tensor metadata.
+
+---
+
+# 8. Resource Exhaustion Threat
+
+A malicious artifact may be syntactically valid but intentionally expensive.
+
+Threats include:
+
+* enormous header;
+* excessive tensor count;
+* excessive metadata;
+* pathological tensor dimensions;
+* enormous total weight size;
+* excessive memory use;
+* excessive inference time;
+* excessive probe count.
+
+### Controls
+
+The scanner requires explicit bounded resource policies.
+
+Relevant ceilings include:
+
+* header bytes;
+* metadata size;
+* tensor count;
+* tensor dimensions;
+* total input size;
+* memory;
+* parsing time;
+* inference time;
+* probe count.
+
+### Important rule
+
+A phrase such as "bounded" does not permit an autonomous agent to choose an unlimited or arbitrarily large value.
+
+Unresolved production security limits MUST be treated as unresolved decisions.
+
+### Failure behavior
+
+```text
+resource limit exceeded
+        ↓
+STOP
+        ↓
+NO MRS
+NO VERDICT
+```
+
+---
+
+# 9. Architecture Confusion Threat
+
+### Threat
+
+An attacker supplies a declared architecture that does not correspond to the actual tensor structure.
+
+Potential results:
+
+* incorrect graph loading;
+* malformed state loading;
+* misleading analysis;
+* crashes;
+* accidental fallback behavior.
+
+### Controls
+
+P1 MUST validate:
+
+* architecture identity;
+* expected tensor names;
+* shapes;
+* dtypes;
+* required parameters;
+* unexpected parameters;
+* missing parameters.
+
+Mismatch MUST fail closed.
+
+---
+
+# 10. Arbitrary Code Execution Threat
+
+### Threat
+
+An attacker attempts to cause the scanner to execute malicious code through model loading.
+
+Examples include:
+
+* uploader-supplied `model.py`;
+* unrestricted pickle;
+* executable plugins;
+* arbitrary deserialization hooks.
+
+### Controls
+
+The scanner MUST NOT:
+
+* execute uploaded Python;
+* import uploaded model code;
+* load unrestricted pickle;
+* execute arbitrary model-defined functions.
+
+Architecture classes must originate from trusted scanner-controlled libraries.
+
+---
+
+# 11. Unknown Architecture Threat
+
+### Threat
+
+An attacker provides a model requiring custom executable architecture code.
+
+### Control
+
+Unknown/custom architecture is outside the prototype scope.
+
+The scanner does NOT:
+
+```text
+unknown architecture
+        ↓
+execute uploader code
+```
+
+Instead:
+
+```text
+unknown architecture
+        ↓
+unsupported / FAIL CLOSED
+```
+
+---
+
+# 12. Behavioral Probing Threat
+
+### Threat
+
+A tampered model may behave normally on ordinary inputs while responding abnormally to trigger-like probes.
+
+### Control
+
+P2 performs domain-aware bounded STRIP-style probing.
+
+For VISION:
+
+* float/image-compatible probes.
+
+For NLP:
+
+* integer token-ID-compatible probes.
+
+The scanner computes:
+
+```text
+H_STRIP
+      ↓
+S_behavior
+```
+
+through the approved D3/D4 mechanisms.
+
+---
+
+# 13. Behavioral Input-Type Threat
+
+### Threat
+
+Incorrect probe types may cause:
+
+* model crashes;
+* invalid inference;
+* misleading behavioral results.
+
+### Control
+
+Probe generation is gated by:
+
+```text
+input_domain
+is_quantized
+```
+
+NLP integer-only models MUST NOT receive incompatible floating-point image noise.
+
+### Verification
+
+Tests must exercise both:
+
+* VISION path;
+* NLP path.
+
+---
+
+# 14. Quantized Behavioral Bypass
+
+The finalized architecture skips behavioral probing for quantized models.
+
+Threat-model implication:
+
+> Quantized models receive reduced behavioral coverage by design.
+
+This is a known architectural limitation, not an implementation bug.
+
+The quantized risk formula therefore excludes `S_behavior`.
+
+---
+
+# 15. Statistical Baseline Threat
+
+### Threat
+
+A naturally unusual model layer may be falsely identified as anomalous.
+
+The intra-model baseline can become weak when:
+
+* the model has very few layers;
+* layer distributions are unusually homogeneous;
+* the baseline has near-zero dispersion.
+
+### Control
+
+MAD-based robust statistics are used.
+
+### Unresolved issue
+
+D7 defines the exact behavior for zero/near-zero MAD.
+
+Until D7 is resolved, agents MUST NOT invent an epsilon or fallback rule.
+
+---
+
+# 16. Classifier Integrity Threat
+
+### Threat
+
+The classifier may produce apparently valid predictions despite receiving features whose semantics differ from those used during training.
+
+This is particularly dangerous because the classifier may execute without an obvious software error.
+
+### Control
+
+Final training MUST use the authoritative P1 feature extractor.
+
+Feature semantic changes invalidate the classifier.
+
+```text
+P1 semantic change
+        ↓
+LightGBM = STALE
+        ↓
+retrain + TreeSHAP reverification
+```
+
+---
+
+# 17. TreeSHAP Interpretation Threat
+
+### Threat
+
+An operator or agent may incorrectly interpret TreeSHAP attribution as the highest-risk neural-network layer.
+
+### Control
+
+The architecture explicitly separates:
+
+```text
+TreeSHAP
+→ classifier feature contribution
+
+Highest-risk layer
+→ layer aggregation
+```
+
+D5/D6 govern unresolved aggregation behavior.
+
+---
+
+# 18. Output Artifact Poisoning
+
+### Threat
+
+An attacker, stale process, or faulty pipeline may cause downstream artifacts to be consumed without proving their provenance.
+
+Examples:
+
+* stale `features.json`;
+* stale `ml_results.json`;
+* stale `risk_results.json`;
+* classifier trained against different feature semantics;
+* mock data accidentally used as real data.
+
+### Controls
+
+Artifacts must have identifiable provenance where practical.
+
+Required status vocabulary:
+
+```text
+MOCK
+SCAFFOLD
+VERIFIED-REAL
+STALE
+FAILED
+```
+
+Artifact existence alone does not establish trust.
+
+---
+
+# 19. Mock Data Leakage Threat
+
+### Threat
+
+Development scaffolding is accidentally used in the production/demo path.
+
+### Controls
+
+The pipeline must distinguish:
+
+```text
+MOCK ≠ VERIFIED-REAL
+SCAFFOLD ≠ IMPLEMENTED
+```
+
+Final gates must reject mock-only upstream evidence.
+
+---
+
+# 20. Contract Poisoning / Schema Drift
+
+### Threat
+
+A field remains syntactically valid but its meaning changes.
+
+Examples:
+
+* reordered features;
+* changed units;
+* changed normalization;
+* renamed semantics;
+* changed layer association.
+
+A classifier may continue executing while producing invalid results.
+
+### Control
+
+Contract changes require:
+
+* affected-owner notification;
+* downstream revalidation;
+* classifier retraining where necessary;
+* TreeSHAP remapping;
+* updated evidence.
+
+---
+
+# 21. Risk Aggregation Threat
+
+### Threat
+
+Different components calculate inconsistent risk scores or verdicts.
+
+### Control
+
+P2 is the sole owner of:
+
+* risk aggregation;
+* MRS;
+* verdict.
+
+`scan_model.py` MUST NOT calculate an alternative MRS.
+
+P3 MUST NOT override P2's verdict.
+
+---
+
+# 22. Risk Formula Integrity
+
+For non-quantized models:
+
+```text
+MRS = min(
+    100,
+    40*S_static +
+    35*P_tamper +
+    25*S_behavior
+)
+```
+
+For quantized models:
+
+```text
+MRS = min(
+    100,
+    55*S_static +
+    45*P_tamper
+)
+```
+
+Verdicts:
+
+```text
+PASS    = 0–34
+REVIEW  = 35–69
+FAIL    = 70–100
+```
+
+Any change to these formulas is an architectural/contract change and requires explicit approval.
+
+---
+
+# 23. Detection Failure vs. Scanner Safety Failure
+
+These are different events.
+
+### Detection failure
+
+The scanner completes but does not detect a threat within its scope.
+
+### Scanner safety failure
+
+The scanner cannot safely process the input.
+
+Examples:
+
+* malformed artifact;
+* resource exhaustion;
+* architecture mismatch;
+* unsupported input;
+* internal security-boundary violation.
+
+A scanner safety failure MUST NOT be converted into:
+
+```text
+PASS
+```
+
+The appropriate result is failure/blocking.
+
+---
+
+# 24. Network Egress Threat
+
+### Threat
+
+Model artifacts or sensitive scanner data could be transmitted externally.
+
+### Control
+
+Runtime scanning does not require arbitrary external network access.
+
+Agents MUST NOT upload:
+
+* model weights;
+* proprietary artifacts;
+* credentials;
+* scan results containing sensitive data
+
+to external services without explicit authorization.
+
+Unexpected network requirements must be surfaced rather than silently introduced.
+
+---
+
+# 25. Secret Exposure Threat
+
+The model artifact and scanner inputs are untrusted data.
+
+The scanner MUST NOT treat strings found in:
+
+* tensor metadata;
+* model filenames;
+* configuration fields;
+* arbitrary input fields
+
+as credentials or commands.
+
+Agents MUST NOT commit credentials or secrets discovered during development.
+
+---
+
+# 26. Dependency Supply-Chain Threat
+
+### Threat
+
+A malicious or incompatible dependency could compromise the scanner or invalidate reproducibility.
+
+### Controls
+
+Production dependencies must eventually be pinned according to D9.
+
+Dependency changes require:
+
+* explicit version;
+* justification;
+* compatibility testing;
+* regression testing;
+* security consideration.
+
+Until D9 is resolved, agents must not silently finalize dependency versions.
+
+---
+
+# 27. Scanner Host Isolation
+
+The threat model assumes the scanner is defensive infrastructure.
+
+The runtime environment should provide appropriate isolation so that a compromise of the scanner process does not automatically compromise unrelated host resources.
+
+At minimum, the design must avoid granting the uploaded model:
+
+* arbitrary shell access;
+* arbitrary filesystem writes;
+* unrestricted network access;
+* access to secrets.
+
+Where deployment controls exist, sandboxing/containerization should reinforce these boundaries.
+
+This does not authorize introducing a new runtime architecture into the frozen prototype without approval.
+
+---
+
+# 28. Integrity / Model Identity
+
+Where practical, model artifacts should be associated with an integrity identifier such as a cryptographic hash.
+
+The purpose is to prevent:
+
+```text
+model A scanned
+      ↓
+model B reported
+```
+
+through accidental or malicious artifact substitution.
+
+The same artifact identity should remain associated with downstream results.
+
+---
+
+# 29. Threat → Control → Verification Matrix
+
+| Threat                   | Primary Control                | Owner           | Verification                |
+| ------------------------ | ------------------------------ | --------------- | --------------------------- |
+| Malformed header         | bounded SafeTensors parsing    | P1              | malformed-header tests      |
+| Oversized input          | resource limits                | P1              | limit regression tests      |
+| Invalid offsets          | metadata validation            | P1              | hostile-header tests        |
+| Architecture mismatch    | tensor/architecture validation | P1              | mismatch tests              |
+| Arbitrary code execution | trusted architecture only      | P1              | no-uploaded-code regression |
+| FP steganography         | entropy/PoV/KL/KS/moments      | P1              | synthetic tamper tests      |
+| Quantized evasion        | quantized static path          | P1              | INT8/FP8 tests              |
+| Behavioral anomaly       | STRIP probing                  | P2              | VISION/NLP probe tests      |
+| Wrong NLP input          | domain-aware probes            | P2              | integer-input tests         |
+| Weak MAD baseline        | D7-controlled guard            | P2              | degenerate-baseline tests   |
+| Classifier drift         | provenance/staleness control   | P3              | stale-model tests           |
+| Feature semantic drift   | retraining gate                | P1/P3           | contract regression         |
+| Layer misinterpretation  | TreeSHAP/layer separation      | P3/P2           | attribution tests           |
+| Risk inconsistency       | P2 sole MRS owner              | P2              | integration tests           |
+| Mock leakage             | artifact status/provenance     | all             | mock-to-real tests          |
+| Output poisoning         | provenance                     | all             | artifact identity tests     |
+| Dependency compromise    | D9/pinning                     | project         | dependency verification     |
+| Network exfiltration     | restricted egress              | project/runtime | network policy test         |
+| Scanner crash            | fail-closed behavior           | all             | stage-failure tests         |
+
+---
+
+# 30. Mandatory Adversarial Regression Set
+
+The implementation must maintain regression coverage for applicable cases including:
+
+### Intake
+
+* malformed header;
+* truncated file;
+* oversized header;
+* excessive tensor count;
+* excessive metadata;
+* invalid offsets;
+* invalid shape;
+* invalid dtype;
+* architecture mismatch;
+* unknown architecture.
+
+### Feature extraction
+
+* NaN/Inf;
+* zero MAD;
+* near-zero MAD;
+* one-layer model;
+* empty/invalid feature output;
+* incorrect feature ordering.
+
+### ML
+
+* missing feature;
+* unexpected feature;
+* stale classifier;
+* incompatible feature semantics;
+* mock feature input.
+
+### Behavioral
+
+* VISION input path;
+* NLP integer input path;
+* quantized bypass;
+* bounded pass limit;
+* timeout;
+* malformed behavioral result.
+
+### Risk
+
+* malformed P3 output;
+* missing `P_tamper`;
+* invalid score range;
+* invalid aggregation;
+* invalid verdict;
+* upstream failure.
+
+### Integration
+
+* P1 failure;
+* P3 failure;
+* P2 failure;
+* partial output;
+* stale output;
+* mock output;
+* artifact identity mismatch.
+
+---
+
+# 31. Security Failure Policy
+
+When a security control fails:
+
+```text
+STOP
+ ↓
+record failure
+ ↓
+prevent downstream scoring
+ ↓
+mark affected artifacts invalid/stale
+ ↓
+surface issue
+```
+
+The system MUST NOT:
+
+* continue silently;
+* downgrade the security control;
+* substitute arbitrary defaults;
+* suppress the failure;
+* report PASS.
+
+---
+
+# 32. Known Detection Limitations
+
+The scanner does not claim universal detection.
+
+Known limitations include:
+
+* intra-model baseline weakness for very small models;
+* unresolved D7 edge-case semantics;
+* unresolved D3/D4 behavioral semantics;
+* unresolved D5/D6 aggregation;
+* declared-architecture limitation;
+* quantized behavioral bypass;
+* stale classifier risk if provenance is not enforced;
+* limited detection coverage for sophisticated statistical evasion.
+
+---
+
+# 33. Explicit Non-Claims
+
+The scanner does NOT claim to:
+
+* detect every backdoor;
+* detect every steganographic technique;
+* identify malicious payloads;
+* recover hidden data;
+* guarantee a model is safe;
+* detect data/label poisoning;
+* reliably detect spread-spectrum/LDPC-style schemes specifically engineered below statistical detection thresholds;
+* support arbitrary uploader-defined architectures.
+
+These limitations are part of the security model.
+
+They are not silently converted into implementation promises.
+
+---
+
+# 34. Detection Scope
+
+The core detection scope is:
+
+```text
+post-training weight-level manipulation
++
+selected statistical evidence
++
+selected bounded behavioral evidence
+```
+
+The scanner is evidence-producing.
+
+It is not a remediation engine.
+
+---
+
+# 35. No Automatic Remediation
+
+The scanner does not automatically:
+
+* delete models;
+* modify weights;
+* repair backdoors;
+* shuffle weights;
+* patch model architecture;
+* quarantine external systems.
+
+A FAIL verdict is a security signal.
+
+Any operational remediation belongs outside the frozen detection pipeline unless explicitly added through an approved architecture decision.
+
+---
+
+# 36. PASS Semantics
+
+A PASS means:
+
+> No evidence of manipulation was found within the scanner's tested detection scope.
+
+It does NOT mean:
+
+> The model is mathematically proven clean.
+
+Every final report must preserve this distinction.
+
+---
+
+# 37. Threat Model Acceptance Conditions
+
+The implementation is security-model compliant only when:
+
+* untrusted model artifacts cannot execute arbitrary uploaded code;
+* SafeTensors intake is bounded;
+* architecture/tensor mismatches fail closed;
+* unsupported architectures fail closed;
+* static analysis follows the correct format branch;
+* behavioral probing is domain-aware;
+* quantized models bypass behavioral probing as specified;
+* unresolved D3/D4/D5/D6/D7 decisions are not silently invented;
+* classifier staleness is handled;
+* mock artifacts cannot masquerade as real;
+* downstream failures cannot become PASS;
+* MRS is calculated only by P2;
+* output provenance is maintained;
+* dependency/network/secret boundaries are respected;
+* adversarial regression tests exist.
+
+---
+
+# 38. Final Security Principle
+
+> **The scanner must be safer than the model it is scanning.**
+
+The untrusted model is data, not executable authority.
+
+The scanner may inspect it, measure it, probe it within explicit bounds, and produce evidence.
+
+It must never surrender control of its execution boundary to the artifact being analyzed.
