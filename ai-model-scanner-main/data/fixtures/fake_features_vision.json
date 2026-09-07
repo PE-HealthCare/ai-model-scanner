@@ -1,8 +1,0 @@
-{
-  "domain": "VISION",
-  "is_quantized": false,
-  "layer_features": [
-    {"layer_name": "layer1.0.conv1.weight", "entropy": 0.71, "chi_square": 0.12, "kl_div": 0.05, "ks_stat": 0.09},
-    {"layer_name": "layer4.1.conv2.weight", "entropy": 0.95, "chi_square": 0.88, "kl_div": 0.81, "ks_stat": 0.77}
-  ]
-}

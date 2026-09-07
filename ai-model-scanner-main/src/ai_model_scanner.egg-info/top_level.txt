@@ -1,4 +1,0 @@
-common
-p1_static_engine
-p2_behavioral_risk
-p3_ml_dashboard
