@@ -1,697 +1,496 @@
-# FILE: .planning/phases/01-mock-pipeline/PLAN.md
+# Phase 1 — Mock Pipeline
 
-# Phase 01 — Mock Pipeline — PLAN
+## Status
 
-**Status:** Current execution target
-**Gate:** CP1 — Phase 1 Mock Gate
-**Owners:** P1, P2, P3, with `scan_model.py` as integration surface
-**Source of truth:** `AI_Model_Scanner_FINAL_MASTER_DISCOVERY_GRAPH.md`
+**Execution state:** BLOCKED until the required contract decision is resolved.
 
-## 1. Objective
+**Checkpoint:** CP1
 
-Establish the end-to-end interface between P1, P3, P2, and the final P3 report surface using controlled mock outputs.
+**Purpose:** Build the end-to-end pipeline shape using explicit mock artifacts so that integration contracts can be validated before real model analysis begins.
 
-This phase validates:
+This phase is a **mock/scaffold phase**. It must not be represented as real detection capability.
 
-* contract shape;
-* stage ordering;
-* handoff behavior;
-* schema validation;
-* failure propagation.
+---
 
-This phase does **not** validate detection quality.
+## 1. Source of Truth
 
-No real SafeTensors analysis, real static feature extraction, real LightGBM training, real TreeSHAP, or real behavioral probing is permitted.
+The following are authoritative:
 
-## 2. Hard Prerequisite
+1. `AI_Model_Scanner_FINAL_MASTER_DISCOVERY_GRAPH.md`
+2. `PROJECT.md`
+3. `ROADMAP.md`
+4. `REQUIREMENTS.md`
+5. `STATE.md`
 
-Before implementation begins:
+Agents MUST NOT redesign the finalized architecture.
 
-* D1 — exact contract schemas — MUST be explicitly resolved by the team.
-* The three schemas must contain the agreed fields/types/layout.
-* The decision must be recorded outside this phase as the authoritative D1 decision.
+Agents MUST NOT modify the Master Graph or other planning governance files unless explicitly authorized.
 
-If D1 is unresolved:
+If this plan conflicts with the Master Graph, the Master Graph wins.
 
-**STATUS = BLOCKED.**
+---
 
-The agent MUST stop implementation of authoritative mock contracts.
+## 2. Final Pipeline Being Prepared
 
-The agent MUST NOT invent fields, dimensions, names, defaults, or types.
-
-## 3. Frozen Mock Data Flow
+The implementation flow is:
 
 ```text
-P1 mock
-   ↓
+Untrusted .safetensors
+        ↓
+P1 Zero-Trust Intake
+        ↓
+P1 Static Steganalysis
+        ↓
 features.json
-   ↓
-P3 mock
-   ↓
+        ↓
+P3 LightGBM + TreeSHAP
+        ↓
 ml_results.json
-   ↓
-P2 mock
-   ↓
+        ↓
+P2 STRIP + Risk Aggregation
+        ↓
 risk_results.json
-   ↓
-P3 report surface
+        ↓
+P3 Security Report
 ```
 
-`scan_model.py` MUST orchestrate:
+`scan_model.py` is orchestration only.
+
+It is NOT an additional implementation owner.
+
+---
+
+## 3. Phase Objective
+
+Phase 1 establishes:
+
+* exact cross-phase artifact locations;
+* agreed contract fields;
+* mock `features.json`;
+* mock `ml_results.json`;
+* mock `risk_results.json`;
+* basic orchestration wiring;
+* producer/consumer ownership;
+* explicit mock artifact provenance;
+* verification that later phases can consume the contracts without inventing fields.
+
+Phase 1 does **not** establish:
+
+* real SafeTensors security;
+* real static steganalysis;
+* real LightGBM performance;
+* real STRIP behavior;
+* real MRS validity;
+* production security guarantees.
+
+---
+
+## 4. Blocking Rule
+
+### Required decision: D1 — Exact Contract Schemas
+
+D1 covers the exact fields and semantics of:
+
+* `features.schema.json`;
+* `ml_results.schema.json`;
+* `risk_results.schema.json`.
+
+If D1 is unresolved, Phase 1 is **BLOCKED**.
+
+An unresolved decision can NEVER be interpreted as approval.
+
+The agent MUST NOT:
+
+* invent fields;
+* invent field names;
+* invent types;
+* invent feature ordering;
+* invent normalization;
+* invent thresholds;
+* invent formulas;
+* invent fallback behavior;
+* silently choose a schema.
+
+The correct action is:
 
 ```text
-P1 → P3 → P2 → P3
+BLOCKED → report missing decision → stop affected implementation
 ```
 
-It MUST NOT implement subsystem logic.
+---
 
-## 4. Authorized Files
+## 5. Parallel Work
 
-### P1
+After D1 is explicitly resolved, the three implementation owners may work in parallel:
 
-Primary implementation:
+| Owner       | Responsibility                         |
+| ----------- | -------------------------------------- |
+| P1          | Mock feature producer                  |
+| P3          | Mock ML consumer/producer              |
+| P2          | Mock behavioral/risk consumer/producer |
+| Integration | `scan_model.py` orchestration only     |
+
+All mock artifacts MUST conform to the approved contracts.
+
+---
+
+## 6. Mock Artifact Rules
+
+Mock artifacts MUST be visibly distinguishable from real artifacts.
+
+Every mock artifact must have provenance recorded in verification evidence stating:
+
+* artifact path;
+* producer;
+* source/input;
+* mock status;
+* contract/schema version;
+* generation run or commit;
+* verification result.
+
+A mock artifact MUST NOT be presented as evidence of real detection.
+
+Mock data MUST NOT silently become the training or production source for later phases.
+
+---
+
+## 7. Mock → Real Transition
+
+The transition is explicit.
+
+### Mock state
+
+```text
+MOCK
+```
+
+means the artifact was generated from synthetic or placeholder data.
+
+### Real state
+
+```text
+VERIFIED-REAL
+```
+
+means the artifact was produced by the actual upstream implementation and independently verified against the approved contract and semantics.
+
+### Stale state
+
+```text
+STALE
+```
+
+means the artifact was produced using an upstream implementation or contract whose relevant semantics have subsequently changed.
+
+### Required transition
+
+```text
+MOCK
+  ↓
+real producer implemented
+  ↓
+real producer verified
+  ↓
+real artifact generated
+  ↓
+contract + semantics verified
+  ↓
+VERIFIED-REAL
+```
+
+No agent may simply relabel a mock artifact as real.
+
+---
+
+## 8. Required File Scope
+
+### Allowed
+
+Phase 1 may modify only:
+
+```text
+src/p1_static_engine/analyzer.py
+src/p2_behavioral_risk/prober.py
+src/p3_ml_dashboard/classifier.py
+src/p3_ml_dashboard/dashboard.py
+scan_model.py
+schemas/features.schema.json
+schemas/ml_results.schema.json
+schemas/risk_results.schema.json
+tests/...
+data/outputs/...
+```
+
+Only files actually required by Phase 1 may be changed.
+
+### Forbidden
+
+The agent MUST NOT modify:
+
+```text
+.planning/...
+AI_Model_Scanner_FINAL_MASTER_DISCOVERY_GRAPH.md
+PROJECT.md
+ROADMAP.md
+REQUIREMENTS.md
+STATE.md
+```
+
+unless explicit authorization is given.
+
+The agent MUST NOT modify another phase's implementation merely to make Phase 1 pass.
+
+`src/common/utils.py` is not a general-purpose escape hatch. Changes there require explicit justification and downstream impact analysis.
+
+---
+
+## 9. Ownership Rules
+
+### P1 owns
 
 ```text
 src/p1_static_engine/analyzer.py
 ```
 
-### P2
+P1 owns:
 
-Primary implementation:
+* safe intake;
+* trusted architecture graph;
+* SafeTensors handling;
+* domain/quantization detection;
+* static steganalysis;
+* feature extraction.
 
-```text
-src/p2_behavioral_risk/prober.py
-```
-
-### P3
-
-Primary implementation:
+### P3 owns
 
 ```text
 src/p3_ml_dashboard/classifier.py
 src/p3_ml_dashboard/dashboard.py
 ```
 
-### Integration
+P3 owns:
+
+* LightGBM;
+* synthetic training;
+* TreeSHAP;
+* `P_tamper`;
+* reporting/dashboard functionality assigned to P3.
+
+### P2 owns
+
+```text
+src/p2_behavioral_risk/prober.py
+```
+
+P2 owns:
+
+* STRIP probing;
+* behavioral scoring;
+* MAD risk aggregation;
+* MRS;
+* verdict.
+
+### Integration owns
 
 ```text
 scan_model.py
 ```
 
-### Contract files
+Integration may:
 
-```text
-features.schema.json
-ml_results.schema.json
-risk_results.schema.json
-```
+* call verified stage implementations;
+* pass approved artifacts;
+* enforce execution order;
+* stop on failure;
+* coordinate outputs.
 
-These may only be changed to reflect the explicitly approved D1 decision.
+Integration MUST NOT duplicate:
 
-### Outputs
+* static analysis;
+* classifier logic;
+* behavioral scoring;
+* MRS formulas;
+* verdict calculation.
 
-```text
-data/outputs/features.json
-data/outputs/ml_results.json
-data/outputs/risk_results.json
-```
+---
 
-### Tests
+## 10. Branch
 
-Only tests required for Phase 1 verification may be added or changed.
-
-## 5. Forbidden Scope
-
-The Phase 1 agent MUST NOT:
-
-* modify the frozen Master Graph;
-* redesign the architecture;
-* implement real P1/P2/P3 logic;
-* modify another owner's implementation;
-* modify `src/common/utils.py` unless explicitly authorized;
-* add arbitrary dependencies;
-* install unapproved production dependencies;
-* introduce network access;
-* execute uploaded model code;
-* introduce pickle loading;
-* treat mocks as real artifacts.
-
-## 6. Mock Data Rules
-
-Every Phase 1 output is:
-
-```text
-MOCK
-NON-AUTHORITATIVE
-DEVELOPMENT/INTERFACE ONLY
-```
-
-Mock data MUST be distinguishable from real data.
-
-A mock artifact MUST NOT be:
-
-* used to train the final LightGBM model;
-* used to claim real classifier performance;
-* used to claim real behavioral results;
-* used as evidence for a final security verdict;
-* silently copied into a later authoritative artifact.
-
-If provenance cannot distinguish mock from real:
-
-**BLOCKED.**
-
-## 7. Branch
-
-Each owner works on:
+Phase 1 branch:
 
 ```text
 phase/01-mock-pipeline
 ```
 
-If multiple agents require simultaneous independent work, use an explicitly owner-qualified child branch:
-
-```text
-phase/01-mock-pipeline-p1
-phase/01-mock-pipeline-p2
-phase/01-mock-pipeline-p3
-phase/01-mock-pipeline-integration
-```
-
-The branch MUST start from the current approved base.
-
-An agent MUST NOT assume another agent's unmerged working tree is available.
-
-## 8. Parallel Work
-
-After D1 is resolved:
-
-```text
-P1 mock ─┐
-P2 mock ─┼─→ integration
-P3 mock ─┘
-```
-
-All three mock implementations may proceed in parallel.
-
-Integration MUST wait until the agreed mock interfaces exist.
-
-## 9. Handoff Rule
-
-Before consuming an upstream output:
-
-1. verify the file exists;
-2. validate it against its schema;
-3. verify provenance says `MOCK`;
-4. reject missing/malformed data;
-5. never substitute an empty/default value.
-
-## 10. Failure Rule
-
-Any stage failure MUST propagate.
-
-Forbidden:
-
-```text
-stage fails
-↓
-agent inserts empty/default value
-↓
-pipeline continues
-```
-
-Required:
-
-```text
-stage fails
-↓
-visible failure
-↓
-non-zero execution status
-↓
-stop
-```
-
-## 11. Commit / Merge Rule
-
-An agent MUST:
-
-1. implement only authorized scope;
-2. run verification;
-3. record evidence;
-4. commit its work;
-5. open/update the appropriate PR.
-
-Passing tests do **not** authorize merge.
-
-The agent MUST NOT self-approve or self-merge its own phase work.
-
-Phase 1 becomes complete only after the CP1 gate is independently accepted.
-
-## 12. Phase Exit
-
-CP1 is the only authorization to leave Phase 1.
-
-```text
-CP1 PASS → Phase 2 may begin
-CP1 FAIL → remain in Phase 1
-CP1 BLOCKED → STOP and wait
-```
-
-No downstream phase may treat a branch containing unmerged Phase 1 work as equivalent to CP1 PASS.
+All Phase 1 implementation changes MUST be made on this branch.
 
 ---
 
-# FILE: .planning/phases/01-mock-pipeline/VERIFICATION.md
+## 11. Dependency Rule
 
-# Phase 01 — Mock Pipeline — VERIFICATION
+Agents MUST NOT autonomously select production dependency versions when dependency pinning is unresolved.
 
-**Gate:** CP1 — Phase 1 Mock Gate
-**Source of truth:** `AI_Model_Scanner_FINAL_MASTER_DISCOVERY_GRAPH.md`
-
-## 1. Gate Semantics
-
-Only three outcomes exist:
-
-```text
-PASS
-FAIL
-BLOCKED
-```
-
-Definitions:
-
-* **PASS:** every required criterion passes with recorded evidence.
-* **FAIL:** a required criterion was executed and failed.
-* **BLOCKED:** a required dependency/decision/authorization is unresolved or required evidence cannot be obtained.
-
-An unresolved required decision MUST NOT be treated as PASS.
-
-A checkbox without evidence is NOT verification.
-
-## 2. Required Evidence
-
-Every verification item marked PASS MUST record:
-
-```text
-Command/test:
-Result:
-Artifact/path:
-Relevant code location:
-Commit:
-```
-
-Where a test cannot reasonably provide a command, a reproducible inspection method MUST be recorded.
-
-## 3. D1 Gate
-
-* [ ] D1 is explicitly resolved and recorded.
-* [ ] All three schemas contain the approved fields/types/layout.
-* [ ] No field was invented by an implementation agent.
-
-**If D1 is unresolved: CP1 = BLOCKED.**
-
-## 4. Contract Verification
-
-* [ ] `features.json` validates against `features.schema.json`.
-* [ ] `ml_results.json` validates against `ml_results.schema.json`.
-* [ ] `risk_results.json` validates against `risk_results.schema.json`.
-* [ ] Validation is programmatic.
-* [ ] Validation evidence is recorded.
-
-## 5. Mock Provenance
-
-* [ ] All Phase 1 outputs are explicitly identified as MOCK.
-* [ ] Mock artifacts cannot be mistaken for authoritative real artifacts.
-* [ ] No mock output is used to create a final classifier.
-* [ ] No mock output is used to claim a real security verdict.
-
-## 6. Orchestration
-
-* [ ] `scan_model.py` executes P1 → P3 → P2 → P3.
-* [ ] `scan_model.py` contains orchestration only.
-* [ ] No subsystem implementation logic has been moved into `scan_model.py`.
-* [ ] Each stage consumes the expected upstream artifact.
-* [ ] A single invocation completes the mock chain.
-
-## 7. Failure Tests
-
-The following adversarial cases are mandatory:
-
-* [ ] missing `features.json`;
-* [ ] malformed `features.json`;
-* [ ] missing `ml_results.json`;
-* [ ] malformed `ml_results.json`;
-* [ ] missing `risk_results.json`;
-* [ ] schema mismatch;
-* [ ] wrong field type;
-* [ ] unexpected required field;
-* [ ] mock artifact presented as real.
-
-Each must result in a visible failure rather than silent substitution.
-
-## 8. Scope Verification
-
-* [ ] No unauthorized owner files were modified.
-* [ ] No Master Graph modification occurred.
-* [ ] No unauthorized dependency was introduced.
-* [ ] No unauthorized network access was introduced.
-* [ ] No pickle/unrestricted deserialization was introduced.
-
-## 9. Gate Result
-
-```text
-IF all required checks PASS + evidence exists:
-    CP1 = PASS
-
-ELSE IF any required check was executed and failed:
-    CP1 = FAIL
-
-ELSE IF any required dependency/decision/evidence is unavailable:
-    CP1 = BLOCKED
-```
-
-Only:
-
-```text
-CP1 = PASS
-```
-
-authorizes Phase 2.
-
----
-
-# FILE: .planning/phases/02-zero-trust-intake/PLAN.md
-
-# Phase 02 — Zero-Trust Intake — PLAN
-
-**Owner:** P1 — Eyes
-**Primary file:** `src/p1_static_engine/analyzer.py`
-**Gate prerequisite:** CP1 = PASS
-**Source of truth:** `AI_Model_Scanner_FINAL_MASTER_DISCOVERY_GRAPH.md`
-
-## 1. Objective
-
-Implement real bounded zero-trust intake of an untrusted `.safetensors` file and its declared architecture.
-
-Produce:
-
-* trusted graph;
-* tensor metadata;
-* `input_domain`;
-* `is_quantized`.
-
-No static steganalysis occurs in this phase.
-
-## 2. Start Condition
-
-Phase 2 MAY begin only when:
-
-```text
-CP1 = PASS
-```
-
-If CP1 is:
-
-```text
-FAIL → STOP
-BLOCKED → WAIT
-```
-
-The agent MUST NOT bypass CP1 using mock completion.
-
-## 3. Authorized Files
-
-Primary:
-
-```text
-src/p1_static_engine/analyzer.py
-```
-
-Phase-specific tests may be added/modified.
-
-No P2/P3 implementation changes are permitted.
-
-`scan_model.py` may be touched only if a previously authorized integration change is strictly required for the Phase 2 handoff and does not implement P1 logic.
-
-## 4. Frozen Security Boundary
-
-The implementation SHALL use:
-
-```text
-safetensors.safe_open
-```
-
-for SafeTensors weight access.
-
-The agent MUST NOT replace this with an agent-defined "equivalent" loader.
-
-No uploader-supplied `model.py` or other uploader code may execute.
-
-No unrestricted pickle loading is permitted.
-
-## 5. Bounded Intake
-
-Header handling MUST be bounded.
-
-The implementation MUST explicitly enforce approved limits for:
-
-* header size;
-* tensor count;
-* metadata size;
-* tensor dimensions;
-* model/resource size;
-* memory usage where applicable.
-
-If required limits have not been approved:
-
-**DO NOT INVENT VALUES.**
-
-The relevant operation is BLOCKED until the required limit is explicitly resolved.
-
-## 6. Architecture Trust
-
-The uploader-declared architecture selects a trusted standard-library architecture definition.
-
-The implementation MUST NOT infer an arbitrary architecture.
-
-The following MUST all agree:
-
-```text
-declared architecture
-+
-actual SafeTensors tensor names
-+
-actual shapes
-+
-actual dtypes
-↓
-compatibility validation
-↓
-trusted graph
-```
-
-Mismatch MUST fail closed.
-
-No best-effort remapping is permitted.
-
-## 7. Tensor Metadata
-
-P1 must extract:
-
-* tensor name;
-* tensor shape;
-* tensor dtype.
-
-This information must remain available for downstream processing.
-
-## 8. Quantization
-
-Exactly:
-
-```text
-INT8 / FP8 → is_quantized = TRUE
-otherwise  → is_quantized = FALSE
-```
-
-No additional quantization categories may be invented.
-
-## 9. Domain
-
-`input_domain` is determined from input shape/type characteristics.
-
-Frozen supported paths:
-
-```text
-VISION → 4D float tensors
-NLP    → 2D/3D integer token tensors
-```
-
-Unknown/unsupported characteristics MUST be surfaced.
-
-The agent MUST NOT silently guess a domain from architecture name, filename, metadata, or convenience.
-
-## 10. Handoff
-
-Phase 3 receives the trusted graph and P1 metadata.
-
-D2 remains unresolved for the exact P1 → P2 trusted-graph handoff.
-
-The agent MUST NOT invent D2.
-
-If P2 integration requires D2 before the phase's authorized work can proceed:
-
-**BLOCKED.**
-
-## 11. Branch
-
-```text
-phase/02-zero-trust-intake
-```
-
-Optional owner-qualified branch:
-
-```text
-phase/02-zero-trust-intake-p1
-```
-
-Branch MUST start from the approved CP1 state.
-
-## 12. Waiting Rule
-
-The Phase 2 agent waits when:
-
-* CP1 is not PASS;
-* required dependency installation is not approved/pinned;
-* a required security/resource limit is unresolved;
-* required architecture compatibility information is unavailable.
-
-It MUST NOT work around these by inventing assumptions.
-
-## 13. Commit / Merge
-
-Implementation → verification evidence → commit → PR.
-
-No self-merge.
-
-Phase 3 starts from the merged/approved Phase 2 state after CP2 PASS.
-
----
-
-# FILE: .planning/phases/02-zero-trust-intake/VERIFICATION.md
-
-# Phase 02 — Zero-Trust Intake — VERIFICATION
-
-**Gate:** CP2 — Intake Gate
-**Owner:** P1
-**Primary file:** `src/p1_static_engine/analyzer.py`
-
-## 1. Gate Semantics
-
-Only:
-
-```text
-PASS / FAIL / BLOCKED
-```
-
-A required unresolved dependency or decision means:
+If a dependency/version is required and no approved version exists:
 
 ```text
 BLOCKED
 ```
 
-A checkbox without reproducible evidence cannot be PASS.
+Do not guess.
 
-## 2. Evidence Requirement
+Temporary local execution using an already approved environment does not constitute dependency pinning.
 
-Every PASS item records:
+Final reproducibility requires the dependency decision defined by D9.
 
-```text
-test/command
-result
-artifact/path
-code location
-commit
-```
+---
 
-## 3. SafeTensors Security
+## 12. Security and Network Rules
 
-* [ ] `safetensors.safe_open` is used.
-* [ ] No alternate loader was introduced.
-* [ ] Header parsing is bounded.
-* [ ] No pickle loading exists.
-* [ ] No uploader-supplied code executes.
-* [ ] No generic deserialization path exists.
+The agent MUST:
 
-## 4. Resource Exhaustion
+* treat model files as untrusted;
+* avoid executing uploaded model code;
+* avoid unrestricted pickle loading;
+* avoid uploader-controlled imports;
+* avoid arbitrary network access;
+* never upload model data, credentials, secrets, or repository contents to external services;
+* never use secrets as model inputs;
+* fail closed when a security boundary cannot be established.
 
-Mandatory adversarial tests:
+Network access is allowed only when explicitly authorized for a project operation.
 
-* [ ] oversized header;
-* [ ] malformed header;
-* [ ] excessive tensor count;
-* [ ] pathological tensor dimensions;
-* [ ] malformed metadata;
-* [ ] invalid tensor offsets;
-* [ ] invalid shape;
-* [ ] invalid dtype;
-* [ ] resource-limit violation.
+---
 
-Each must fail safely rather than trigger uncontrolled resource use.
+## 13. Failure Behavior
 
-## 5. Architecture Trust
+Any implementation failure MUST be explicit.
 
-* [ ] Declared architecture is required.
-* [ ] Unknown architecture fails closed.
-* [ ] Arbitrary architecture inference is absent.
-* [ ] Trusted architecture comes only from approved definitions.
-* [ ] Tensor names/shapes/dtypes are checked for compatibility.
-* [ ] Architecture/weight mismatch fails closed.
-* [ ] No best-effort mapping silently occurs.
+The agent MUST NOT:
 
-## 6. Metadata
+* fabricate an output;
+* silently substitute a fallback;
+* silently skip a failed stage;
+* mark a failed artifact as verified;
+* continue to the next dependent stage.
 
-* [ ] Tensor names are extracted correctly.
-* [ ] Shapes are extracted correctly.
-* [ ] Dtypes are extracted correctly.
-* [ ] `is_quantized` follows the frozen rule.
-* [ ] `input_domain` follows the frozen shape/type rule.
-* [ ] Missing/malformed metadata produces an explicit failure.
-
-## 7. Downstream Handoff
-
-* [ ] Phase 3 receives the actual trusted graph.
-* [ ] Actual `input_domain` is handed off.
-* [ ] Actual `is_quantized` is handed off.
-* [ ] No mock/default metadata leaks into a real run.
-* [ ] D2 is not silently resolved.
-
-If D2 is required for the current acceptance criteria and unresolved:
-
-**CP2 = BLOCKED.**
-
-## 8. Security Regression
-
-Mandatory:
-
-* [ ] executable-content smuggling test;
-* [ ] pickle-path absence test;
-* [ ] unknown-architecture test;
-* [ ] architecture/tensor mismatch test;
-* [ ] malformed SafeTensors test.
-
-## 9. Scope
-
-* [ ] Only authorized files changed.
-* [ ] Master Graph unchanged.
-* [ ] No P2/P3 ownership crossed.
-* [ ] No unauthorized dependency/network change.
-
-## 10. Gate
+Required behavior:
 
 ```text
-all required checks + evidence → PASS
-executed failure → FAIL
-required unresolved decision/dependency/evidence → BLOCKED
+failure
+  ↓
+record evidence
+  ↓
+mark affected work BLOCKED/FAIL
+  ↓
+stop dependent work
 ```
 
-Only CP2 PASS authorizes Phase 3.
+---
+
+## 14. Completion Conditions
+
+Phase 1 is complete only when:
+
+* D1 is resolved;
+* approved schemas exist;
+* mock producer/consumer contracts match exactly;
+* mock artifacts are generated;
+* mock provenance is recorded;
+* orchestration follows the approved graph;
+* ownership boundaries are preserved;
+* adversarial contract tests pass;
+* verification evidence is complete;
+* CP1 is explicitly approved.
+
+Code compiling is NOT sufficient.
+
+Tests passing are NOT automatically sufficient.
+
+A phase is complete only when its checkpoint is approved.
+
+---
+
+## 15. Commit Rules
+
+The agent may commit only Phase 1 changes.
+
+Commit messages must clearly identify Phase 1 work.
+
+The agent MUST NOT:
+
+* commit unrelated fixes;
+* include generated secrets;
+* include unrelated formatting changes;
+* commit stale artifacts as authoritative real outputs.
+
+Before commit, the agent must verify:
+
+```text
+git status
+git diff
+tests
+artifact provenance
+scope
+```
+
+---
+
+## 16. PR and Merge Rules
+
+The agent may open a PR.
+
+The agent MUST NOT merge its own PR.
+
+Merge requires:
+
+1. Phase 1 implementation complete;
+2. Phase 1 verification PASS;
+3. CP1 approval;
+4. required human/independent review;
+5. no unresolved blocking decision;
+6. no failing required checks.
+
+If any condition is missing:
+
+```text
+DO NOT MERGE
+```
+
+---
+
+## 17. Downstream Gate
+
+Phase 2 may begin only after:
+
+```text
+CP1 = APPROVED
+```
+
+Phase 2 MUST NOT treat:
+
+* an unapproved mock;
+* a failed verification;
+* an unresolved D1;
+* an unreviewed commit
+
+as permission to proceed.
+
+---
+
+## 18. Hard Stop
+
+STOP immediately if:
+
+* D1 is unresolved;
+* a required schema field is ambiguous;
+* ownership is ambiguous;
+* an implementation requires inventing semantics;
+* an upstream contract changes unexpectedly;
+* mock and real artifact provenance cannot be distinguished;
+* a required security boundary cannot be established;
+* a required dependency version is unknown;
+* a verification requirement cannot be evidenced.
+
+Do not work around the blocker silently.
+
+Report the blocker and wait for resolution.
