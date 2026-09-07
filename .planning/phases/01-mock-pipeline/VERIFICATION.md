@@ -1,64 +1,419 @@
-# Phase 01 — Mock Pipeline — VERIFICATION
+# Phase 1 — Mock Pipeline Verification
 
-**Gate:** CP1 — Phase 1 Mock Gate (per Master Graph Section 13)
+## Status
 
-No phase advances until its VERIFICATION.md gate passes. This is CP1; Phase 02 (Zero-Trust Intake) real implementation may only proceed after all checks below pass.
+**Checkpoint:** CP1
 
-## Pass/Fail Checklist
+**Verification state:** NOT VERIFIED until every required criterion below has evidence.
 
-### Required Files Exist
+A checkbox alone is NOT evidence.
 
-- [ ] `data/outputs/features.json` exists (P1 mock output)
-- [ ] `data/outputs/ml_results.json` exists (P3 mock output)
-- [ ] `data/outputs/risk_results.json` exists (P2 mock output)
-- [ ] `features.schema.json` exists and has the team-agreed (D1) field definitions populated (no longer empty)
-- [ ] `ml_results.schema.json` exists and has the team-agreed (D1) field definitions populated (no longer empty)
-- [ ] `risk_results.schema.json` exists and has the team-agreed (D1) field definitions populated (no longer empty)
+Every PASS must identify:
 
-### Mock Pipeline Executes
+* command/test used;
+* result;
+* affected artifact or file;
+* commit/version where applicable.
 
-- [ ] `scan_model.py` runs end-to-end against mock inputs without an unhandled exception
-- [ ] `scan_model.py` invokes stages in the frozen order: P1 → P3 → P2 → P3 (final report)
-- [ ] Each stage's mock output is written to disk (or handed off per the agreed mechanism) before the next stage begins
+---
 
-### JSON Contracts Validate
+# 1. Verification State Model
 
-- [ ] `features.json` validates against `features.schema.json`
-- [ ] `ml_results.json` validates against `ml_results.schema.json`
-- [ ] `risk_results.json` validates against `risk_results.schema.json`
-- [ ] Schema validation is performed programmatically (not visually inspected only) and its result is recorded
+Each criterion has exactly one state:
 
-### P1 → P3 Handoff Works
+```text
+PASS
+FAIL
+BLOCKED
+```
 
-- [ ] P3 mock stage successfully reads the P1 mock `features.json`
-- [ ] P3 mock stage does not require any field not present in the agreed `features.schema.json`
-- [ ] Handoff failure (missing/malformed `features.json`) is detected and reported by the pipeline, not silently skipped
+Rules:
 
-### P3 → P2 Handoff Works
+* `PASS` requires evidence.
+* `FAIL` requires remediation.
+* `BLOCKED` requires an external decision/dependency.
+* `BLOCKED` MUST NOT be converted into PASS by assumption.
 
-- [ ] P2 mock stage successfully reads the P3 mock `ml_results.json`
-- [ ] P2 mock stage does not require any field not present in the agreed `ml_results.schema.json`
-- [ ] Handoff failure (missing/malformed `ml_results.json`) is detected and reported by the pipeline, not silently skipped
+CP1 can be approved only when all required criteria are PASS.
 
-### Final Orchestration Works
+---
 
-- [ ] `scan_model.py` produces a final report surface consuming the mock `risk_results.json`
-- [ ] The final report surface reflects the mock verdict/MRS fields as defined in the agreed `risk_results.schema.json`
-- [ ] A single `scan_model.py` invocation completes the full mock chain (P1 → P3 → P2 → P3) without manual intervention between stages
+# 2. Contract Verification
 
-### Failures Are Visible, Not Silently Ignored
+## D1 — Exact Contract Fields
 
-- [ ] A deliberately malformed mock `features.json` causes a visible, non-zero-exit failure (not a silently empty or partially-populated downstream result)
-- [ ] A deliberately malformed mock `ml_results.json` causes a visible, non-zero-exit failure
-- [ ] A missing mock output file at any stage causes a visible failure rather than the pipeline continuing with default/empty values
-- [ ] Schema validation failures are surfaced with the specific field(s)/reason(s), not a generic pass/fail with no detail
+* [ ] `features.schema.json` contains the explicitly approved fields.
+* [ ] `ml_results.schema.json` contains the explicitly approved fields.
+* [ ] `risk_results.schema.json` contains the explicitly approved fields.
+* [ ] No agent-invented contract fields exist.
+* [ ] Producer/consumer ownership is documented.
+* [ ] Feature ordering/semantics are explicitly defined where required.
+* [ ] No unresolved contract ambiguity remains.
 
-## Gate Result
+**Evidence required:**
 
-- [ ] **PASS** — all checks above are satisfied; Phase 02 real implementation may proceed
-- [ ] **FAIL** — one or more checks unsatisfied; remain in Phase 01 until resolved
+```text
+Decision/reference:
+Schema files:
+Validation command:
+Result:
+Commit:
+```
 
-## Notes
+If D1 remains unresolved:
 
-- This gate validates interface and orchestration correctness only. It does not validate detection accuracy, real feature semantics, or real model behavior, none of which exist yet at this phase.
-- If any contract field required for a check above is still marked DECISION REQUIRED (D1) and unresolved by the team, that check cannot be marked PASS — record it as blocked on D1 rather than skipping it.
+```text
+BLOCKED
+```
+
+---
+
+# 3. Mock Artifact Verification
+
+Required artifacts:
+
+```text
+data/outputs/features.json
+data/outputs/ml_results.json
+data/outputs/risk_results.json
+```
+
+Verify:
+
+* [ ] each required artifact can be generated;
+* [ ] each artifact validates against its approved schema;
+* [ ] producer is identified;
+* [ ] mock status is explicitly recorded in verification evidence;
+* [ ] generation commit/run is recorded;
+* [ ] no mock artifact is represented as verified-real.
+
+**Evidence required:**
+
+```text
+Artifact:
+Producer:
+Input/source:
+Schema:
+Generation command:
+Validation command:
+Result:
+Commit/run:
+```
+
+---
+
+# 4. Provenance Verification
+
+For every mock artifact:
+
+* [ ] source is known;
+* [ ] producer is known;
+* [ ] mock/real status is known;
+* [ ] contract version is known;
+* [ ] generation version/commit is known;
+* [ ] downstream consumer is known.
+
+An artifact with unknown provenance is:
+
+```text
+BLOCKED
+```
+
+It cannot be used as authoritative evidence.
+
+---
+
+# 5. Mock → Real Protection
+
+Verify that:
+
+* [ ] mock artifacts cannot simply be relabeled as real;
+* [ ] real status requires execution of the real producer;
+* [ ] downstream code does not assume mock data is production data;
+* [ ] feature placeholders cannot silently become final classifier inputs;
+* [ ] provenance can distinguish MOCK from VERIFIED-REAL.
+
+**Required adversarial test:**
+
+Attempt to consume a mock artifact through the real-data path.
+
+Expected result:
+
+```text
+REJECT / BLOCK / EXPLICITLY IDENTIFY AS MOCK
+```
+
+A silent acceptance is a verification failure.
+
+---
+
+# 6. Ownership Verification
+
+Confirm:
+
+```text
+P1 → analyzer.py
+P2 → prober.py
+P3 → classifier.py / dashboard.py
+Integration → scan_model.py
+```
+
+Verify:
+
+* [ ] `scan_model.py` contains orchestration only;
+* [ ] `scan_model.py` does not duplicate P1 logic;
+* [ ] `scan_model.py` does not duplicate classifier logic;
+* [ ] `scan_model.py` does not calculate MRS;
+* [ ] `scan_model.py` does not calculate the final verdict;
+* [ ] no owner modifies another owner's implementation without explicit authorization;
+* [ ] shared utility changes, if any, have documented impact analysis.
+
+---
+
+# 7. Orchestration Verification
+
+Verify the mock execution order:
+
+```text
+P1
+ ↓
+P3
+ ↓
+P2
+ ↓
+P3/report
+```
+
+Verify:
+
+* [ ] stage boundaries are explicit;
+* [ ] outputs are passed through approved contracts;
+* [ ] failed stages stop dependent execution;
+* [ ] missing artifacts stop dependent execution;
+* [ ] malformed artifacts stop dependent execution;
+* [ ] orchestration does not silently fabricate outputs.
+
+---
+
+# 8. Failure-Mode Tests
+
+The following adversarial cases MUST be tested.
+
+### Contract failures
+
+* [ ] missing required field;
+* [ ] unexpected field;
+* [ ] wrong field type;
+* [ ] wrong feature ordering;
+* [ ] malformed JSON;
+* [ ] schema mismatch.
+
+### Artifact failures
+
+* [ ] missing `features.json`;
+* [ ] missing `ml_results.json`;
+* [ ] missing `risk_results.json`;
+* [ ] corrupted artifact;
+* [ ] stale artifact;
+* [ ] mock artifact presented as real.
+
+### Pipeline failures
+
+* [ ] P1 failure;
+* [ ] P3 failure;
+* [ ] P2 failure;
+* [ ] downstream stage invoked after upstream failure.
+
+Expected behavior:
+
+```text
+STOP
+NON-ZERO/FAILURE STATUS
+NO FABRICATED OUTPUT
+```
+
+---
+
+# 9. Security Verification
+
+Verify:
+
+* [ ] no uploaded model code is executed;
+* [ ] no unrestricted pickle loading is introduced;
+* [ ] no uploader-controlled imports are introduced;
+* [ ] no arbitrary external network access occurs;
+* [ ] no credentials/secrets are sent to external services;
+* [ ] mock pipeline does not establish a false claim of production security.
+
+---
+
+# 10. Scope Verification
+
+Before commit, inspect:
+
+```text
+git status
+git diff --stat
+git diff
+```
+
+Verify:
+
+* [ ] only Phase 1 files changed;
+* [ ] no unrelated formatting changes;
+* [ ] no unrelated refactors;
+* [ ] no unauthorized planning-file changes;
+* [ ] no secrets;
+* [ ] no unrelated generated files.
+
+Forbidden governance changes include:
+
+```text
+.planning/...
+PROJECT.md
+ROADMAP.md
+REQUIREMENTS.md
+STATE.md
+AI_Model_Scanner_FINAL_MASTER_DISCOVERY_GRAPH.md
+```
+
+unless separately authorized.
+
+---
+
+# 11. Regression Verification
+
+Run the repository's applicable test/lint/type-check commands.
+
+Record:
+
+```text
+Command:
+Result:
+Failures:
+Relevant output:
+Commit:
+```
+
+A successful command is evidence only for the behavior that command actually verifies.
+
+Do not claim security or architectural verification from a generic successful test run.
+
+---
+
+# 12. Dependency Verification
+
+Verify:
+
+* [ ] required Phase 1 dependencies are installed;
+* [ ] no agent-selected production dependency version was silently introduced;
+* [ ] unresolved dependency decisions are explicitly recorded;
+* [ ] final dependency reproducibility remains governed by D9.
+
+If the implementation depends on an unapproved version choice:
+
+```text
+BLOCKED
+```
+
+---
+
+# 13. Checkpoint CP1 Decision
+
+CP1 may be marked:
+
+### PASS
+
+Only if:
+
+* D1 is resolved;
+* all required contract checks PASS;
+* all required artifact checks PASS;
+* provenance is complete;
+* adversarial tests PASS;
+* ownership boundaries PASS;
+* scope verification PASS;
+* security verification PASS;
+* required tests PASS;
+* required human/independent review is complete.
+
+### FAIL
+
+If an implemented requirement does not work as specified.
+
+### BLOCKED
+
+If completion requires an unresolved:
+
+* decision;
+* dependency;
+* contract;
+* approval;
+* security boundary;
+* upstream prerequisite.
+
+---
+
+# 14. Evidence Record
+
+Complete before CP1 approval:
+
+```text
+Phase:
+Branch: phase/01-mock-pipeline
+Commit:
+Reviewer:
+Date:
+
+D1:
+Contract validation:
+
+Mock features artifact:
+Mock ML artifact:
+Mock risk artifact:
+
+Provenance verification:
+
+Adversarial tests:
+
+Security checks:
+
+Regression tests:
+
+Scope check:
+
+Dependency check:
+
+Final state:
+PASS / FAIL / BLOCKED
+
+If BLOCKED:
+Blocker:
+Required decision/owner:
+Affected downstream phase:
+```
+
+---
+
+# 15. Approval Rule
+
+`VERIFICATION.md` is evidence, not self-approval.
+
+The implementing agent MUST NOT approve its own checkpoint.
+
+Final CP1 status requires an authorized human/independent reviewer or project governance process.
+
+Only:
+
+```text
+CP1 = APPROVED
+```
+
+permits Phase 2 execution.
+
+If CP1 is not approved:
+
+```text
+STOP
+DO NOT ADVANCE
+```
