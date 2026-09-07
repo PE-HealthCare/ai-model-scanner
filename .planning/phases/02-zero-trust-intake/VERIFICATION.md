@@ -1,75 +1,132 @@
-# Phase 02 — Zero-Trust Intake — VERIFICATION
+# Phase 2 — Zero-Trust Intake Verification
 
-**Gate:** CP2 — Intake Gate (per Master Graph Section 13)
+## 1. Verification Contract
 
-No phase advances until its VERIFICATION.md gate passes. This is CP2; Phase 03 (Static Steganalysis) real implementation may only proceed after all checks below pass.
+States are exactly:
 
-## Pass/Fail Checklist
+- PASS
+- FAIL
+- BLOCKED
 
-### Bounded Header Handling
+A checkbox without reproducible evidence is NOT a PASS.
 
-- [ ] SafeTensors header parsing is bounded (does not read beyond the declared header region)
-- [ ] Header parsing does not execute any code embedded in or referenced by the file
+Any unresolved required decision/dependency makes the affected gate BLOCKED.
 
-### SafeTensors-Only Intake
+## 2. Prerequisite
 
-- [ ] Weight access uses `safetensors.safe_open` (or equivalent bounded SafeTensors API), not a generic/unbounded deserializer
-- [ ] No other untrusted serialization format is accepted as a substitute for SafeTensors in this phase
+- [ ] CP1 is explicitly APPROVED.
+- [ ] Approved Phase-1 state is the base of this work.
+- [ ] Required contract is resolved.
+- [ ] Required dependency policy is satisfied.
 
-### No Pickle Execution
+Evidence:
+```text
+CP1 evidence:
+Base commit:
+Dependency evidence:
+```
 
-- [ ] No Pickle-based loading path exists anywhere in the intake code
-- [ ] A file crafted to trigger Pickle deserialization (if such a path existed) does not execute code — verified by absence of any Pickle usage in the intake implementation
+## 3. SafeTensors Boundary
 
-### Declared Architecture Validation
+- [ ] `safetensors.safe_open` is used.
+- [ ] No unauthorized alternative loader exists.
+- [ ] No unrestricted pickle loading exists.
+- [ ] No uploader-supplied Python/model code executes.
+- [ ] No uploader-controlled imports execute.
+- [ ] No unauthorized network access is introduced.
 
-- [ ] Intake requires an uploader-declared architecture and validates it against the trusted, standard-library set before proceeding
-- [ ] An unrecognized/undeclared architecture causes intake to fail closed, not proceed with a guessed architecture
-- [ ] No automatic architecture inference/detection is implemented for arbitrary unlabeled models
+Evidence:
+```text
+Files:
+Tests/commands:
+Result:
+Commit:
+```
 
-### Trusted Graph Creation
+## 4. Resource Exhaustion Tests
 
-- [ ] The instantiated graph is built exclusively from trusted, standard-library architecture definitions
-- [ ] No uploader-supplied `model.py` (or equivalent uploader-supplied code) is executed at any point during graph instantiation
-- [ ] Weights from the SafeTensors file are correctly mapped onto the trusted graph structure
+Mandatory adversarial tests:
 
-### Shape/Dtype Extraction
+- [ ] oversized header;
+- [ ] excessive metadata;
+- [ ] excessive tensor count;
+- [ ] pathological tensor dimensions;
+- [ ] invalid offsets;
+- [ ] integer/size boundary cases;
+- [ ] excessive resource/time condition.
 
-- [ ] Tensor shape is correctly extracted for each tensor in the file
-- [ ] Tensor dtype is correctly extracted for each tensor in the file
-- [ ] Extracted shape/dtype data is available to downstream quantization and domain tagging logic
+For every production limit:
+```text
+Limit:
+Authoritative decision/source:
+Test:
+Result:
+```
 
-### Quantization Tagging
+If a required production limit is not approved: **BLOCKED**, not PASS.
 
-- [ ] `is_quantized = TRUE` is correctly set when dtype is INT8 or FP8
-- [ ] `is_quantized = FALSE` is correctly set for all other observed dtypes (e.g. FP32/FP16)
-- [ ] Quantization tag is included in the metadata handed off downstream
+## 5. Architecture Validation
 
-### Domain Tagging
+- [ ] unknown architecture rejected;
+- [ ] malformed architecture rejected;
+- [ ] architecture/tensor-name mismatch rejected;
+- [ ] architecture/shape mismatch rejected;
+- [ ] incompatible dtype rejected;
+- [ ] no best-effort remapping;
+- [ ] trusted graph created only after compatibility validation.
 
-- [ ] `input_domain = VISION` is correctly set for 4D float tensor input characteristics
-- [ ] `input_domain = NLP` is correctly set for 2D/3D integer token tensor input characteristics
-- [ ] Domain tagging is derived only from input shape/type characteristics, per the canonical wording — not from architecture name, filename, or other unspecified signals
-- [ ] Domain tag is included in the metadata handed off downstream
+## 6. Domain / Quantization
 
-### Downstream Handoff
+- [ ] `input_domain` follows approved shape/type semantics.
+- [ ] INT8/FP8 produce `is_quantized = TRUE`.
+- [ ] other approved non-quantized types produce `FALSE`.
+- [ ] domain/quantization tags are traceable to actual inspected model properties.
 
-- [ ] Trusted graph, `input_domain`, and `is_quantized` are all available to the Phase 3 (Static Steganalysis) stage
-- [ ] The mechanism used for handoff is documented; if it relies on resolving D2 (P1→P2 trusted-graph handoff), this is explicitly noted as pending rather than assumed complete
-- [ ] Handoff data matches the values actually computed during intake (no default/placeholder values leaking through in a real run)
+## 7. Failure-Closed Tests
 
-### Malformed/Untrusted Input Handling
+Mandatory tests:
 
-- [ ] A malformed SafeTensors file (corrupt header) causes a visible, handled failure — not a crash with no diagnostic, and not silent continuation
-- [ ] A file with an undeclared or unrecognized architecture causes a visible, handled failure
-- [ ] A file attempting to smuggle executable content (e.g. disguised as a valid tensor) does not result in code execution during intake
-- [ ] Failure modes are distinguishable from success (e.g. explicit error/status, not an empty or partially-populated success result)
+- [ ] malformed file;
+- [ ] invalid header;
+- [ ] invalid tensor metadata;
+- [ ] architecture mismatch;
+- [ ] unsupported dtype;
+- [ ] unknown architecture;
+- [ ] intake exception/failure.
 
-## Gate Result
+Expected result:
+```text
+FAILURE STATUS
+NO DOWNSTREAM AUTHORITATIVE OUTPUT
+NO FABRICATED TRUSTED GRAPH
+```
 
-- [ ] **PASS** — all checks above are satisfied; Phase 03 real implementation may proceed
-- [ ] **FAIL** — one or more checks unsatisfied; remain in Phase 02 until resolved
+## 8. Scope
 
-## Preserved Unresolved Decision
+- [ ] only Phase-2-authorized files changed;
+- [ ] no planning governance files changed;
+- [ ] no P2/P3 implementation changed;
+- [ ] no unauthorized `scan_model.py` change;
+- [ ] shared utility changes, if any, have authorization and impact evidence.
 
-- **D2 — Trusted graph handoff mechanism** between P1 and P2 through `scan_model.py` is DECISION REQUIRED. If any downstream-handoff check above depends on this mechanism being finalized, record it as blocked on D2 rather than marking it PASS by assumption.
+## 9. CP2 Evidence Record
+
+```text
+Branch: phase-2/zero-trust-intake
+Commit:
+Reviewer:
+
+CP1:
+SafeTensors:
+Resource limits:
+Architecture compatibility:
+Domain:
+Quantization:
+Adversarial tests:
+Failure-closed tests:
+Scope:
+Final state: PASS / FAIL / BLOCKED
+Blocker (if any):
+```
+
+CP2 may be approved only after all required criteria are PASS and independent approval is recorded.
