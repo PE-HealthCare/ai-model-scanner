@@ -1,4 +1,4 @@
-"""Root Phase 1 orchestration surface for the mock pipeline."""
+"""Root pipeline orchestration surface with zero-trust D2 handoff boundary."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 
 from src.common.utils import ROOT, get_generation_commit, validate_artifact
-from src.p1_static_engine.analyzer import build_mock_features
-from src.p2_behavioral_risk.prober import build_mock_risk_results
+from src.p1_static_engine.analyzer import TrustedModelContext, build_mock_features, intake_model
+from src.p2_behavioral_risk.prober import build_mock_risk_results, receive_trusted_model
 from src.p3_ml_dashboard.classifier import build_mock_ml_results
 
 OUTPUT_DIR = ROOT / "data" / "outputs"
@@ -17,6 +17,19 @@ CONTRACT_DIR = ROOT / "contracts"
 def _write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def handoff_trusted_model(context: TrustedModelContext) -> TrustedModelContext:
+    """Pass the exact in-memory P1 context to P2; no artifact reload occurs."""
+    return receive_trusted_model(context)
+
+
+def run_real_intake_handoff(model_path: str | Path, declared_architecture: str) -> TrustedModelContext:
+    """Execute P1 intake and hand the same trusted context directly to P2."""
+    context = intake_model(Path(model_path), declared_architecture=declared_architecture)
+    if context is None:
+        raise ValueError("Integrity violated: intake did not produce a trusted context")
+    return handoff_trusted_model(context)
 
 
 def run_mock_pipeline() -> dict[str, Path]:
