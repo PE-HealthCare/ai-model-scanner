@@ -14,7 +14,7 @@
 
 The Final Master Discovery & Dependency Graph is the authoritative architecture source.
 
-This state file records execution status only.
+This state file records execution status and explicitly locked project decisions only.
 
 It SHALL NOT redefine the architecture or silently resolve design decisions.
 
@@ -26,7 +26,7 @@ Begin Phase 2 Zero-Trust Intake using the completed Phase 1 contracts and verifi
 
 ---
 
-## Current D1 Decision Record
+## Resolved Master-Graph Decision Records
 
 ### D1 — Exact Contract Schemas
 
@@ -57,22 +57,121 @@ The Master Graph remains the source of truth. Any implementation, downstream con
 
 Robust intra-model normalization uses leave-one-out comparable layers.
 
-*   **Finite nonzero MAD:** Use actual MAD directly. Do not add epsilon or arbitrary near-zero threshold. If calculation is finite, it is valid.
-*   **Exact MAD = 0:** If target layer feature equals baseline median, record deterministic zero anomaly. If target differs, record deterministic `DEGENERATE_DEVIATION`. Do not invent a finite Z-score or add epsilon.
-*   **Insufficient baselines (1 or 2 layers):** Do not fabricate a score. Mark static baseline evidence unavailable and block downstream scoring that requires it.
-*   **Invalid numeric data (missing, NaN, +/-inf):** Invalid. Do not silently impute, replace with zero, or fabricate values.
-*   **Extremely small nonzero MAD:** Treat as mathematically valid using actual value. Do not replace with epsilon.
-*   **Quantized models:** Preserve existing format-adaptive rules. Do not invent new semantics. If conflict with schema exists, document it as unresolved follow-up.
+* **Finite nonzero MAD:** Use actual MAD directly. Do not add epsilon or arbitrary near-zero threshold. If calculation is finite, it is valid.
+* **Exact MAD = 0:** If target layer feature equals baseline median, record deterministic zero anomaly. If target differs, record deterministic `DEGENERATE_DEVIATION`. Do not invent a finite Z-score or add epsilon.
+* **Insufficient baselines (1 or 2 layers):** Do not fabricate a score. Mark static baseline evidence unavailable and block downstream scoring that requires it.
+* **Invalid numeric data (missing, NaN, +/-inf):** Invalid. Do not silently impute, replace with zero, or fabricate values.
+* **Extremely small nonzero MAD:** Treat as mathematically valid using actual value. Do not replace with epsilon.
+* **Quantized models:** Preserve existing format-adaptive rules. Do not invent new semantics. If conflict with schema exists, document it as unresolved follow-up.
 
 Note: D5 (Per-layer risk aggregation) and D6 (Highest-risk-layer aggregation) remain `REQUIRED` and unresolved. TreeSHAP must not be used for highest-risk-layer selection.
-
----
 
 ### D8 — Artifact Staleness
 
 **Status: RESOLVED.**
 
 Downstream stages must consume outputs generated for the current pipeline execution and must not silently reuse artifacts from a previous execution. Artifact provenance/generation identity (`generation_commit`) is used to distinguish current pipeline outputs from stale outputs. If an artifact does not match the current pipeline execution, the consuming stage must reject/block it rather than reuse it.
+
+---
+
+## Locked Execution Decisions
+
+These decisions were explicitly agreed during execution and are recorded here without changing the frozen architecture.
+
+### Execution Decision 1 — Trusted Architecture Registry
+
+**Status: LOCKED.**
+
+The authoritative trusted architecture registry is exactly:
+
+| Declared architecture | Domain | Trusted implementation |
+| --- | --- | --- |
+| `resnet18` | VISION | `torchvision.models` |
+| `distilbert` | NLP | `transformers` |
+
+Rules:
+
+* The uploader declares one supported architecture.
+* Unsupported, unknown, malformed, or incompatible architecture input fails closed.
+* There is no automatic architecture detection.
+* No uploader-supplied `model.py`, custom executable model code, or arbitrary model import is trusted.
+* The registry is intentionally limited to the two explicitly approved architectures above unless separately reopened and extended by an explicit decision.
+
+### Execution Decision 2 — Zero-Trust Intake Resource Limits
+
+**Status: LOCKED.**
+
+Hard fail-closed production intake limits are:
+
+| Resource | Hard limit |
+| --- | ---: |
+| SafeTensors header | 100 MB |
+| Metadata | 1 MB |
+| Tensor count | 10,000 |
+| Maximum tensor rank | 8 |
+| Maximum dimension size | 1,000,000 per dimension |
+| Model file size | 2 GB |
+
+Operational targets (not hard walls) are:
+
+* Intake memory target: `<50 MB`
+* Intake processing-time target: `<0.5 sec`
+
+If a hard limit is exceeded, intake fails closed and reports the exact exceeded limit.
+
+No per-tensor quota heuristic is introduced. No configuration file is used for these limits. No limit-tuning CLI flag is introduced.
+
+The 100 MB header value is now an explicit project decision; it is no longer treated as merely the illustrative `e.g.` value from the resolved pipeline description.
+
+### Execution Decision 3 — D9.1 Python Baseline
+
+**Status: LOCKED.**
+
+Authoritative Python baseline: **Python 3.11.x**.
+
+### Execution Decision 4 — D9.2 Hardware Policy
+
+**Status: LOCKED.**
+
+The authoritative execution environment is **CPU-only**.
+
+* GPU/CUDA is not a required dependency.
+* PASS/REVIEW/FAIL must be reproducible without GPU execution.
+* GPU availability may exist on a machine but must not be required by the authoritative pipeline.
+
+### Execution Decision 5 — D9.3 PyTorch Pair
+
+**Status: LOCKED.**
+
+* `torch==2.3.1`
+* `torchvision==0.18.1`
+
+This is the pinned PyTorch/torchvision pair for the project. CPU-only execution remains authoritative.
+
+### Execution Decision 6 — D9.4 Transformers
+
+**Status: LOCKED.**
+
+* `transformers==4.41.2`
+
+This is the pinned Transformers version for the trusted `distilbert` architecture.
+
+### D9 — Dependency Pinning
+
+**Overall Status: REQUIRED — PARTIALLY RESOLVED.**
+
+D9 remains `REQUIRED` until the complete dependency policy is explicitly locked. The following D9 sub-decisions are currently locked:
+
+| D9 sub-decision | Status | Locked value |
+| --- | --- | --- |
+| D9.1 Python | RESOLVED | Python 3.11.x |
+| D9.2 Hardware | RESOLVED | CPU-only |
+| D9.3 PyTorch | RESOLVED | `torch==2.3.1`, `torchvision==0.18.1` |
+| D9.4 Transformers | RESOLVED | `transformers==4.41.2` |
+| D9.5 SafeTensors | REQUIRED | Not yet decided |
+| Remaining dependency pins | REQUIRED | Not yet decided |
+
+No unapproved dependency version is implied by this partial D9 record.
 
 ---
 
@@ -95,10 +194,10 @@ Downstream stages must consume outputs generated for the current pipeline execut
 | -------------------------- | -------------------- |
 | CP1 — Mock Gate            | PASS                 |
 | CP2 — Intake Gate          | NOT REACHED          |
-| CP3 — Static Gate          | NOT REACHED          |
-| CP4 — ML Gate              | NOT REACHED          |
-| CP5 — Behavioral/Risk Gate | NOT REACHED          |
-| CP6 — Demo Gate            | NOT REACHED          |
+| CP3 — Static Gate          | NOT REACHED           |
+| CP4 — ML Gate              | NOT REACHED           |
+| CP5 — Behavioral/Risk Gate | NOT REACHED           |
+| CP6 — Demo Gate            | NOT REACHED           |
 
 Only a `PASS` checkpoint permits advancement.
 
@@ -121,6 +220,8 @@ Only a `PASS` checkpoint permits advancement.
 A decision may move from `REQUIRED` to `RESOLVED` only through an explicit project/team decision.
 
 An implementation choice does not automatically resolve a decision.
+
+The execution decisions above are recorded separately so they do not collide with the Master Graph's D1–D9 numbering.
 
 ---
 
@@ -228,6 +329,8 @@ Do not mark:
 * a decision as resolved because an agent selected an implementation;
 * dependencies as verified merely because they appear in a file.
 
+Explicitly agreed execution decisions may be recorded as `LOCKED` even while their corresponding implementation and verification remain incomplete. Such a decision does not by itself advance a checkpoint.
+
 ---
 
 ## Architecture Integrity
@@ -272,9 +375,9 @@ TreeSHAP attribution and highest-risk-layer determination remain separate mechan
 
 **Phase 1 is complete: CP1 PASS.**
 
-The six-feature executable schema is no longer authoritative. D1 is resolved to the frozen Master Graph 10-feature set in the listed order. D7 and D8 are also resolved. Phase 1 mock contracts, artifacts, orchestration, provenance protection, adversarial/failure tests, and regression evidence are complete.
+The six-feature executable schema is no longer authoritative. D1 is resolved to the frozen Master Graph 10-feature set in the listed order. D7 and D8 are also resolved. The trusted architecture registry and zero-trust intake resource limits are explicitly locked execution decisions. D9 is partially resolved through D9.4; remaining dependency decisions are still required.
 
-**Next permitted action: begin Phase 2 — Zero-Trust Intake.** D2–D6 remain REQUIRED and are intentionally not resolved in this transition.
+**Next permitted action: continue Phase 2 — Zero-Trust Intake preparation/implementation once all applicable prerequisites are satisfied.** D2–D6 remain REQUIRED and are intentionally not resolved. D9 remains REQUIRED until all dependency sub-decisions are locked.
 
 No Phase 2 implementation is represented as complete by this state update.
 
