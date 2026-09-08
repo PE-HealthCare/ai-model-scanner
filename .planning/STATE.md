@@ -115,7 +115,7 @@ Hard fail-closed production limits:
 
 | Resource | Hard limit |
 |---|---:|
-| SafeTensors header | 100 MB |
+| SafeTensors header | **5 MB** |
 | Metadata | 1 MB |
 | Tensor count | 10,000 |
 | Maximum tensor rank | 8 |
@@ -127,9 +127,9 @@ Operational targets (not hard security walls):
 - Intake memory target: `<50 MB`
 - Intake processing-time target: `<0.5 sec`
 
-When a hard limit is exceeded, intake fails closed and reports the exact exceeded limit. No per-tensor quota heuristics, no configuration-file override, and no limit-tuning CLI flag are part of this decision.
+The SafeTensors header limit is **5 MB** and is the locked project boundary. This explicitly supersedes the previous 100 MB header value and resolves the identified conflict between the header boundary, the `<50 MB` operational memory target, and mandatory native `safetensors.safe_open()` parsing. The 5 MB value is a hard production security limit, not an illustrative value.
 
-The 100 MB header value is the locked project limit; it is not merely the illustrative `e.g. 100MB` wording in the original pipeline document.
+When a hard limit is exceeded, intake fails closed and reports the exact exceeded limit. No per-tensor quota heuristics, no configuration-file override, and no limit-tuning CLI flag are part of this decision.
 
 ### D7 — MAD Degenerate Baseline Guard
 
