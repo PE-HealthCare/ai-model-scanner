@@ -1,5 +1,5 @@
-﻿import unittest
-from src.p3_ml_dashboard.classifier import build_mock_ml_results, FEATURE_NAMES
+import unittest
+from src.p3_ml_dashboard.classifier import build_ml_results, FEATURE_NAMES
 
 class TestClassifier(unittest.TestCase):
     def test_prototype(self):
@@ -18,7 +18,7 @@ class TestClassifier(unittest.TestCase):
             ]
         }
         
-        res = build_mock_ml_results(features, "TEST_COMMIT")
+        res = build_ml_results(features, "TEST_COMMIT")
         self.assertEqual(res["producer"], "P3")
         self.assertEqual(res["mock_status"], "VERIFIED-REAL")
         self.assertTrue(0 <= res["p_tamper"] <= 1.0)

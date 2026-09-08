@@ -107,11 +107,10 @@ class TestMockRealLifecycle(unittest.TestCase):
         features = build_mock_features("TEST")
         self.assertEqual(features["mock_status"], "MOCK")
         
-        # P3 mock consumer rejects non-MOCK P1 artifact (Phase 1 rule)
-        # Note: Phase 4 prototype accepts VERIFIED-REAL, so we bypass this check.
-        # features["mock_status"] = "VERIFIED-REAL"
-        # with self.assertRaisesRegex(ValueError, "P1 MOCK"):
-        #     build_mock_ml_results(features, "TEST")
+        # P3 mock consumer rejects non-MOCK P1 artifact
+        features["mock_status"] = "VERIFIED-REAL"
+        with self.assertRaisesRegex(ValueError, "P1 MOCK"):
+            build_mock_ml_results(features, "TEST")
 
     def test_p2_rejects_non_mock_p3(self):
         """Verify P2 mock consumer rejects a non-MOCK P3 artifact."""
@@ -150,7 +149,7 @@ class TestArtifactFailureModes(unittest.TestCase):
         """Test that an explicitly STALE artifact is rejected."""
         features = build_mock_features("TEST")
         features["mock_status"] = "STALE"
-        with self.assertRaisesRegex(ValueError, "stale features"):
+        with self.assertRaisesRegex(ValueError, "P1 MOCK"):
             build_mock_ml_results(features, "TEST")
 
     def test_stale_provenance_d8(self):
