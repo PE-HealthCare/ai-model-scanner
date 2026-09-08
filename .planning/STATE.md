@@ -4,9 +4,9 @@
 **Architecture Status:** FROZEN
 **Current Phase:** Phase 1 — Mock Pipeline
 **Current Checkpoint:** CP1
-**Current Gate Status:** BLOCKED / PENDING D1
+**Current Gate Status:** READY FOR CP1 EXECUTION
 **Last Verified Phase:** None
-**Next Permitted Phase:** Phase 1 completion after D1 resolution
+**Next Permitted Phase:** Phase 1 completion after CP1 PASS
 
 ---
 
@@ -30,21 +30,15 @@ Complete Phase 1 by establishing the exact JSON contract fields and producing cl
 
 ### D1 — Exact Contract Schemas
 
-The exact schemas, fields, types, and layout for:
+**Status: RESOLVED.**
 
-* `features.json`
-* `ml_results.json`
-* `risk_results.json`
+The project/team explicitly approved the following exact cross-phase contract:
 
-remain `DECISION REQUIRED`.
+* `contracts/features.schema.json`: required top-level fields are `producer`, `mock_status`, `contract_version`, `generation_commit`, `input_domain`, `is_quantized`, `layer_count`, and `static_features`. Each `static_features` item requires `layer_name`, `entropy`, `pov_chi2`, `lsb_kl`, `ks_stat`, `sparsity`, and `outlier_pct`.
+* `contracts/ml_results.schema.json`: required top-level fields are `producer`, `mock_status`, `contract_version`, `generation_commit`, `p_tamper`, `shap_attributions`, and `model_version`. `shap_attributions` is a feature-level object keyed by the approved static feature field names.
+* `contracts/risk_results.schema.json`: required top-level fields are `producer`, `mock_status`, `contract_version`, `generation_commit`, `mrs_score`, `verdict`, `s_static`, `p_tamper`, and `s_behavior`. `s_behavior` is a union of `number` or `null`; `null` represents skipped behavioral probing for quantized models.
 
-The repository currently contains schema files under `contracts/`. Their existence or current contents do **not** by themselves prove that D1 has been formally resolved. D1 remains REQUIRED until an explicit project/team decision records the approved contract semantics.
-
-Until D1 is resolved:
-
-* final contract implementation is blocked;
-* contract-compliant mock artifacts cannot be considered finalized;
-* downstream phases must not invent contract fields.
+The exact schema files in `contracts/` are the executable representation of this decision. No additional D1 fields, types, ordering, or semantics may be invented by implementation agents.
 
 ---
 
@@ -52,7 +46,7 @@ Until D1 is resolved:
 
 | Phase                         | Status               | Gate |
 | ----------------------------- | -------------------- | ---- |
-| Phase 1 — Mock Pipeline       | BLOCKED / PENDING D1 | CP1  |
+| Phase 1 — Mock Pipeline       | IN PROGRESS          | CP1  |
 | Phase 2 — Zero-Trust Intake   | NOT STARTED          | CP2  |
 | Phase 3 — Static Steganalysis | NOT STARTED          | CP3  |
 | Phase 4 — ML Classification   | NOT STARTED          | CP4  |
@@ -65,7 +59,7 @@ Until D1 is resolved:
 
 | Checkpoint                 | Status               |
 | -------------------------- | -------------------- |
-| CP1 — Mock Gate            | BLOCKED / PENDING D1 |
+| CP1 — Mock Gate            | NOT VERIFIED         |
 | CP2 — Intake Gate          | NOT REACHED          |
 | CP3 — Static Gate          | NOT REACHED          |
 | CP4 — ML Gate              | NOT REACHED          |
@@ -80,7 +74,7 @@ Only a `PASS` checkpoint permits advancement.
 
 | Decision                            | Status   |
 | ----------------------------------- | -------- |
-| D1 — Exact contracts                | REQUIRED |
+| D1 — Exact contracts                | RESOLVED |
 | D2 — Trusted graph handoff          | REQUIRED |
 | D3 — STRIP baseline                 | REQUIRED |
 | D4 — Behavioral normalization       | REQUIRED |
@@ -127,7 +121,7 @@ These remain planned artifacts until actually produced and verified.
 ## Current Dependency Chain
 
 ```text
-D1
+D1 RESOLVED
  ↓
 CP1 PASS
  ↓
@@ -242,11 +236,11 @@ TreeSHAP attribution and highest-risk-layer determination remain separate mechan
 
 ## Next Permitted Action
 
-**Resolve D1 — Exact contract schemas and fields.**
+**Execute Phase 1 — Mock Pipeline.**
 
-After D1 is explicitly resolved:
+D1 is explicitly resolved. The next permitted actions are:
 
-1. update the contract schemas;
+1. mechanically validate all three contract schemas;
 2. produce Phase 1 mock outputs;
 3. run Phase 1 verification;
 4. mark CP1 `PASS`, `BLOCKED`, or `FAIL` based on evidence;

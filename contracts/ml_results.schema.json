@@ -1,19 +1,49 @@
-﻿{
+{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "ML Classification Results",
   "type": "object",
-  "required": ["producer", "mock_status", "contract_version", "generation_commit", "p_tamper", "shap_attributions", "model_version"],
+  "required": [
+    "producer",
+    "mock_status",
+    "contract_version",
+    "generation_commit",
+    "p_tamper",
+    "shap_attributions",
+    "model_version"
+  ],
   "properties": {
-    "producer": {"type": "string", "enum": ["P3"]},
-    "mock_status": {"type": "string", "enum": ["MOCK", "VERIFIED-REAL", "STALE"]},
-    "contract_version": {"type": "string"},
-    "generation_commit": {"type": "string"},
-    "p_tamper": {"type": "number", "minimum": 0, "maximum": 1},
+    "producer": {
+      "type": "string",
+      "enum": [
+        "P3"
+      ]
+    },
+    "mock_status": {
+      "type": "string",
+      "enum": [
+        "MOCK",
+        "VERIFIED-REAL",
+        "STALE"
+      ]
+    },
+    "contract_version": {
+      "type": "string"
+    },
+    "generation_commit": {
+      "type": "string"
+    },
+    "p_tamper": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
     "shap_attributions": {
       "type": "object",
-      "description": "Feature-level SHAP values. Keys must match features.static_features field names."
+      "description": "Feature-level SHAP values keyed by the approved static feature field names."
     },
-    "model_version": {"type": "string"}
+    "model_version": {
+      "type": "string"
+    }
   },
   "additionalProperties": false
 }

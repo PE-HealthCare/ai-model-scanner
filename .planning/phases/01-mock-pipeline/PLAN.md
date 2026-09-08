@@ -406,7 +406,7 @@ Code compiling is NOT sufficient.
 
 Tests passing are NOT automatically sufficient.
 
-A phase is complete only when its checkpoint is approved.
+A phase is complete only when its checkpoint is `PASS`.
 
 ---
 
@@ -445,7 +445,7 @@ Merge requires:
 
 1. Phase 1 implementation complete;
 2. Phase 1 verification PASS;
-3. CP1 approval;
+3. CP1 = `PASS`;
 4. required human/independent review;
 5. no unresolved blocking decision;
 6. no failing required checks.
