@@ -201,7 +201,39 @@ The artifact must account for platform-specific package artifacts where applicab
 
 D9.14 does not permit unpinned requirements, arbitrary package sources, or silent package substitution.
 
-#### D9.15 and later — NOT YET RESOLVED
+#### D9.15 — Authoritative Lock Artifact Format
+**Status: LOCKED.**
+
+The authoritative dependency reproducibility artifact shall be a **generated, fully pinned requirements lock artifact** (requirements-file format), rather than relying on experimental `pylock.toml` support.
+
+Rules:
+
+- Generate it from a successfully resolved authoritative Python 3.11 CPU environment.
+- Include exact versions for all direct and transitive runtime dependencies.
+- Include the required cryptographic hashes for installable artifacts.
+- Preserve the already locked direct dependency versions; generation must not silently alter them.
+- Do not manually invent transitive versions or hashes.
+- The artifact is authoritative for reproducible installation/verification; ordinary unpinned `requirements.txt` content is not sufficient by itself.
+- Because package artifacts can vary by platform, the lock artifact must represent each authoritative supported platform/artifact set explicitly rather than falsely treating a platform-specific hash as universal.
+
+This choice is grounded in pip's documented requirements-file hash-checking support; pip's newer `pylock.toml` support is documented as experimental, and generated lock files are platform/Python-version scoped. citeturn0search0turn0search1turn0search2
+
+#### D9.16 — Authoritative Environment Verification
+**Status: LOCKED.**
+
+Before CP2 and before any authoritative PASS/REVIEW/FAIL result, the environment must be verified against the dependency contract.
+
+Verification must confirm:
+
+- Python is **3.11.x**.
+- All D9.3–D9.10 direct dependency pins are installed exactly as locked.
+- Every transitive dependency required by the authoritative lock artifact is present at its locked version.
+- Required package hashes are enforced by the authoritative installation procedure.
+- Execution is CPU-only for the authoritative pipeline; GPU/CUDA availability must not be treated as a requirement or substituted into the authoritative result.
+
+Any mismatch, missing package, version drift, unresolved lock entry, hash-integrity failure, or unsupported environment condition results in **BLOCKED** verification. The verifier must not auto-upgrade, auto-downgrade, or silently repair the environment and then claim the original environment was verified.
+
+#### D9.17 and later — NOT YET RESOLVED
 
 Any remaining dependency-policy details remain **REQUIRED** until explicitly agreed. No implementation choice may silently resolve a remaining D9 sub-decision.
 
@@ -331,9 +363,9 @@ Quantized models bypass behavioral probing under the finalized format-adaptive d
 
 ## Next Permitted Action
 
-Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2–D6 remain REQUIRED. D9 is partially resolved; continue only with the next explicitly proposed D9 sub-decisions and obtain explicit agreement before recording them as LOCKED.
+Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.16 are LOCKED, while D9.17+ remain REQUIRED. Continue only with the next explicitly proposed D9 sub-decisions and obtain explicit agreement before recording them as LOCKED.
 
-**Current D9 frontier: D9.15 — remaining dependency-policy details.**
+**Current D9 frontier: D9.17 — remaining dependency-policy details.**
 
 ## Final Rule
 
