@@ -370,23 +370,23 @@ Reviewer: Pending
 Date: 2026-09-08
 
 D1: RESOLVED (verified via tests/test_mock_pipeline.py)
-Contract validation: PASS (test_valid_existing_artifacts, test_missing_required_field, test_unexpected_field, test_wrong_field_type, test_malformed_json, test_wrong_feature_ordering, test_schema_mismatch)
+Contract validation: PARTIAL (Tests cover missing fields, unexpected fields, wrong types, malformed JSON, schema mismatch, and D1 ordering preservation. Ownership and exact non-D1 fields unverified in checklist)
 
 Mock features artifact: PASS (generated and validated)
 Mock ML artifact: PASS (generated and validated)
 Mock risk artifact: PASS (generated and validated)
 
-Provenance verification: PASS (existing MOCK provenance verified in test_mock_status_enforced)
+Provenance verification: NOT VERIFIED (Checklist criteria not evaluated)
 
-Adversarial tests: PASS (tests implemented for missing/corrupted artifacts, mock/real status rejection, pipeline failure propagation, explicit STALE artifact status. Stale provenance skip recorded)
+Adversarial tests: PARTIAL / BLOCKED (Tests cover missing/corrupted artifacts, mock/real status rejection, pipeline failure propagation, and explicit STALE artifact status. Stale provenance is skipped/blocked by D8)
 
-Security checks: PASS (test_security_constraints executed successfully)
+Security checks: NOT VERIFIED (Checklist criteria not evaluated, though test_security_constraints covers basic AST checks)
 
-Regression tests: PASS (python -m unittest discover -s tests -v ran 19 tests, OK (skipped=1))
+Regression tests: PASS (python -m unittest discover -s tests -v ran 19 tests, 18 passed, 1 skipped)
 
-Scope check: PASS (Only tests/ directory changed, no Phase 2 logic introduced)
+Scope check: NOT VERIFIED (Files changed: tests/test_mock_pipeline.py, .planning/phases/01-mock-pipeline/VERIFICATION.md. Checklist criteria not evaluated)
 
-Dependency check: PASS (jsonschema installed, D9 remains REQUIRED and unpinned)
+Dependency check: NOT VERIFIED (Checklist criteria not evaluated)
 
 Final state:
 NOT VERIFIED (Pending human/independent review)
