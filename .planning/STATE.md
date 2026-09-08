@@ -41,6 +41,34 @@ The authoritative FP32/FP16 static feature set and order are:
 
 The previous six-feature executable schema is not authoritative. Implementations, downstream contracts, feature ordering, feature semantics, and TreeSHAP mapping must follow the frozen Master Graph definitions exactly.
 
+### D2 — Trusted Graph Handoff
+
+**Status: RESOLVED / LOCKED.**
+
+P1 SHALL construct the trusted, weight-loaded model as part of the zero-trust intake boundary and make that trusted model and the required trusted metadata available to `scan_model.py`.
+
+`scan_model.py` SHALL hand the already-created trusted model/context to P2 by in-process Python object reference during the same pipeline execution.
+
+The D2 handoff SHALL NOT:
+
+- serialize or persist the trusted model for downstream loading;
+- independently reload the model in P2;
+- provide the original untrusted model artifact as P2's loading source;
+- create an alternative architecture in P2.
+
+P2 SHALL consume the received trusted model for bounded, inference-only behavioral analysis. P2's inference-only contract prohibits training, gradient/backward execution, optimizer use, weight modification, or independent model loading.
+
+The handoff SHALL carry the trusted metadata required by P2, including:
+
+- `input_domain` (`VISION` or `NLP`);
+- `is_quantized` (`true` or `false`).
+
+The exact Python class, function names, type annotations, and module location used to represent this handoff are implementation details and are NOT fixed by D2.
+
+D2 does not change the artifact contracts (`features.json`, `ml_results.json`, or `risk_results.json`) because the trusted-model handoff is an in-process runtime mechanism rather than a JSON artifact.
+
+D2 does not resolve D3, D4, D5, or D6.
+
 ### Decision 1 — Trusted Architecture Registry
 
 **Status: RESOLVED / LOCKED.**
@@ -287,13 +315,12 @@ Any remaining dependency-policy details remain **REQUIRED** until explicitly agr
 
 | Decision | Status |
 |---|---|
-| D2 — Trusted graph handoff | REQUIRED |
 | D3 — STRIP baseline | REQUIRED |
 | D4 — Behavioral normalization | REQUIRED |
 | D5 — Risk aggregation | REQUIRED |
 | D6 — Highest-risk-layer aggregation | REQUIRED |
 
-D2–D6 are not resolved by any implementation branch, placeholder, or prior agent choice.
+D3–D6 are not resolved by any implementation branch, placeholder, or prior agent choice. D2 is resolved as a persistent project decision above; its implementation remains subject to Phase 2/CP2 verification.
 
 ## Phase Status
 
@@ -407,7 +434,7 @@ Quantized models bypass behavioral probing under the finalized format-adaptive d
 
 ## Next Permitted Action
 
-Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED. Continue only with the next explicitly proposed D9 sub-decisions and obtain explicit agreement before recording them as LOCKED.
+Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2 is RESOLVED as a project decision, while D3–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED. Continue Phase 2 only within the approved D2 handoff boundary and existing Phase 2 plan/verification; do not implement D3–D6 or silently resolve remaining D9 details.
 
 **Current D9 frontier: D9.21 — remaining dependency-policy details.**
 
