@@ -4,6 +4,8 @@
 def build_mock_risk_results(ml_results: dict, generation_commit: str) -> dict:
     if ml_results.get("producer") != "P3" or ml_results.get("mock_status") != "MOCK":
         raise ValueError("Phase 1 mock P2 requires a P3 MOCK ML artifact")
+    if ml_results.get("generation_commit") != generation_commit:
+        raise ValueError("Phase 1 P2 rejects stale P3 artifact generation")
     s_static, s_behavior = 0.10, 0.05
     p_tamper = float(ml_results["p_tamper"])
     mrs_score = min(100.0, 40 * s_static + 35 * p_tamper + 25 * s_behavior)
