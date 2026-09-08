@@ -144,7 +144,7 @@ This is the pinned LightGBM dependency for the P3 classifier.
 #### D9.9 — SHAP
 **Status: LOCKED.** `shap==0.45.1`.
 
-This is the pinned SHAP dependency for TreeSHAP attribution. SHAP 0.45.1 is a production/stable release and provides CPython 3.11 wheels. citeturn0search0
+This is the pinned SHAP dependency for TreeSHAP attribution.
 
 #### D9.10 — jsonschema
 **Status: LOCKED.** `jsonschema==4.22.0`.
@@ -157,7 +157,7 @@ This is the pinned JSON Schema validation dependency for the project contracts.
 The authoritative installation sources are:
 
 - Standard Python runtime dependencies: **PyPI**.
-- `torch` / `torchvision` CPU wheels: **official PyTorch CPU wheel index** (`https://download.pytorch.org/whl/cpu`). The official PyTorch installation documentation publishes the exact `torch==2.3.1` / `torchvision==0.18.1` CPU installation path, and the CPU index contains Python 3.11 wheels. citeturn0search0turn0search8turn0search1
+- `torch` / `torchvision` CPU wheels: **official PyTorch CPU wheel index** (`https://download.pytorch.org/whl/cpu`).
 - No Git/VCS URLs, arbitrary package repositories, local unpublished package sources, or unpinned `latest` installation choices are authoritative.
 
 The installation-source policy is a reproducibility/security requirement. It does not by itself pin transitive dependencies; those require the later lockfile/hash policy decision.
@@ -179,15 +179,31 @@ shap==0.45.1
 jsonschema==4.22.0
 ```
 
-No `>=`, `~=`, caret/wildcard, or unpinned version specification is authoritative for these direct runtime dependencies. pip documents `==` as the exact-version pinning form and notes that fully pinned requirements can be used for repeatable installs. citeturn0search9turn0search11
+No `>=`, `~=`, caret/wildcard, or unpinned version specification is authoritative for these direct runtime dependencies.
 
 D9.12 does **not** silently resolve transitive dependency versions. Transitive reproducibility remains a separate D9 decision and must be explicitly locked before claiming a fully reproducible environment.
 
-#### D9.13 and later — NOT YET RESOLVED
+#### D9.13 — Transitive Dependency Lockfile
+**Status: LOCKED.**
 
-Dependency hashes/lockfile policy, transitive dependency pinning, and any other remaining dependency-policy details remain **REQUIRED** until explicitly agreed.
+The authoritative environment must capture **all direct and transitive runtime dependencies** in a fully pinned reproducibility artifact. The lock artifact must not rely on resolver-selected floating transitive versions at authoritative verification time.
 
-No implementation choice may silently resolve a remaining D9 sub-decision.
+The lock artifact may be generated from a successfully resolved authoritative Python 3.11 CPU environment; it must record the exact versions required for that environment rather than manually inventing transitive versions. pip documents that a fully pinned requirements file can capture top-level and transitive dependencies for repeatable installs. citeturn0search1turn0search2
+
+The lock artifact is a reproducibility record, not permission to change any already locked direct dependency version.
+
+#### D9.14 — Package Hash Integrity
+**Status: LOCKED.**
+
+The authoritative reproducibility artifact must include cryptographic hashes for installable package artifacts and authoritative installation must enforce hash checking. pip documents `--require-hashes` for repeatable installs and hash-checking as protection against package/index or artifact tampering. citeturn0search0turn0search1
+
+The artifact must account for platform-specific package artifacts where applicable; one hash must not be falsely represented as universal when different wheels are authoritative for different supported environments.
+
+D9.14 does not permit unpinned requirements, arbitrary package sources, or silent package substitution.
+
+#### D9.15 and later — NOT YET RESOLVED
+
+Any remaining dependency-policy details remain **REQUIRED** until explicitly agreed. No implementation choice may silently resolve a remaining D9 sub-decision.
 
 ---
 
@@ -202,8 +218,6 @@ No implementation choice may silently resolve a remaining D9 sub-decision.
 | D6 — Highest-risk-layer aggregation | REQUIRED |
 
 D2–D6 are not resolved by any implementation branch, placeholder, or prior agent choice.
-
----
 
 ## Phase Status
 
@@ -319,7 +333,7 @@ Quantized models bypass behavioral probing under the finalized format-adaptive d
 
 Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2–D6 remain REQUIRED. D9 is partially resolved; continue only with the next explicitly proposed D9 sub-decisions and obtain explicit agreement before recording them as LOCKED.
 
-**Current D9 frontier: D9.13 — dependency hashes/lockfile policy and transitive dependency pinning.**
+**Current D9 frontier: D9.15 — remaining dependency-policy details.**
 
 ## Final Rule
 
