@@ -57,11 +57,21 @@ If a material semantic choice is unresolved, mark BLOCKED.
 
 For D7:
 ```text
+Decision status: RESOLVED / LOCKED
 Condition detected:
 Approved handling:
 Evidence:
 ```
-No arbitrary epsilon is acceptable without approval.
+
+The approved D7 handling is:
+- finite nonzero MAD: actual MAD, no epsilon;
+- exact MAD = 0 and target = median: deterministic zero anomaly;
+- exact MAD = 0 and target != median: `DEGENERATE_DEVIATION`;
+- 1–2 comparable layers: baseline evidence unavailable; block downstream scoring requiring it;
+- invalid numeric data: invalid, no imputation;
+- very small nonzero MAD: actual value.
+
+No arbitrary epsilon or fallback is acceptable.
 
 ## 6. Provenance
 
@@ -90,7 +100,7 @@ Feature artifact:
 Schema:
 Semantic evidence:
 Adversarial tests:
-D7 status:
+D7 status: RESOLVED / LOCKED; implementation evidence pending until verified
 Provenance:
 Final state: PASS / FAIL / BLOCKED
 ```
