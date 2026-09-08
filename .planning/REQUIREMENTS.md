@@ -435,7 +435,6 @@ The following remain unresolved and SHALL NOT be silently invented:
 * **D4:** `S_behavior` normalization
 * **D5:** Per-layer → model-level risk aggregation
 * **D6:** Highest-risk-layer aggregation
-* **D7:** MAD zero/near-zero and low-layer-count guard
 * **D8:** Model-artifact staleness protection
 * **D9:** Dependency population and pinning
 

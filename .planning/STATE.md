@@ -51,6 +51,21 @@ The current six-feature executable schema was not the final D1 contract. D1 is r
 
 The Master Graph remains the source of truth. Any implementation, downstream contract, feature ordering, feature semantics, or TreeSHAP mapping must follow the explicitly resolved Master Graph feature definitions; unresolved differences are a hard stop.
 
+### D7 — MAD Degenerate Baseline Guard
+
+**Status: RESOLVED.**
+
+Robust intra-model normalization uses leave-one-out comparable layers.
+
+*   **Finite nonzero MAD:** Use actual MAD directly. Do not add epsilon or arbitrary near-zero threshold. If calculation is finite, it is valid.
+*   **Exact MAD = 0:** If target layer feature equals baseline median, record deterministic zero anomaly. If target differs, record deterministic `DEGENERATE_DEVIATION`. Do not invent a finite Z-score or add epsilon.
+*   **Insufficient baselines (1 or 2 layers):** Do not fabricate a score. Mark static baseline evidence unavailable and block downstream scoring that requires it.
+*   **Invalid numeric data (missing, NaN, +/-inf):** Invalid. Do not silently impute, replace with zero, or fabricate values.
+*   **Extremely small nonzero MAD:** Treat as mathematically valid using actual value. Do not replace with epsilon.
+*   **Quantized models:** Preserve existing format-adaptive rules. Do not invent new semantics. If conflict with schema exists, document it as unresolved follow-up.
+
+Note: D5 (Per-layer risk aggregation) and D6 (Highest-risk-layer aggregation) remain `REQUIRED` and unresolved. TreeSHAP must not be used for highest-risk-layer selection.
+
 ---
 
 ## Phase Status
@@ -91,7 +106,7 @@ Only a `PASS` checkpoint permits advancement.
 | D4 — Behavioral normalization       | REQUIRED |
 | D5 — Risk aggregation               | REQUIRED |
 | D6 — Highest-risk-layer aggregation | REQUIRED |
-| D7 — MAD guard                      | REQUIRED |
+| D7 — MAD guard                      | RESOLVED |
 | D8 — Model staleness protection     | REQUIRED |
 | D9 — Dependency pinning             | REQUIRED |
 
