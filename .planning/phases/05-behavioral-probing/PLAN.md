@@ -4,7 +4,7 @@
 
 **Owner:** P2 — Muscle  
 **Checkpoint:** CP5  
-**Prerequisites:** CP4 = APPROVED and required P1/P3 real upstream outputs available  
+**Prerequisites:** CP4 = PASS and required P1/P3 real upstream outputs available  
 **Branch:** `phase-5/behavioral-probing`
 
 Phase 5 owns final behavioral probing, behavioral anomaly scoring, MAD risk aggregation, MRS, and verdict.
@@ -17,7 +17,7 @@ P2 may design probes and test logic with mocks before upstream readiness.
 
 Final authoritative risk processing MUST WAIT until required real upstream artifacts are verified.
 
-If CP4 is not approved, final P_tamper consumption is BLOCKED.
+If CP4 is not PASS, final P_tamper consumption is BLOCKED.
 
 If required upstream artifacts are missing/stale/malformed, final risk output is BLOCKED.
 

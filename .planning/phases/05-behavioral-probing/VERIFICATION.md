@@ -12,7 +12,7 @@ A checkbox without evidence is not verification.
 
 ## 2. Prerequisites
 
-- [ ] CP4 APPROVED.
+- [ ] CP4 PASS.
 - [ ] P1 real inputs verified.
 - [ ] P3 `ml_results.json` verified-real.
 - [ ] required contracts resolved.

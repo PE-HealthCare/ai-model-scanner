@@ -4,7 +4,7 @@
 
 **Owner:** Integration surface + P3 reporting  
 **Checkpoint:** CP6  
-**Prerequisites:** CP4 = APPROVED and CP5 = APPROVED  
+**Prerequisites:** CP4 = PASS and CP5 = PASS  
 **Branch:** `phase-6/risk-integration-demo`
 
 Phase 6 integrates already-verified outputs into the final end-to-end runner and security report.
@@ -31,8 +31,8 @@ P2's verified `risk_results.json` is the authoritative source for MRS and verdic
 
 Before starting final integration:
 
-1. verify CP4 APPROVED;
-2. verify CP5 APPROVED;
+1. verify CP4 PASS;
+2. verify CP5 PASS;
 3. inspect the merged states;
 4. verify all required upstream artifacts are VERIFIED-REAL and current;
 5. create/use `phase-6/risk-integration-demo`;
@@ -172,8 +172,8 @@ Merge requires CP6 PASS, evidence, and independent/human review.
 
 CP6 PASS requires:
 
-- CP4 approved;
-- CP5 approved;
+- CP4 PASS;
+- CP5 PASS;
 - all final artifacts VERIFIED-REAL and current;
 - E2E runner works;
 - P2 risk result is consumed rather than recalculated;
@@ -185,4 +185,4 @@ CP6 PASS requires:
 
 Required unresolved decision or stale artifact = BLOCKED.
 
-CP6 APPROVAL is the final execution gate.
+CP6 PASS is the final execution gate; independent/human approval must also be recorded.

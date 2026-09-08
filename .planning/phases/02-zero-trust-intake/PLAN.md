@@ -4,7 +4,7 @@
 
 **Owner:** P1 — Eyes  
 **Checkpoint:** CP2  
-**Prerequisite:** CP1 = APPROVED  
+**Prerequisite:** CP1 = PASS  
 **Branch:** `phase-2/zero-trust-intake`
 
 Phase 2 implements the real zero-trust model intake boundary. It must consume only the approved Phase 1 contract state and must fail closed on untrusted or structurally inconsistent input.
@@ -13,7 +13,7 @@ Phase 2 implements the real zero-trust model intake boundary. It must consume on
 
 Before changing code, the agent MUST:
 
-1. Verify CP1 is explicitly APPROVED.
+1. Verify CP1 is explicitly PASS.
 2. Inspect the current merged Phase-1 state.
 3. Confirm no required Phase-2 decision/dependency is unresolved.
 4. Create/use `phase-2/zero-trust-intake`.
@@ -48,7 +48,7 @@ Shared `src/common/utils.py` is cross-boundary. Changes require explicit authori
 
 Phase 2 requires:
 
-- CP1 approved;
+- CP1 PASS;
 - approved contract fields;
 - required dependencies available under approved/pinned policy.
 
@@ -187,4 +187,4 @@ CP2 = BLOCKED when a required decision, dependency, approved resource limit, con
 
 CP2 = FAIL when implemented behavior violates the approved requirement.
 
-Only **CP2 = APPROVED** permits Phase 3 real static implementation.
+Only **CP2 = PASS** permits Phase 3 real static implementation.

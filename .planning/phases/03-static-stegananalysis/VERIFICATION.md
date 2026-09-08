@@ -10,7 +10,7 @@ Checkbox alone = NOT verification.
 
 ## 2. Prerequisite
 
-- [ ] CP2 APPROVED.
+- [ ] CP2 PASS.
 - [ ] Real P1 intake is used.
 - [ ] No unapproved contract change exists.
 

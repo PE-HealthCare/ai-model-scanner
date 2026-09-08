@@ -38,6 +38,8 @@ The exact schemas, fields, types, and layout for:
 
 remain `DECISION REQUIRED`.
 
+The repository currently contains schema files under `contracts/`. Their existence or current contents do **not** by themselves prove that D1 has been formally resolved. D1 remains REQUIRED until an explicit project/team decision records the approved contract semantics.
+
 Until D1 is resolved:
 
 * final contract implementation is blocked;

@@ -45,6 +45,56 @@ If authoritative documents conflict:
 
 **Not reading a document does not grant permission to override it.**
 
+## 2A. GSD Reconciliation / Documentation-Change Control
+
+When the task is to audit, reconcile, synchronize, or update project documentation, agents MUST enter **read-only reconciliation mode before editing**.
+
+The required order is:
+
+```text
+MASTER GRAPH
+    ↓
+PROJECT / REQUIREMENTS / ROADMAP
+    ↓
+STATE
+    ↓
+PHASE PLAN / VERIFICATION
+    ↓
+AGENT_RULES / SUPPORTING DOCS
+    ↓
+ACTUAL REPOSITORY STRUCTURE / IMPLEMENTATION
+```
+
+The agent MUST first reconstruct current project state and report discrepancies without modification. Each discrepancy MUST be classified as one of:
+
+```text
+NO ISSUE
+FACTUAL DRIFT
+DOCUMENTATION DRIFT
+STATE DRIFT
+GOVERNANCE DRIFT
+ARCHITECTURAL CONFLICT
+DECISION REQUIRED
+IMPLEMENTATION GAP
+```
+
+A documentation audit MUST NOT silently resolve project decisions. In particular:
+
+* file existence does not prove a decision is resolved;
+* populated schemas do not by themselves prove D1 is resolved;
+* implementation presence does not prove design approval;
+* scaffolding is not implementation;
+* checkpoint `PASS` is distinct from independent/human approval;
+* lower-authority documentation MUST NOT be changed to make an implementation appear unblocked.
+
+After reconciliation, edits may be made only for explicitly identified drift or for an explicitly authorized decision update. A second read-only verification pass MUST confirm that the edited documentation remains consistent with the frozen architecture.
+
+**READ → COMPARE → CLASSIFY → RESOLVE EXPLICIT DECISIONS → EDIT → VERIFY**
+
+Never use:
+
+**READ → ASSUME → EDIT**
+
 ---
 
 # 3. Default Context-Minimization Policy
@@ -221,6 +271,7 @@ Then load the relevant portions of:
 docs/contribution-rules.md
 docs/solution-architecture.md
 docs/threat-model.md
+contracts/AGENT_RULES.md
 contracts/<relevant-schema>.json
 ```
 

@@ -214,18 +214,18 @@ src/p2_behavioral_risk/prober.py
 src/p3_ml_dashboard/classifier.py
 src/p3_ml_dashboard/dashboard.py
 scan_model.py
-schemas/features.schema.json
-schemas/ml_results.schema.json
-schemas/risk_results.schema.json
+contracts/features.schema.json
+contracts/ml_results.schema.json
+contracts/risk_results.schema.json
 tests/...
 data/outputs/...
 ```
 
-Only files actually required by Phase 1 may be changed.
+Only files actually required by Phase 1 may be changed. Contract schemas under `contracts/` are read-only to autonomous Phase-1 implementation; approved schema changes require the contract governance process.
 
 ### Forbidden
 
-The agent MUST NOT modify:
+The agent MUST NOT modify contract schemas or governance/planning files during ordinary Phase-1 implementation.
 
 ```text
 .planning/...
@@ -463,7 +463,7 @@ DO NOT MERGE
 Phase 2 may begin only after:
 
 ```text
-CP1 = APPROVED
+CP1 = PASS
 ```
 
 Phase 2 MUST NOT treat:

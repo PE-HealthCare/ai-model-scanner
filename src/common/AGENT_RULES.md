@@ -2,7 +2,7 @@
 
 ## 1. OWNERSHIP & SCOPE
 - **Owner:** SHARED INFRASTRUCTURE (cross-cutting concern)
-- **Purpose:** Pure utility functions ONLY - JSON I/O, logging, config loading, type helpers
+- **Purpose:** Pure, phase-agnostic utility functions ONLY - JSON I/O, logging, config loading, type helpers, and generic schema-validation helpers
 - **Allowed Files:** utils.py, __init__.py, helper modules with ZERO business logic
 - **FORBIDDEN CONTENT:** Analysis, classification, probing, risk calculation, model loading, orchestration
 
@@ -10,14 +10,14 @@
 Agent MUST HALT and report BLOCKED if ANY of these are true:
 - Agent adds ANY analysis/classification/probing/risk logic -> IMMEDIATE HALT
 - Function has side effects beyond I/O/logging
-- Utility depends on specific phase artifacts or contracts
+- Utility embeds phase-specific business rules or hard-coded artifact semantics
 - Change impacts multiple owners without impact analysis
 - Agent modifies utils.py to bypass phase gates or security boundaries
 
 ## 3. INPUT CONTRACT
 - **Parameters:** Generic, phase-agnostic inputs only
 - **Dependencies:** Standard library + approved pinned packages ONLY
-- **Preconditions:** Change authorization from ALL affected owners (P1+P2+P3)
+- **Preconditions:** Authorization from the owner(s) materially affected by the shared utility change. Do not require unrelated owners to approve an isolated utility change that has no impact on their subsystem.
 
 ## 4. OUTPUT CONTRACT
 - **Return Type:** Deterministic, side-effect-free values

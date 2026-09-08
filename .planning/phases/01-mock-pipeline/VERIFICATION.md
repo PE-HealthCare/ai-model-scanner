@@ -34,7 +34,7 @@ Rules:
 * `BLOCKED` requires an external decision/dependency.
 * `BLOCKED` MUST NOT be converted into PASS by assumption.
 
-CP1 can be approved only when all required criteria are PASS.
+CP1 may be marked PASS only when all required criteria are PASS.
 
 ---
 
@@ -406,12 +406,12 @@ Final CP1 status requires an authorized human/independent reviewer or project go
 Only:
 
 ```text
-CP1 = APPROVED
+CP1 = PASS
 ```
 
 permits Phase 2 execution.
 
-If CP1 is not approved:
+If CP1 is not PASS:
 
 ```text
 STOP
