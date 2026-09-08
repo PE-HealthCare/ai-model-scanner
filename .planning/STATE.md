@@ -18,8 +18,6 @@ This state file records execution status only. It SHALL NOT redefine the archite
 
 The explicit project decisions recorded below are persistent execution decisions already agreed by the project team. They do not by themselves constitute implementation verification or checkpoint PASS.
 
----
-
 ## Persistent Locked Decisions
 
 ### D1 — Exact Static Feature Contract
@@ -68,6 +66,8 @@ The exact Python class, function names, type annotations, and module location us
 D2 does not change the artifact contracts (`features.json`, `ml_results.json`, or `risk_results.json`) because the trusted-model handoff is an in-process runtime mechanism rather than a JSON artifact.
 
 D2 does not resolve D3, D4, D5, or D6.
+
+**Implementation / verification status:** The D2 architectural decision is locked, but its implementation and verification evidence remain pending. `RESOLVED / LOCKED` here does not mean the real P1→P2 handoff has been implemented, tested, or accepted at CP2.
 
 ### Decision 1 — Trusted Architecture Registry
 
@@ -309,8 +309,6 @@ Until these implementation and verification conditions are satisfied, D9 remains
 
 Any remaining dependency-policy details remain **REQUIRED** until explicitly agreed. No implementation choice may silently resolve a remaining D9 sub-decision.
 
----
-
 ## Intentionally Unresolved Decisions
 
 | Decision | Status |
@@ -428,7 +426,7 @@ The architecture remains frozen:
 P1 → P3 → P2 → P3
 ```
 
-with P1 zero-trust intake → static steganalysis → `features.json` → P3 LightGBM + TreeSHAP → `ml_results.json` → P2 STRIP + risk aggregation → `risk_results.json` → P3 security report/dashboard.
+with P1 zero-trust intake → static steganalysis → `features.json` → P3 LightGBM + TreeSHAP → `ml_results.json` → P2 STRIP + risk aggregation → `risk_results.json` → P3 security report.
 
 Quantized models bypass behavioral probing under the finalized format-adaptive design. TreeSHAP attribution and highest-risk-layer determination remain separate mechanisms.
 
