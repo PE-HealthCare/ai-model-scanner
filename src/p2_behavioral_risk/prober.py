@@ -1,4 +1,15 @@
-"""Phase 1 mock behavioral/risk producer owned by P2."""
+"""Phase 2 behavioral handoff boundary plus Phase 1 mock producer."""
+
+from __future__ import annotations
+
+from src.p1_static_engine.analyzer import TrustedModelContext
+
+
+def receive_trusted_model(context: TrustedModelContext) -> TrustedModelContext:
+    """Accept the already-created trusted context without reloading the artifact."""
+    if not isinstance(context, TrustedModelContext):
+        raise ValueError("D2 handoff requires a TrustedModelContext")
+    return context
 
 
 def build_mock_risk_results(ml_results: dict, generation_commit: str) -> dict:
