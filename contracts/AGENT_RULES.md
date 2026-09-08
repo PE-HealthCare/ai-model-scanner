@@ -4,9 +4,9 @@
 - **Owner:** SHARED GOVERNANCE (READ-ONLY FOR ALL AGENTS)
 - **Purpose:** Authoritative JSON Schema definitions for cross-phase data contracts; the SINGLE SOURCE OF TRUTH for all artifact validation.
 - **Allowed Files:** 
-  - \eatures.schema.json\
+  - \features.schema.json\
   - \ml_results.schema.json\
-  - \isk_results.schema.json\
+  - \risk_results.schema.json\
 - **FORBIDDEN ACTIONS:** ANY write, modify, rename, delete, create, or patch operation by autonomous agents. Schema changes require human PR + approval only.
 
 ## 2. HARD STOP CONDITIONS (MANDATORY)
