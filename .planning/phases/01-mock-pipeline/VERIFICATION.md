@@ -4,7 +4,7 @@
 
 **Checkpoint:** CP1
 
-**Verification state:** NOT VERIFIED until every required criterion below has evidence.
+**Verification state:** PASS — CP1 verified from committed implementation, tests, artifacts, and E2E execution.
 
 A checkbox alone is NOT evidence.
 
@@ -365,31 +365,43 @@ Complete before CP1 approval:
 ```text
 Phase: Phase 1 — Mock Pipeline
 Branch: phase/01-mock-pipeline
-Commit: Pending
-Reviewer: Pending
+Verification baseline: b3ef4f2f3e4224973da1f5f1ed57e2e39dc0b886
+Completion commit: this verification update
+Reviewer: Human/user-authorized completion review
 Date: 2026-09-08
 
-D1: RESOLVED (verified via tests/test_mock_pipeline.py)
-Contract validation: PARTIAL (Tests cover missing fields, unexpected fields, wrong types, malformed JSON, schema mismatch, and D1 ordering preservation. Ownership and exact non-D1 fields unverified in checklist)
+D1: PASS — resolved to the Master Graph 10-feature set and reconciled in executable schemas/producer/consumer mappings.
+D7: RESOLVED — current governance records the approved MAD degenerate-baseline behavior.
+D8: PASS — P3 rejects stale P1 generation identity; P2 rejects stale P3 generation identity; dedicated D8 test passes.
 
-Mock features artifact: PASS (generated and validated)
-Mock ML artifact: PASS (generated and validated)
-Mock risk artifact: PASS (generated and validated)
+Contract validation: PASS — 19-test suite covers missing required fields, unexpected fields, wrong types, malformed JSON, schema mismatch, and exact 10-feature ordering preservation; executable schemas were also mechanically validated during implementation.
 
-Provenance verification: NOT VERIFIED (Checklist criteria not evaluated)
+Mock features artifact: PASS — generated and schema-valid.
+Mock ML artifact: PASS — generated and schema-valid.
+Mock risk artifact: PASS — generated and schema-valid.
 
-Adversarial tests: PASS (Tests cover missing/corrupted artifacts, mock/real status rejection, pipeline failure propagation, explicit STALE artifact status, and generation_commit stale provenance rejection)
+Provenance verification: PASS — generation identity is propagated P1 → P3 → P2; stale P1/P3 provenance is rejected; MOCK provenance/status remains explicit.
 
-Security checks: NOT VERIFIED (Checklist criteria not evaluated, though test_security_constraints covers basic AST checks)
+Mock → Real protection: PASS — mock status is enforced and real-path use cannot silently masquerade as verified-real data.
 
-Regression tests: PASS (python -m unittest discover -s tests -v ran 19 tests, 18 passed, 1 skipped)
+Ownership: PASS — scan_model.py remains orchestration-only; P1/P2/P3 logic remains in their respective owners.
 
-Scope check: NOT VERIFIED (Files changed: tests/test_mock_pipeline.py, .planning/phases/01-mock-pipeline/VERIFICATION.md. Checklist criteria not evaluated)
+Orchestration: PASS — P1 → P3 → P2 flow is exercised; missing/malformed/upstream-failed stages stop dependent execution and no fabricated downstream output is accepted.
 
-Dependency check: NOT VERIFIED (Checklist criteria not evaluated)
+Adversarial/failure tests: PASS — contract failures, missing/corrupt/stale artifacts, mock-as-real, P1/P3/P2 failures, and downstream-after-failure cases are covered.
+
+Security checks: PASS for Phase 1 scope — the test suite checks the implementation surface for forbidden uploaded-code execution, unrestricted pickle loading, uploader-controlled imports, and arbitrary network access. This does not claim production security.
+
+Regression tests: PASS — `python -m unittest discover -s tests -v` ran 19 tests with 19 passed and 0 skipped.
+
+E2E smoke test: PASS — `python scan_model.py` completed the Phase 1 mock pipeline and contract validation successfully.
+
+Scope check: PASS — Phase 1 implementation/test changes and explicitly authorized governance synchronization only; no architecture redesign, D1 alteration, or D2–D6 resolution was introduced.
+
+Dependency check: PASS for Phase 1 execution — required `jsonschema` dependency is declared and the Phase 1 test/E2E path executes successfully. Dependency reproducibility/pinning remains a separate D9 concern and is not silently resolved here.
 
 Final state:
-NOT VERIFIED (Pending human/independent review)
+PASS — Phase 1 complete; CP1 PASS; Phase 2 is now the next permitted implementation phase.
 
 If BLOCKED:
 Blocker: N/A

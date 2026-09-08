@@ -2,11 +2,11 @@
 
 **Project Status:** FROZEN FOR EXECUTION
 **Architecture Status:** FROZEN
-**Current Phase:** Phase 1 — Mock Pipeline
-**Current Checkpoint:** CP1
-**Current Gate Status:** BLOCKED — CP1 NOT VERIFIED
-**Last Verified Phase:** None
-**Next Permitted Phase:** Phase 1 completion after CP1 PASS
+**Current Phase:** Phase 2 — Zero-Trust Intake
+**Current Checkpoint:** CP1 — COMPLETE
+**Current Gate Status:** PASS — CP1 VERIFIED
+**Last Verified Phase:** Phase 1 — Mock Pipeline
+**Next Permitted Phase:** Phase 2 — Zero-Trust Intake
 
 ---
 
@@ -22,7 +22,7 @@ It SHALL NOT redefine the architecture or silently resolve design decisions.
 
 ## Current Objective
 
-Resolve D1 against the frozen Master Graph, establish the exact 10-feature P1 contract, reconcile the executable schemas, and only then complete CP1 mock verification.
+Begin Phase 2 Zero-Trust Intake using the completed Phase 1 contracts and verified mock pipeline. D2–D6 remain intentionally unresolved and are not being changed in this transition.
 
 ---
 
@@ -80,8 +80,8 @@ Downstream stages must consume outputs generated for the current pipeline execut
 
 | Phase                         | Status               | Gate |
 | ----------------------------- | -------------------- | ---- |
-| Phase 1 — Mock Pipeline       | IN PROGRESS          | CP1  |
-| Phase 2 — Zero-Trust Intake   | NOT STARTED          | CP2  |
+| Phase 1 — Mock Pipeline       | COMPLETE             | CP1  |
+| Phase 2 — Zero-Trust Intake   | IN PROGRESS          | CP2  |
 | Phase 3 — Static Steganalysis | NOT STARTED          | CP3  |
 | Phase 4 — ML Classification   | NOT STARTED          | CP4  |
 | Phase 5 — Behavioral + Risk   | NOT STARTED          | CP5  |
@@ -93,7 +93,7 @@ Downstream stages must consume outputs generated for the current pipeline execut
 
 | Checkpoint                 | Status               |
 | -------------------------- | -------------------- |
-| CP1 — Mock Gate            | NOT VERIFIED         |
+| CP1 — Mock Gate            | PASS                 |
 | CP2 — Intake Gate          | NOT REACHED          |
 | CP3 — Static Gate          | NOT REACHED          |
 | CP4 — ML Gate              | NOT REACHED          |
@@ -270,16 +270,13 @@ TreeSHAP attribution and highest-risk-layer determination remain separate mechan
 
 ## Next Permitted Action
 
-**D1 is resolved against the Master Graph; complete CP1 verification next.**
+**Phase 1 is complete: CP1 PASS.**
 
-The six-feature executable schema is no longer authoritative. D1 is resolved to the frozen Master Graph 10-feature set in the listed order. The next permitted actions are:
+The six-feature executable schema is no longer authoritative. D1 is resolved to the frozen Master Graph 10-feature set in the listed order. D7 and D8 are also resolved. Phase 1 mock contracts, artifacts, orchestration, provenance protection, adversarial/failure tests, and regression evidence are complete.
 
-1. mechanically validate the reconciled executable schemas;
-2. update/verify Phase 1 mock artifacts against the 10-feature contract;
-3. complete the remaining CP1 adversarial, failure-mode, regression, and review evidence;
-4. mark CP1 `PASS` only when every required criterion has evidence and authorized human/independent review is recorded.
+**Next permitted action: begin Phase 2 — Zero-Trust Intake.** D2–D6 remain REQUIRED and are intentionally not resolved in this transition.
 
-No dependent phase may be treated as active merely because Phase 1 work has started.
+No Phase 2 implementation is represented as complete by this state update.
 
 ---
 

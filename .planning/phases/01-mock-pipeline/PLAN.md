@@ -2,7 +2,7 @@
 
 ## Status
 
-**Execution state:** IN PROGRESS; D1 is RESOLVED against the frozen Master Graph 10-feature set. CP1 remains blocked pending full verification evidence.
+**Execution state:** COMPLETE; CP1 = PASS. D1 is RESOLVED against the frozen Master Graph 10-feature set; D7 and D8 are also RESOLVED. Phase 1 mock implementation and verification are complete.
 
 **Checkpoint:** CP1
 
@@ -97,7 +97,7 @@ D1 covers the exact fields and semantics of the three cross-phase contracts, wit
 
 The previously committed six-feature schema was a temporary inconsistency. D1 is now explicitly resolved to the Master Graph 10-feature set in the listed order; executable schemas and dependent mappings must use exactly those names.
 
-D1 is resolved. Phase 1 remains **BLOCKED** until CP1 verification is complete.
+D1 is resolved. Phase 1 is no longer blocked; CP1 has passed and Phase 1 is complete.
 
 An unresolved decision can NEVER be interpreted as approval.
 
@@ -462,7 +462,7 @@ DO NOT MERGE
 
 ## 17. Downstream Gate
 
-Phase 2 may begin only after:
+Phase 2 may begin now.
 
 ```text
 CP1 = PASS
