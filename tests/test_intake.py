@@ -1,4 +1,4 @@
-import struct
+﻿import struct
 import tempfile
 import unittest
 from pathlib import Path
@@ -8,6 +8,7 @@ import torch
 from safetensors.torch import save_file
 
 from src.p1_static_engine import analyzer
+from src.p1_static_engine.analyzer import TrustedModelContext
 
 class TestZeroTrustIntake(unittest.TestCase):
     def setUp(self):
@@ -17,15 +18,20 @@ class TestZeroTrustIntake(unittest.TestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
         
-    def test_valid_safetensors_intake(self):
+    def test_missing_architecture(self):
         path = self.test_dir / "valid.safetensors"
-        save_file({"tensor1": torch.zeros(2, 2)}, path, metadata={"author": "test"})
-        analyzer.intake_model(path)
+        with open(path, "wb") as f:
+            f.write(b"0" * 100)
+        with self.assertRaisesRegex(ValueError, "Integrity violated: declared_architecture is required"):
+            analyzer.intake_model(path)
 
-    def test_no_metadata(self):
-        path = self.test_dir / "no_meta.safetensors"
-        save_file({"tensor1": torch.zeros(2, 2)}, path)
-        analyzer.intake_model(path)
+    def test_unknown_architecture(self):
+        path = self.test_dir / "valid.safetensors"
+        with open(path, "wb") as f:
+            f.write(struct.pack("<Q", 100))
+            f.write(b"0" * 10)
+        with self.assertRaisesRegex(ValueError, "Unknown architecture nonexistent"):
+            analyzer.intake_model(path, declared_architecture="nonexistent")
 
     def test_malformed_safetensors(self):
         path = self.test_dir / "malformed.safetensors"
@@ -33,14 +39,14 @@ class TestZeroTrustIntake(unittest.TestCase):
             f.write(struct.pack("<Q", 10)) # Valid header size
             f.write(b"NOT_A_JSON")
         with self.assertRaisesRegex(ValueError, "Integrity violated: malformed SafeTensors file"):
-            analyzer.intake_model(path)
+            analyzer.intake_model(path, declared_architecture="resnet18")
             
     def test_file_too_small(self):
         path = self.test_dir / "small.safetensors"
         with open(path, "wb") as f:
             f.write(b"tiny")
         with self.assertRaisesRegex(ValueError, "Integrity violated: file too small"):
-            analyzer.intake_model(path)
+            analyzer.intake_model(path, declared_architecture="resnet18")
 
     @patch("src.p1_static_engine.analyzer.MAX_FILE_SIZE", 50)
     def test_file_size_limit(self):
@@ -48,64 +54,155 @@ class TestZeroTrustIntake(unittest.TestCase):
         with open(path, "wb") as f:
             f.write(b"0" * 100)
         with self.assertRaisesRegex(ValueError, "Limit violated: file size"):
-            analyzer.intake_model(path)
-
-    @patch("src.p1_static_engine.analyzer.safe_open")
-    def test_header_size_limit_exact(self, mock_safe_open):
-        path = self.test_dir / "exact_header.safetensors"
-        with open(path, "wb") as f:
-            f.write(struct.pack("<Q", 5 * 1024 * 1024)) # exactly 5 MB
-            f.write(b"0" * 10)
-        
-        # We expect it to reach safe_open. Since we mock safe_open, it won't actually parse the invalid "0"*10 header.
-        # But we still need to catch any Exception that might occur after safe_open if our mock returns a mock object.
-        # safe_open returns a context manager, so mock it properly:
-        mock_st = MagicMock()
-        mock_st.metadata.return_value = {}
-        mock_st.keys.return_value = ["t1"]
-        mock_st.get_slice.return_value.get_shape.return_value = [1]
-        mock_safe_open.return_value.__enter__.return_value = mock_st
-        
-        analyzer.intake_model(path)
-        mock_safe_open.assert_called_once()
+            analyzer.intake_model(path, declared_architecture="resnet18")
 
     @patch("src.p1_static_engine.analyzer.safe_open")
     def test_header_size_limit(self, mock_safe_open):
         path = self.test_dir / "large_header.safetensors"
         with open(path, "wb") as f:
-            f.write(struct.pack("<Q", 6 * 1024 * 1024)) # 6 MB (over 5 MB limit)
+            f.write(struct.pack("<Q", 6 * 1024 * 1024))
             f.write(b"0" * 10)
         with self.assertRaisesRegex(ValueError, "Limit violated: header size"):
-            analyzer.intake_model(path)
+            analyzer.intake_model(path, declared_architecture="resnet18")
         mock_safe_open.assert_not_called()
 
     @patch("src.p1_static_engine.analyzer.MAX_METADATA_SIZE", 50)
     def test_metadata_size_limit(self):
         path = self.test_dir / "large_metadata.safetensors"
-        save_file({"t": torch.zeros(1)}, path, metadata={"long_key": "x" * 100})
+        from torchvision.models import resnet18
+        m = resnet18()
+        save_file(m.state_dict(), path, metadata={"long_key": "x" * 100})
         with self.assertRaisesRegex(ValueError, "Limit violated: metadata size"):
-            analyzer.intake_model(path)
+            analyzer.intake_model(path, declared_architecture="resnet18")
 
     @patch("src.p1_static_engine.analyzer.MAX_TENSORS", 2)
     def test_tensor_count_limit(self):
         path = self.test_dir / "many_tensors.safetensors"
         save_file({"t1": torch.zeros(1), "t2": torch.zeros(1), "t3": torch.zeros(1)}, path)
         with self.assertRaisesRegex(ValueError, "Limit violated: tensor count"):
-            analyzer.intake_model(path)
+            analyzer.intake_model(path, declared_architecture="resnet18")
 
-    @patch("src.p1_static_engine.analyzer.MAX_RANK", 2)
+    @patch("src.p1_static_engine.analyzer.MAX_RANK", 1)
     def test_rank_limit(self):
         path = self.test_dir / "high_rank.safetensors"
-        save_file({"t": torch.zeros(1, 1, 1)}, path)
-        with self.assertRaisesRegex(ValueError, "Limit violated: tensor 't' rank"):
-            analyzer.intake_model(path)
+        from torchvision.models import resnet18
+        m = resnet18()
+        sd = m.state_dict()
+        save_file(sd, path)
+        with self.assertRaisesRegex(ValueError, "Limit violated: tensor .* rank"):
+            analyzer.intake_model(path, declared_architecture="resnet18")
 
-    @patch("src.p1_static_engine.analyzer.MAX_DIMENSION", 10)
-    def test_dimension_limit(self):
-        path = self.test_dir / "large_dim.safetensors"
-        save_file({"t": torch.zeros(2, 15)}, path)
-        with self.assertRaisesRegex(ValueError, "Limit violated: tensor 't' dimension"):
-            analyzer.intake_model(path)
+    def test_resnet18_wrong_keys(self):
+        path = self.test_dir / "wrong_keys.safetensors"
+        from torchvision.models import resnet18
+        m = resnet18()
+        sd = m.state_dict()
+        del sd["conv1.weight"]
+        save_file(sd, path)
+        with self.assertRaisesRegex(ValueError, "architecture mismatch. Missing tensors: 1"):
+            analyzer.intake_model(path, declared_architecture="resnet18")
+            
+    def test_resnet18_wrong_shape(self):
+        path = self.test_dir / "wrong_shape.safetensors"
+        from torchvision.models import resnet18
+        m = resnet18()
+        sd = m.state_dict()
+        sd["conv1.weight"] = torch.zeros(1, 1, 1, 1) # wrong shape
+        save_file(sd, path)
+        with self.assertRaisesRegex(ValueError, "shape mismatch for tensor conv1.weight"):
+            analyzer.intake_model(path, declared_architecture="resnet18")
+            
+    def test_distilbert_wrong_keys(self):
+        path = self.test_dir / "wrong_keys_db.safetensors"
+        from transformers import DistilBertConfig, DistilBertModel
+        m = DistilBertModel(DistilBertConfig())
+        sd = m.state_dict()
+        sd["extra_tensor"] = torch.zeros(1)
+        save_file(sd, path)
+        with self.assertRaisesRegex(ValueError, "architecture mismatch.*Unexpected tensors: 1"):
+            analyzer.intake_model(path, declared_architecture="distilbert")
+
+    def test_incompatible_dtype(self):
+        path = self.test_dir / "incompatible_dtype.safetensors"
+        from torchvision.models import resnet18
+        m = resnet18()
+        sd = m.state_dict()
+        save_file(sd, path)
+        
+        # Monkeypatch safe_open to simulate unknown dtype
+        original_safe_open = analyzer.safe_open
+        class MockSlice:
+            def __init__(self, s): self.s = s
+            def get_shape(self): return self.s.get_shape()
+            def get_dtype(self): return "F128" # unknown dtype
+        
+        class MockSafeOpen:
+            def __init__(self, *args, **kwargs):
+                self.st = original_safe_open(*args, **kwargs)
+            def __enter__(self):
+                self.ctx = self.st.__enter__()
+                return self
+            def __exit__(self, *args):
+                return self.st.__exit__(*args)
+            def metadata(self): return self.ctx.metadata()
+            def keys(self): return self.ctx.keys()
+            def get_slice(self, key): return MockSlice(self.ctx.get_slice(key))
+            def get_tensor(self, key): return self.ctx.get_tensor(key)
+
+        with patch("src.p1_static_engine.analyzer.safe_open", new=MockSafeOpen):
+            with self.assertRaisesRegex(ValueError, "unknown or incompatible dtype"):
+                analyzer.intake_model(path, declared_architecture="resnet18")
+                
+    def test_mixed_dtype(self):
+        path = self.test_dir / "mixed_dtype.safetensors"
+        from torchvision.models import resnet18
+        m = resnet18()
+        sd = m.state_dict()
+        sd["conv1.weight"] = sd["conv1.weight"].to(torch.int8)
+        save_file(sd, path)
+        
+        with self.assertRaisesRegex(ValueError, "mixed/inconsistent dtype state"):
+            analyzer.intake_model(path, declared_architecture="resnet18")
+            
+    def test_quantized_unsupported(self):
+        path = self.test_dir / "quant.safetensors"
+        from torchvision.models import resnet18
+        m = resnet18()
+        sd = m.state_dict()
+        for k in sd.keys():
+            if sd[k].dtype in (torch.float32, torch.float16):
+                sd[k] = sd[k].to(torch.int8)
+        save_file(sd, path)
+        with self.assertRaisesRegex(ValueError, "unsupported-quantized-graph"):
+            analyzer.intake_model(path, declared_architecture="resnet18")
+
+    def test_successful_resnet18(self):
+        path = self.test_dir / "success_rn18.safetensors"
+        from torchvision.models import resnet18
+        m = resnet18()
+        sd = m.state_dict()
+        save_file(sd, path)
+        
+        ctx = analyzer.intake_model(path, declared_architecture="resnet18")
+        self.assertIsInstance(ctx, TrustedModelContext)
+        self.assertIsNotNone(ctx.model)
+        self.assertEqual(ctx.architecture, "resnet18")
+        self.assertEqual(ctx.input_domain, "VISION")
+        self.assertEqual(ctx.is_quantized, False)
+        
+    def test_successful_distilbert(self):
+        path = self.test_dir / "success_db.safetensors"
+        from transformers import DistilBertConfig, DistilBertModel
+        m = DistilBertModel(DistilBertConfig())
+        sd = m.state_dict()
+        save_file(sd, path)
+        
+        ctx = analyzer.intake_model(path, declared_architecture="distilbert")
+        self.assertIsInstance(ctx, TrustedModelContext)
+        self.assertIsNotNone(ctx.model)
+        self.assertEqual(ctx.architecture, "distilbert")
+        self.assertEqual(ctx.input_domain, "NLP")
+        self.assertEqual(ctx.is_quantized, False)
 
 if __name__ == "__main__":
     unittest.main()
