@@ -83,7 +83,25 @@ SafeTensors processing MUST enforce approved finite resource limits covering, as
 - maximum memory/resource use;
 - maximum processing time.
 
-The current approved hard production limits are recorded in `.planning/STATE.md`. If an additional limit is needed and is not approved, the agent MUST NOT invent a production value; the affected behavior is BLOCKED until the limit is explicitly resolved.
+The authoritative hard production limits are:
+
+| Resource | Hard limit |
+|---|---:|
+| SafeTensors header | **5 MB** |
+| Metadata | 1 MB |
+| Tensor count | 10,000 |
+| Maximum tensor rank | 8 |
+| Maximum dimension | 1,000,000 |
+| Model file size | 2 GB |
+
+Operational targets remain:
+
+- Intake memory target: `<50 MB`
+- Intake processing-time target: `<0.5 sec`
+
+The 5 MB SafeTensors header limit is the explicitly locked resolution to the previously identified conflict between the 100 MB header boundary, the `<50 MB` operational memory target, and the mandatory native `safetensors.safe_open()` parser. It is a hard production security limit, not an illustrative test value.
+
+When a hard limit is exceeded, intake fails closed and reports the exact exceeded limit. No per-tensor quota heuristics, no configuration-file override, and no limit-tuning CLI flag are part of this decision.
 
 A test may use a fixture-specific bound only when that bound is explicitly identified as a test fixture limit and not represented as the production policy.
 

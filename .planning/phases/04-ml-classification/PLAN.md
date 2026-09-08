@@ -83,17 +83,19 @@ Phase 4 MUST NOT invent the feature→layer aggregation mechanism D6.
 
 ## 7. D8 — Staleness
 
-Until D8 is explicitly resolved, use the conservative rule:
+D8 is **RESOLVED / LOCKED**. The authoritative rule is:
 
 ```text
-P1 feature semantic/name/order/representation change
-→ lightgbm_model.txt = STALE
-→ CP4 BLOCKED
-→ retrain
-→ TreeSHAP remap/reverify
+material P1 feature semantic/name/order/representation change
+→ classifier artifact = STALE
+→ CP4/downstream verification blocked as applicable
+→ P3 retraining required
+→ TreeSHAP remapping/reverification required
 ```
 
-A manual memory-based check is not sufficient to keep an artifact authoritative.
+The authoritative artifact provenance/generation identity must be checked rather than relying on a manual memory-based assumption. A stale or mismatched artifact must not be silently reused.
+
+D8 being locked does not itself constitute implementation or verification evidence.
 
 ## 8. Provenance
 
@@ -135,6 +137,6 @@ CP4 PASS requires:
 - adversarial regression passes;
 - evidence complete.
 
-Unresolved required D8 or another required decision = BLOCKED.
+An unresolved required decision or missing required verification evidence = BLOCKED.
 
 Only CP4 PASS permits final P2 risk integration.
