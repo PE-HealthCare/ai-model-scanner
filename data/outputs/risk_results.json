@@ -1,0 +1,11 @@
+{
+  "producer": "P2",
+  "mock_status": "MOCK",
+  "contract_version": "1.0",
+  "generation_commit": "PHASE1-MOCK-VERIFY",
+  "mrs_score": 8.05,
+  "verdict": "PASS",
+  "s_static": 0.1,
+  "p_tamper": 0.08,
+  "s_behavior": 0.05
+}
