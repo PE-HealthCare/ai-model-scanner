@@ -1,4 +1,4 @@
-﻿import struct
+import struct
 import tempfile
 import unittest
 from pathlib import Path
@@ -164,7 +164,7 @@ class TestZeroTrustIntake(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "mixed/inconsistent dtype state"):
             analyzer.intake_model(path, declared_architecture="resnet18")
             
-    def test_quantized_unsupported(self):
+    def test_quantized_supported_assign(self):
         path = self.test_dir / "quant.safetensors"
         from torchvision.models import resnet18
         m = resnet18()
@@ -173,8 +173,18 @@ class TestZeroTrustIntake(unittest.TestCase):
             if sd[k].dtype in (torch.float32, torch.float16):
                 sd[k] = sd[k].to(torch.int8)
         save_file(sd, path)
-        with self.assertRaisesRegex(ValueError, "unsupported-quantized-graph"):
-            analyzer.intake_model(path, declared_architecture="resnet18")
+        
+        ctx = analyzer.intake_model(path, declared_architecture="resnet18")
+        self.assertIsInstance(ctx, TrustedModelContext)
+        self.assertTrue(ctx.is_quantized)
+        
+        # Verify the actual dtype in the trusted model is int8
+        model = ctx.model
+        self.assertEqual(model.conv1.weight.dtype, torch.int8)
+        
+        # Verify that attempting to execute the graph fails closed natively
+        with self.assertRaises(Exception):
+            model(torch.randn(1, 3, 224, 224))
 
     def test_successful_resnet18(self):
         path = self.test_dir / "success_rn18.safetensors"
