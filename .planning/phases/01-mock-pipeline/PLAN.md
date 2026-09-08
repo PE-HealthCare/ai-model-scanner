@@ -2,7 +2,7 @@
 
 ## Status
 
-**Execution state:** IN PROGRESS; D1 is resolved and CP1 verification is pending.
+**Execution state:** IN PROGRESS; D1 is RESOLVED against the frozen Master Graph 10-feature set. CP1 remains blocked pending full verification evidence.
 
 **Checkpoint:** CP1
 
@@ -87,15 +87,17 @@ Phase 1 does **not** establish:
 
 ## 4. Blocking Rule
 
-### Required decision: D1 — Exact Contract Schemas
+### Required decision: D1 — Exact Contract Schemas (Master Graph authority)
 
-D1 covers the exact fields and semantics of:
+D1 covers the exact fields and semantics of the three cross-phase contracts, with the Master Graph as the sole authority for the P1 static feature set. The authoritative FP32/FP16 feature vector is 10 features: `entropy`, `pov_chi2`, `lsb_kl`, `ks_stat`, `mean`, `std`, `skewness`, `kurtosis`, `sparsity`, `outlier_pct`.
 
 * `features.schema.json`;
 * `ml_results.schema.json`;
 * `risk_results.schema.json`.
 
-If D1 is unresolved, Phase 1 is **BLOCKED**.
+The previously committed six-feature schema was a temporary inconsistency. D1 is now explicitly resolved to the Master Graph 10-feature set in the listed order; executable schemas and dependent mappings must use exactly those names.
+
+D1 is resolved. Phase 1 remains **BLOCKED** until CP1 verification is complete.
 
 An unresolved decision can NEVER be interpreted as approval.
 
@@ -391,8 +393,8 @@ stop dependent work
 
 Phase 1 is complete only when:
 
-* D1 is resolved;
-* approved schemas exist;
+* D1 is explicitly resolved against the Master Graph;
+* approved schemas exist and match the resolved 10-feature contract;
 * mock producer/consumer contracts match exactly;
 * mock artifacts are generated;
 * mock provenance is recorded;

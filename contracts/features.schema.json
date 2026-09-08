@@ -57,6 +57,10 @@
           "pov_chi2",
           "lsb_kl",
           "ks_stat",
+          "mean",
+          "std",
+          "skewness",
+          "kurtosis",
           "sparsity",
           "outlier_pct"
         ],
@@ -74,6 +78,18 @@
             "type": "number"
           },
           "ks_stat": {
+            "type": "number"
+          },
+          "mean": {
+            "type": "number"
+          },
+          "std": {
+            "type": "number"
+          },
+          "skewness": {
+            "type": "number"
+          },
+          "kurtosis": {
             "type": "number"
           },
           "sparsity": {

@@ -2,7 +2,7 @@
   "producer": "P1",
   "mock_status": "MOCK",
   "contract_version": "1.0",
-  "generation_commit": "PHASE1-MOCK-VERIFY",
+  "generation_commit": "PHASE1-D1-10FEATURE-VERIFY",
   "input_domain": "VISION",
   "is_quantized": false,
   "layer_count": 2,
@@ -13,6 +13,10 @@
       "pov_chi2": 1.05,
       "lsb_kl": 0.02,
       "ks_stat": 0.12,
+      "mean": 0.01,
+      "std": 0.24,
+      "skewness": -0.08,
+      "kurtosis": 2.91,
       "sparsity": 0.08,
       "outlier_pct": 0.3
     },
@@ -22,6 +26,10 @@
       "pov_chi2": 1.1,
       "lsb_kl": 0.03,
       "ks_stat": 0.15,
+      "mean": -0.02,
+      "std": 0.27,
+      "skewness": 0.11,
+      "kurtosis": 3.12,
       "sparsity": 0.1,
       "outlier_pct": 0.4
     }

@@ -4,7 +4,7 @@
 **Architecture Status:** FROZEN
 **Current Phase:** Phase 1 — Mock Pipeline
 **Current Checkpoint:** CP1
-**Current Gate Status:** READY FOR CP1 EXECUTION
+**Current Gate Status:** BLOCKED — CP1 NOT VERIFIED
 **Last Verified Phase:** None
 **Next Permitted Phase:** Phase 1 completion after CP1 PASS
 
@@ -22,7 +22,7 @@ It SHALL NOT redefine the architecture or silently resolve design decisions.
 
 ## Current Objective
 
-Complete Phase 1 by establishing the exact JSON contract fields and producing clearly identified mock artifacts that conform to those contracts.
+Resolve D1 against the frozen Master Graph, establish the exact 10-feature P1 contract, reconcile the executable schemas, and only then complete CP1 mock verification.
 
 ---
 
@@ -32,13 +32,24 @@ Complete Phase 1 by establishing the exact JSON contract fields and producing cl
 
 **Status: RESOLVED.**
 
-The project/team explicitly approved the following exact cross-phase contract:
+The previous six-feature D1 resolution is superseded because it conflicts with the frozen Master Graph. D1 is now explicitly resolved against the frozen Master Graph; the Master Graph is the sole architectural authority for the static feature set and must be followed exactly for the final P1 feature contract.
 
-* `contracts/features.schema.json`: required top-level fields are `producer`, `mock_status`, `contract_version`, `generation_commit`, `input_domain`, `is_quantized`, `layer_count`, and `static_features`. Each `static_features` item requires `layer_name`, `entropy`, `pov_chi2`, `lsb_kl`, `ks_stat`, `sparsity`, and `outlier_pct`.
-* `contracts/ml_results.schema.json`: required top-level fields are `producer`, `mock_status`, `contract_version`, `generation_commit`, `p_tamper`, `shap_attributions`, and `model_version`. `shap_attributions` is a feature-level object keyed by the approved static feature field names.
-* `contracts/risk_results.schema.json`: required top-level fields are `producer`, `mock_status`, `contract_version`, `generation_commit`, `mrs_score`, `verdict`, `s_static`, `p_tamper`, and `s_behavior`. `s_behavior` is a union of `number` or `null`; `null` represents skipped behavioral probing for quantized models.
+The authoritative FP32/FP16 static feature set is **10 features**:
 
-The exact schema files in `contracts/` are the executable representation of this decision. No additional D1 fields, types, ordering, or semantics may be invented by implementation agents.
+1. `entropy`
+2. `pov_chi2`
+3. `lsb_kl`
+4. `ks_stat`
+5. `mean`
+6. `std`
+7. `skewness`
+8. `kurtosis`
+9. `sparsity`
+10. `outlier_pct`
+
+The current six-feature executable schema was not the final D1 contract. D1 is resolved to the 10-feature Master Graph set, and the executable feature schema is reconciled to that decision. No alternate feature semantics are introduced.
+
+The Master Graph remains the source of truth. Any implementation, downstream contract, feature ordering, feature semantics, or TreeSHAP mapping must follow the explicitly resolved Master Graph feature definitions; unresolved differences are a hard stop.
 
 ---
 
@@ -236,15 +247,14 @@ TreeSHAP attribution and highest-risk-layer determination remain separate mechan
 
 ## Next Permitted Action
 
-**Execute Phase 1 — Mock Pipeline.**
+**D1 is resolved against the Master Graph; complete CP1 verification next.**
 
-D1 is explicitly resolved. The next permitted actions are:
+The six-feature executable schema is no longer authoritative. D1 is resolved to the frozen Master Graph 10-feature set in the listed order. The next permitted actions are:
 
-1. mechanically validate all three contract schemas;
-2. produce Phase 1 mock outputs;
-3. run Phase 1 verification;
-4. mark CP1 `PASS`, `BLOCKED`, or `FAIL` based on evidence;
-5. advance only if CP1 is `PASS`.
+1. mechanically validate the reconciled executable schemas;
+2. update/verify Phase 1 mock artifacts against the 10-feature contract;
+3. complete the remaining CP1 adversarial, failure-mode, regression, and review evidence;
+4. mark CP1 `PASS` only when every required criterion has evidence and authorized human/independent review is recorded.
 
 No dependent phase may be treated as active merely because Phase 1 work has started.
 

@@ -39,7 +39,24 @@
     },
     "shap_attributions": {
       "type": "object",
-      "description": "Feature-level SHAP values keyed by the approved static feature field names."
+      "description": "Feature-level SHAP values keyed by the approved 10-feature static field names.",
+      "propertyNames": {
+        "enum": [
+          "entropy",
+          "pov_chi2",
+          "lsb_kl",
+          "ks_stat",
+          "mean",
+          "std",
+          "skewness",
+          "kurtosis",
+          "sparsity",
+          "outlier_pct"
+        ]
+      },
+      "additionalProperties": {
+        "type": "number"
+      }
     },
     "model_version": {
       "type": "string"
