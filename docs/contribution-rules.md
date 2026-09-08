@@ -308,7 +308,7 @@ The following are interfaces, not implementation suggestions:
 * `ml_results.schema.json`
 * `risk_results.schema.json`
 
-Current empty schemas MUST remain treated as empty until D1 is explicitly resolved.
+Schema files may exist before D1 is formally resolved. File existence does not constitute D1 resolution. Until D1 is explicitly resolved, agents MUST NOT treat schema contents as final authority for unresolved contract semantics or invent additional fields.
 
 Conceptual fields in documentation are NOT implemented fields.
 

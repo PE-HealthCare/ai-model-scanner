@@ -1,42 +1,47 @@
-﻿# artifacts — TRANSIENT HANDOFF STORAGE
+# artifacts — PERSISTENT P3 ML ARTIFACT STORAGE
 
 ## 1. OWNERSHIP & SCOPE
-- **Owner:** SHARED (transient storage only)
-- **Purpose:** Temporary holding for intermediate JSON artifacts between phases; purged after downstream VERIFICATION = PASS
-- **Allowed Files:** Only JSON artifacts produced by P1/P2/P3 during active phase execution
-- **FORBIDDEN FILES:** Any .py, .md, schema files, planning docs, or non-artifact content
+- **Owner:** P3 (ML artifact authority)
+- **Purpose:** Persistent storage for the trained LightGBM model used by the P3 classifier.
+- **Canonical Artifact:** `artifacts/lightgbm_model.txt`
+- **Not for:** transient JSON handoff outputs, planning files, schemas, model inputs, or arbitrary uploaded content.
 
 ## 2. HARD STOP CONDITIONS (MANDATORY)
 Agent MUST HALT and report BLOCKED if ANY of these are true:
-- Upstream phase VERIFICATION.md state != PASS
-- Artifact lacks required provenance metadata fields
-- Artifact fails validation against corresponding contracts/*.schema.json
-- Mock artifact presented without mock_status=MOCK tag
-- Agent asked to store non-JSON or non-artifact content
-- Downstream consumer has not yet consumed artifact within same branch
+- A model artifact is used without its required provenance/version information.
+- The artifact is stale relative to the approved P1 feature semantics or classifier contract.
+- A mock/scaffold model is represented as a verified production model.
+- An agent attempts to store unrelated content in this directory.
 
 ## 3. INPUT CONTRACT
-- **Required Artifacts:** Produced exclusively by authorized upstream phase owner
-- **Schema Validation:** Mandatory pre-storage validation against contracts/*.schema.json
-- **Preconditions:** Producing phase CP[N] = APPROVED
-- **Mock Protection:** If input contains mock_status=MOCK -> store ONLY if current phase = 01-mock-pipeline; else REJECT
+- **Producer:** P3 classifier/training workflow only.
+- **Training Dependency:** Final training MUST use the verified P1 feature extractor and exact approved feature semantics.
+- **Preconditions:** Applicable ML checkpoint and required upstream verification must be PASS.
+- **Mock Protection:** Preparatory/mock artifacts MUST remain explicitly identified as MOCK and MUST NOT be silently promoted to final artifacts.
 
-## 4. OUTPUT CONTRACT
-- **Produced Artifact:** N/A (this folder consumes, does not produce)
-- **Provenance Metadata (REQUIRED in stored artifact):**
-  - producer: [P1|P2|P3]
-  - mock_status: MOCK | VERIFIED-REAL | STALE
-  - contract_version: [sha of schema used]
-  - generation_commit: [git sha of producing commit]
-  - phase_checkpoint: [CP1|CP2|CP3|CP4|CP5|CP6]
+## 4. ARTIFACT PROVENANCE
+A persistent model artifact MUST be traceable to:
+- producer/owner;
+- model version;
+- training data/source status;
+- P1 feature semantics/version used;
+- generation commit;
+- applicable checkpoint/verification evidence.
 
-## 5. SECURITY BOUNDARIES
-- Never deserialize or execute contents of stored artifacts
-- Never expose artifact contents to network or external services
-- Fail CLOSED on malformed JSON -> delete partial file, report FAIL
+`generation_commit` identifies the producer code revision. `contract_version` identifies the applicable data contract; these values MUST NOT be conflated.
 
-## 6. WHEN THIS FOLDER IS USED IN PIPELINE
-- **Phase:** 01-05 (transient); 06 (final outputs only)
-- **Trigger:** After upstream CP[N] = PASS
-- **Consumed By:** Next phase owner per PROJECT.md pipeline flow
-- **Transition Rule:** MOCK artifacts auto-deleted upon real producer VERIFIED-REAL confirmation; NEVER relabel
+## 5. STALENESS / RE-VERIFICATION
+If P1 changes feature names, meanings, representation, ordering, or other semantics consumed by the classifier, the existing LightGBM artifact MUST be treated as stale until P3 retrains and re-verifies the model and TreeSHAP mapping.
+
+If the project has not explicitly resolved D8 (artifact staleness protection), do not invent a different production policy. Record the dependency as DECISION REQUIRED where it blocks final behavior.
+
+## 6. SECURITY BOUNDARIES
+- Never execute arbitrary uploaded content from this directory.
+- Do not treat a model artifact as trusted merely because it is stored under `artifacts/`.
+- Fail closed on malformed or untraceable artifacts.
+
+## 7. WHEN THIS FOLDER IS USED IN PIPELINE
+- **Phase:** P3 ML training and downstream verified consumption.
+- **Trigger:** After the applicable upstream checkpoint and training prerequisites are PASS.
+- **Consumed By:** P3 classifier/reporting and verified integration.
+- **Lifecycle:** Persistent artifact; it is not a transient phase handoff directory.

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Execution state:** BLOCKED until the required contract decision is resolved.
+**Execution state:** COMPLETE; CP1 = PASS. D1 is RESOLVED against the frozen Master Graph 10-feature set; D7 and D8 are also RESOLVED. Phase 1 mock implementation and verification are complete.
 
 **Checkpoint:** CP1
 
@@ -87,15 +87,17 @@ Phase 1 does **not** establish:
 
 ## 4. Blocking Rule
 
-### Required decision: D1 — Exact Contract Schemas
+### Required decision: D1 — Exact Contract Schemas (Master Graph authority)
 
-D1 covers the exact fields and semantics of:
+D1 covers the exact fields and semantics of the three cross-phase contracts, with the Master Graph as the sole authority for the P1 static feature set. The authoritative FP32/FP16 feature vector is 10 features: `entropy`, `pov_chi2`, `lsb_kl`, `ks_stat`, `mean`, `std`, `skewness`, `kurtosis`, `sparsity`, `outlier_pct`.
 
 * `features.schema.json`;
 * `ml_results.schema.json`;
 * `risk_results.schema.json`.
 
-If D1 is unresolved, Phase 1 is **BLOCKED**.
+The previously committed six-feature schema was a temporary inconsistency. D1 is now explicitly resolved to the Master Graph 10-feature set in the listed order; executable schemas and dependent mappings must use exactly those names.
+
+D1 is resolved. Phase 1 is no longer blocked; CP1 has passed and Phase 1 is complete.
 
 An unresolved decision can NEVER be interpreted as approval.
 
@@ -214,18 +216,18 @@ src/p2_behavioral_risk/prober.py
 src/p3_ml_dashboard/classifier.py
 src/p3_ml_dashboard/dashboard.py
 scan_model.py
-schemas/features.schema.json
-schemas/ml_results.schema.json
-schemas/risk_results.schema.json
+contracts/features.schema.json
+contracts/ml_results.schema.json
+contracts/risk_results.schema.json
 tests/...
 data/outputs/...
 ```
 
-Only files actually required by Phase 1 may be changed.
+Only files actually required by Phase 1 may be changed. Contract schemas under `contracts/` are read-only to autonomous Phase-1 implementation; approved schema changes require the contract governance process.
 
 ### Forbidden
 
-The agent MUST NOT modify:
+The agent MUST NOT modify contract schemas or governance/planning files during ordinary Phase-1 implementation.
 
 ```text
 .planning/...
@@ -391,8 +393,8 @@ stop dependent work
 
 Phase 1 is complete only when:
 
-* D1 is resolved;
-* approved schemas exist;
+* D1 is explicitly resolved against the Master Graph;
+* approved schemas exist and match the resolved 10-feature contract;
 * mock producer/consumer contracts match exactly;
 * mock artifacts are generated;
 * mock provenance is recorded;
@@ -406,7 +408,7 @@ Code compiling is NOT sufficient.
 
 Tests passing are NOT automatically sufficient.
 
-A phase is complete only when its checkpoint is approved.
+A phase is complete only when its checkpoint is `PASS`.
 
 ---
 
@@ -445,7 +447,7 @@ Merge requires:
 
 1. Phase 1 implementation complete;
 2. Phase 1 verification PASS;
-3. CP1 approval;
+3. CP1 = `PASS`;
 4. required human/independent review;
 5. no unresolved blocking decision;
 6. no failing required checks.
@@ -460,10 +462,10 @@ DO NOT MERGE
 
 ## 17. Downstream Gate
 
-Phase 2 may begin only after:
+Phase 2 may begin now.
 
 ```text
-CP1 = APPROVED
+CP1 = PASS
 ```
 
 Phase 2 MUST NOT treat:

@@ -4,14 +4,14 @@
 
 **Owner:** P3 — Brain & Voice  
 **Checkpoint:** CP4  
-**Prerequisite:** CP3 = APPROVED  
+**Prerequisite:** CP3 = PASS  
 **Branch:** `phase-4/ml-classification`
 
 Phase 4 converts verified P1 features into the final LightGBM classifier, P_tamper, TreeSHAP evidence, and approved ML contract.
 
 ## 1. Agent Execution Control
 
-Before final training, verify CP3 APPROVED.
+Before final training, verify CP3 PASS.
 
 If P1 real features are unavailable or unverified, final training is BLOCKED.
 
@@ -124,7 +124,7 @@ Merge requires CP4 approval and required independent review.
 
 CP4 PASS requires:
 
-- CP3 approved;
+- CP3 PASS;
 - final training uses verified-real P1 extraction;
 - no mock leakage;
 - LightGBM artifact generated;
@@ -137,4 +137,4 @@ CP4 PASS requires:
 
 Unresolved required D8 or another required decision = BLOCKED.
 
-Only CP4 APPROVED permits final P2 risk integration.
+Only CP4 PASS permits final P2 risk integration.

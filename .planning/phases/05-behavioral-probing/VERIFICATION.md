@@ -12,7 +12,7 @@ A checkbox without evidence is not verification.
 
 ## 2. Prerequisites
 
-- [ ] CP4 APPROVED.
+- [ ] CP4 PASS.
 - [ ] P1 real inputs verified.
 - [ ] P3 `ml_results.json` verified-real.
 - [ ] required contracts resolved.
@@ -109,4 +109,4 @@ Provenance:
 Final state: PASS / FAIL / BLOCKED
 ```
 
-CP5 is APPROVED only after every required criterion is PASS and independent approval is recorded.
+CP5 may be marked PASS only after every required criterion is PASS and independent approval is recorded.

@@ -1,29 +1,107 @@
-﻿{
+{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Static Steganalysis Features",
   "type": "object",
-  "required": ["producer", "mock_status", "contract_version", "generation_commit", "input_domain", "is_quantized", "layer_count", "static_features"],
+  "required": [
+    "producer",
+    "mock_status",
+    "contract_version",
+    "generation_commit",
+    "input_domain",
+    "is_quantized",
+    "layer_count",
+    "static_features"
+  ],
   "properties": {
-    "producer": {"type": "string", "enum": ["P1"]},
-    "mock_status": {"type": "string", "enum": ["MOCK", "VERIFIED-REAL", "STALE"]},
-    "contract_version": {"type": "string"},
-    "generation_commit": {"type": "string"},
-    "input_domain": {"type": "string", "enum": ["VISION", "NLP"]},
-    "is_quantized": {"type": "boolean"},
-    "layer_count": {"type": "integer", "minimum": 1},
+    "producer": {
+      "type": "string",
+      "enum": [
+        "P1"
+      ]
+    },
+    "mock_status": {
+      "type": "string",
+      "enum": [
+        "MOCK",
+        "VERIFIED-REAL",
+        "STALE"
+      ]
+    },
+    "contract_version": {
+      "type": "string"
+    },
+    "generation_commit": {
+      "type": "string"
+    },
+    "input_domain": {
+      "type": "string",
+      "enum": [
+        "VISION",
+        "NLP"
+      ]
+    },
+    "is_quantized": {
+      "type": "boolean"
+    },
+    "layer_count": {
+      "type": "integer",
+      "minimum": 1
+    },
     "static_features": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["layer_name", "entropy", "pov_chi2", "lsb_kl", "ks_stat", "sparsity", "outlier_pct"],
+        "required": [
+          "layer_name",
+          "entropy",
+          "pov_chi2",
+          "lsb_kl",
+          "ks_stat",
+          "mean",
+          "std",
+          "skewness",
+          "kurtosis",
+          "sparsity",
+          "outlier_pct"
+        ],
         "properties": {
-          "layer_name": {"type": "string"},
-          "entropy": {"type": "number"},
-          "pov_chi2": {"type": "number"},
-          "lsb_kl": {"type": "number"},
-          "ks_stat": {"type": "number"},
-          "sparsity": {"type": "number", "minimum": 0, "maximum": 1},
-          "outlier_pct": {"type": "number", "minimum": 0, "maximum": 100}
+          "layer_name": {
+            "type": "string"
+          },
+          "entropy": {
+            "type": "number"
+          },
+          "pov_chi2": {
+            "type": "number"
+          },
+          "lsb_kl": {
+            "type": "number"
+          },
+          "ks_stat": {
+            "type": "number"
+          },
+          "mean": {
+            "type": "number"
+          },
+          "std": {
+            "type": "number"
+          },
+          "skewness": {
+            "type": "number"
+          },
+          "kurtosis": {
+            "type": "number"
+          },
+          "sparsity": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "outlier_pct": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
         },
         "additionalProperties": false
       }

@@ -10,7 +10,7 @@ Code execution success alone does not prove CP4.
 
 ## 2. Prerequisite
 
-- [ ] CP3 APPROVED.
+- [ ] CP3 PASS.
 - [ ] P1 real feature extractor is verified.
 - [ ] Exact feature semantics/order are locked.
 

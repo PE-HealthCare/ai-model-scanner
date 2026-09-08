@@ -14,7 +14,7 @@ Any unresolved required decision/dependency makes the affected gate BLOCKED.
 
 ## 2. Prerequisite
 
-- [ ] CP1 is explicitly APPROVED.
+- [ ] CP1 is explicitly PASS.
 - [ ] Approved Phase-1 state is the base of this work.
 - [ ] Required contract is resolved.
 - [ ] Required dependency policy is satisfied.

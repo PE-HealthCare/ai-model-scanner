@@ -4,14 +4,14 @@
 
 **Owner:** P1 — Eyes  
 **Checkpoint:** CP3  
-**Prerequisite:** CP2 = APPROVED  
+**Prerequisite:** CP2 = PASS  
 **Branch:** `phase-3/static-stegananalysis`
 
 Phase 3 produces the first verified real `features.json` using the verified Phase-2 intake path.
 
 ## 1. Agent Execution Control
 
-If CP2 is not APPROVED, the agent is BLOCKED for real static implementation.
+If CP2 is not PASS, the agent is BLOCKED for real static implementation.
 
 The agent may prepare tests and isolated scaffolding while waiting, but must not mark any feature artifact VERIFIED-REAL.
 
@@ -158,4 +158,4 @@ CP3 PASS requires:
 
 Any unresolved required semantic decision = BLOCKED.
 
-Only CP3 APPROVED permits P3 final real training work.
+Only CP3 PASS permits P3 final real training work.

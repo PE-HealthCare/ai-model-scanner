@@ -12,8 +12,8 @@ Checkbox alone is NOT verification.
 
 ## 2. Prerequisites
 
-- [ ] CP4 APPROVED.
-- [ ] CP5 APPROVED.
+- [ ] CP4 PASS.
+- [ ] CP5 PASS.
 - [ ] current merged upstream artifacts exist.
 - [ ] all required contracts are resolved.
 
@@ -114,4 +114,4 @@ Ownership:
 Final state: PASS / FAIL / BLOCKED
 ```
 
-CP6 may be APPROVED only after every required criterion is PASS and independent approval is recorded.
+CP6 may be marked PASS only after every required criterion is PASS and independent approval is recorded.

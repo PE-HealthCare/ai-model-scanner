@@ -575,21 +575,14 @@ where approved implementation semantics are applied.
 
 # 23. MAD Degenerate Cases
 
-Zero or near-zero MAD requires an approved guard.
+The approved D7 guard for zero/near-zero MAD and degenerate baselines is:
 
-The implementation MUST NOT invent an arbitrary epsilon solely to avoid division by zero.
+*   **Finite nonzero MAD:** Use the actual MAD directly (even if extremely small). Do not add epsilon or near-zero thresholds.
+*   **Exact MAD = 0:** If the target equals the median, anomaly is 0. If it differs, record `DEGENERATE_DEVIATION`. Do not invent a finite Z-score or add epsilon.
+*   **Insufficient baselines (1-2 layers):** Mark static baseline evidence unavailable; block downstream scoring requiring it. Do not fabricate scores.
+*   **Invalid data (NaN, inf, missing):** Invalid. Do not impute.
 
-Until D7 is resolved:
-
-```text
-degenerate MAD
-      ↓
-do not invent fallback semantics
-      ↓
-BLOCKED / FAIL CLOSED
-```
-
-Any approved D7 behavior must be reflected in tests and verification evidence.
+Note: D5 (Model-level risk aggregation) and D6 (Highest-risk-layer aggregation) remain unresolved and must not be bypassed using TreeSHAP.
 
 ---
 

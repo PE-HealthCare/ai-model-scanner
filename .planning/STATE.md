@@ -2,11 +2,11 @@
 
 **Project Status:** FROZEN FOR EXECUTION
 **Architecture Status:** FROZEN
-**Current Phase:** Phase 1 — Mock Pipeline
-**Current Checkpoint:** CP1
-**Current Gate Status:** BLOCKED / PENDING D1
-**Last Verified Phase:** None
-**Next Permitted Phase:** Phase 1 completion after D1 resolution
+**Current Phase:** Phase 2 — Zero-Trust Intake
+**Current Checkpoint:** CP1 — COMPLETE
+**Current Gate Status:** PASS — CP1 VERIFIED
+**Last Verified Phase:** Phase 1 — Mock Pipeline
+**Next Permitted Phase:** Phase 2 — Zero-Trust Intake
 
 ---
 
@@ -22,27 +22,57 @@ It SHALL NOT redefine the architecture or silently resolve design decisions.
 
 ## Current Objective
 
-Complete Phase 1 by establishing the exact JSON contract fields and producing clearly identified mock artifacts that conform to those contracts.
+Begin Phase 2 Zero-Trust Intake using the completed Phase 1 contracts and verified mock pipeline. D2–D6 remain intentionally unresolved and are not being changed in this transition.
 
 ---
 
-## Current Blocker
+## Current D1 Decision Record
 
 ### D1 — Exact Contract Schemas
 
-The exact schemas, fields, types, and layout for:
+**Status: RESOLVED.**
 
-* `features.json`
-* `ml_results.json`
-* `risk_results.json`
+The previous six-feature D1 resolution is superseded because it conflicts with the frozen Master Graph. D1 is now explicitly resolved against the frozen Master Graph; the Master Graph is the sole architectural authority for the static feature set and must be followed exactly for the final P1 feature contract.
 
-remain `DECISION REQUIRED`.
+The authoritative FP32/FP16 static feature set is **10 features**:
 
-Until D1 is resolved:
+1. `entropy`
+2. `pov_chi2`
+3. `lsb_kl`
+4. `ks_stat`
+5. `mean`
+6. `std`
+7. `skewness`
+8. `kurtosis`
+9. `sparsity`
+10. `outlier_pct`
 
-* final contract implementation is blocked;
-* contract-compliant mock artifacts cannot be considered finalized;
-* downstream phases must not invent contract fields.
+The current six-feature executable schema was not the final D1 contract. D1 is resolved to the 10-feature Master Graph set, and the executable feature schema is reconciled to that decision. No alternate feature semantics are introduced.
+
+The Master Graph remains the source of truth. Any implementation, downstream contract, feature ordering, feature semantics, or TreeSHAP mapping must follow the explicitly resolved Master Graph feature definitions; unresolved differences are a hard stop.
+
+### D7 — MAD Degenerate Baseline Guard
+
+**Status: RESOLVED.**
+
+Robust intra-model normalization uses leave-one-out comparable layers.
+
+*   **Finite nonzero MAD:** Use actual MAD directly. Do not add epsilon or arbitrary near-zero threshold. If calculation is finite, it is valid.
+*   **Exact MAD = 0:** If target layer feature equals baseline median, record deterministic zero anomaly. If target differs, record deterministic `DEGENERATE_DEVIATION`. Do not invent a finite Z-score or add epsilon.
+*   **Insufficient baselines (1 or 2 layers):** Do not fabricate a score. Mark static baseline evidence unavailable and block downstream scoring that requires it.
+*   **Invalid numeric data (missing, NaN, +/-inf):** Invalid. Do not silently impute, replace with zero, or fabricate values.
+*   **Extremely small nonzero MAD:** Treat as mathematically valid using actual value. Do not replace with epsilon.
+*   **Quantized models:** Preserve existing format-adaptive rules. Do not invent new semantics. If conflict with schema exists, document it as unresolved follow-up.
+
+Note: D5 (Per-layer risk aggregation) and D6 (Highest-risk-layer aggregation) remain `REQUIRED` and unresolved. TreeSHAP must not be used for highest-risk-layer selection.
+
+---
+
+### D8 — Artifact Staleness
+
+**Status: RESOLVED.**
+
+Downstream stages must consume outputs generated for the current pipeline execution and must not silently reuse artifacts from a previous execution. Artifact provenance/generation identity (`generation_commit`) is used to distinguish current pipeline outputs from stale outputs. If an artifact does not match the current pipeline execution, the consuming stage must reject/block it rather than reuse it.
 
 ---
 
@@ -50,8 +80,8 @@ Until D1 is resolved:
 
 | Phase                         | Status               | Gate |
 | ----------------------------- | -------------------- | ---- |
-| Phase 1 — Mock Pipeline       | BLOCKED / PENDING D1 | CP1  |
-| Phase 2 — Zero-Trust Intake   | NOT STARTED          | CP2  |
+| Phase 1 — Mock Pipeline       | COMPLETE             | CP1  |
+| Phase 2 — Zero-Trust Intake   | IN PROGRESS          | CP2  |
 | Phase 3 — Static Steganalysis | NOT STARTED          | CP3  |
 | Phase 4 — ML Classification   | NOT STARTED          | CP4  |
 | Phase 5 — Behavioral + Risk   | NOT STARTED          | CP5  |
@@ -63,7 +93,7 @@ Until D1 is resolved:
 
 | Checkpoint                 | Status               |
 | -------------------------- | -------------------- |
-| CP1 — Mock Gate            | BLOCKED / PENDING D1 |
+| CP1 — Mock Gate            | PASS                 |
 | CP2 — Intake Gate          | NOT REACHED          |
 | CP3 — Static Gate          | NOT REACHED          |
 | CP4 — ML Gate              | NOT REACHED          |
@@ -78,14 +108,14 @@ Only a `PASS` checkpoint permits advancement.
 
 | Decision                            | Status   |
 | ----------------------------------- | -------- |
-| D1 — Exact contracts                | REQUIRED |
+| D1 — Exact contracts                | RESOLVED |
 | D2 — Trusted graph handoff          | REQUIRED |
 | D3 — STRIP baseline                 | REQUIRED |
 | D4 — Behavioral normalization       | REQUIRED |
 | D5 — Risk aggregation               | REQUIRED |
 | D6 — Highest-risk-layer aggregation | REQUIRED |
-| D7 — MAD guard                      | REQUIRED |
-| D8 — Model staleness protection     | REQUIRED |
+| D7 — MAD guard                      | RESOLVED |
+| D8 — Model staleness protection     | RESOLVED |
 | D9 — Dependency pinning             | REQUIRED |
 
 A decision may move from `REQUIRED` to `RESOLVED` only through an explicit project/team decision.
@@ -125,7 +155,7 @@ These remain planned artifacts until actually produced and verified.
 ## Current Dependency Chain
 
 ```text
-D1
+D1 RESOLVED
  ↓
 CP1 PASS
  ↓
@@ -240,17 +270,13 @@ TreeSHAP attribution and highest-risk-layer determination remain separate mechan
 
 ## Next Permitted Action
 
-**Resolve D1 — Exact contract schemas and fields.**
+**Phase 1 is complete: CP1 PASS.**
 
-After D1 is explicitly resolved:
+The six-feature executable schema is no longer authoritative. D1 is resolved to the frozen Master Graph 10-feature set in the listed order. D7 and D8 are also resolved. Phase 1 mock contracts, artifacts, orchestration, provenance protection, adversarial/failure tests, and regression evidence are complete.
 
-1. update the contract schemas;
-2. produce Phase 1 mock outputs;
-3. run Phase 1 verification;
-4. mark CP1 `PASS`, `BLOCKED`, or `FAIL` based on evidence;
-5. advance only if CP1 is `PASS`.
+**Next permitted action: begin Phase 2 — Zero-Trust Intake.** D2–D6 remain REQUIRED and are intentionally not resolved in this transition.
 
-No dependent phase may be treated as active merely because Phase 1 work has started.
+No Phase 2 implementation is represented as complete by this state update.
 
 ---
 

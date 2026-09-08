@@ -435,11 +435,13 @@ The intra-model baseline can become weak when:
 
 MAD-based robust statistics are used.
 
-### Unresolved issue
+### D7 Guard
 
-D7 defines the exact behavior for zero/near-zero MAD.
-
-Until D7 is resolved, agents MUST NOT invent an epsilon or fallback rule.
+D7 is RESOLVED. The exact behavior for degenerate baselines is:
+*   **Finite nonzero MAD:** Use actual MAD. Do not add epsilon.
+*   **Exact MAD = 0:** Record zero anomaly (if target equals median) or `DEGENERATE_DEVIATION` (if target differs).
+*   **Insufficient baselines (1-2 layers):** Block downstream scoring.
+*   **Invalid data:** Fail closed.
 
 ---
 
@@ -875,7 +877,7 @@ The scanner does not claim universal detection.
 Known limitations include:
 
 * intra-model baseline weakness for very small models;
-* unresolved D7 edge-case semantics;
+* missing dependency pinning;
 * unresolved D3/D4 behavioral semantics;
 * unresolved D5/D6 aggregation;
 * declared-architecture limitation;
@@ -964,7 +966,7 @@ The implementation is security-model compliant only when:
 * static analysis follows the correct format branch;
 * behavioral probing is domain-aware;
 * quantized models bypass behavioral probing as specified;
-* unresolved D3/D4/D5/D6/D7 decisions are not silently invented;
+* unresolved D3/D4/D5/D6 decisions are not silently invented;
 * classifier staleness is handled;
 * mock artifacts cannot masquerade as real;
 * downstream failures cannot become PASS;
