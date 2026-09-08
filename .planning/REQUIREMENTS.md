@@ -4,9 +4,7 @@
 
 This document defines implementation requirements derived from the finalized project architecture and Master Graph.
 
-Unresolved decisions listed in this document are **not implementation requirements yet**. They are explicit blockers that require a decision before dependent implementation can be finalized.
-
----
+Decision status is maintained separately from implementation verification: a decision may be locked while its implementation, empirical calibration, or checkpoint evidence remains pending. Such pending evidence SHALL NOT be inferred.
 
 ## 1. Core Functional Requirements
 
@@ -196,7 +194,7 @@ Quantized models SHALL skip behavioral probing under the finalized format-adapti
 
 Applicable behavioral probing SHALL produce `S_behavior`.
 
-Exact baseline and normalization remain unresolved where listed in the Decision-Required Register.
+D3 methodology is resolved and locked, but empirical baseline calibration/evidence remains pending. D4 normalization remains unresolved. Implementations SHALL NOT invent baseline values, thresholds, normalization, or fallback behavior.
 
 ---
 
@@ -425,20 +423,21 @@ It SHALL NOT duplicate P1, P2, or P3 algorithms.
 
 ---
 
-## 12. Explicit Decision-Required Register
+## 12. Decision Status Register
 
-The following remain unresolved and SHALL NOT be silently invented:
+The current project decision status is:
 
-* **D1:** Exact contract schemas and fields
-* **D2:** Exact trusted-graph handoff mechanism
-* **D3:** STRIP entropy baseline
-* **D4:** `S_behavior` normalization
-* **D5:** Per-layer → model-level risk aggregation
-* **D6:** Highest-risk-layer aggregation
-* **D8:** Model-artifact staleness protection
-* **D9:** Dependency population and pinning
+* **D1:** RESOLVED / LOCKED — exact 10-feature static contract.
+* **D2:** RESOLVED / LOCKED — in-process trusted-model handoff; implementation/verification pending.
+* **D3:** RESOLVED / LOCKED — methodology defined; empirical calibration/evidence pending; values MUST NOT be invented.
+* **D4:** REQUIRED — exact `S_behavior` normalization remains unresolved.
+* **D5:** REQUIRED — exact per-layer → model-level risk aggregation remains unresolved.
+* **D6:** REQUIRED — exact highest-risk-layer aggregation remains unresolved.
+* **D7:** RESOLVED / LOCKED — MAD degenerate/insufficient-baseline guard.
+* **D8:** RESOLVED / LOCKED — model-artifact staleness protection.
+* **D9:** REQUIRED / PARTIALLY RESOLVED — D9.1–D9.20 locked; D9.21+ remains required.
 
-A dependent implementation SHALL be marked `BLOCKED` when one of these decisions is required for completion.
+A dependent implementation SHALL be marked `BLOCKED` when an unresolved decision or pending prerequisite is required for legitimate completion. A methodologically locked decision with pending implementation or empirical evidence SHALL NOT be represented as fully verified.
 
 ---
 
@@ -452,7 +451,8 @@ The implementation SHALL:
 4. distinguish scaffolding from implementation;
 5. distinguish mocks from real artifacts;
 6. preserve phase gates;
-7. surface unresolved decisions;
-8. stop when a required decision or dependency blocks progress.
+7. surface unresolved decisions and pending evidence;
+8. return to the corresponding decision record when explicitly pending implementation or empirical evidence becomes available;
+9. stop when a required decision or dependency blocks progress.
 
 **No agent may invent a missing architectural decision merely to continue execution.**
