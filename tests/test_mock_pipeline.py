@@ -64,6 +64,42 @@ class TestContracts(unittest.TestCase):
         finally:
             os.remove(tmp_name)
 
+    def test_schema_mismatch(self):
+        """Test for an artifact/schema mismatch using the existing validation mechanism."""
+        features = build_mock_features("TEST")
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as tmp:
+            json.dump(features, tmp)
+            tmp_name = tmp.name
+        try:
+            with self.assertRaises(ValidationError):
+                validate_artifact(Path(tmp_name), CONTRACT_DIR / "ml_results.schema.json")
+        finally:
+            os.remove(tmp_name)
+
+    def test_wrong_feature_ordering(self):
+        """Test that wrong feature ordering is rejected by the test suite where contractually represented."""
+        expected_order = [
+            "entropy", "pov_chi2", "lsb_kl", "ks_stat", "mean",
+            "std", "skewness", "kurtosis", "sparsity", "outlier_pct"
+        ]
+        
+        # Contractual representation in ML schema enum
+        enum_order = self.ml_schema["properties"]["shap_attributions"]["propertyNames"]["enum"]
+        self.assertEqual(enum_order, expected_order, "Schema enum ordering does not match Master Graph")
+        
+        # Contractual representation in Features schema required fields
+        features_required_order = self.features_schema["properties"]["static_features"]["items"]["required"][1:]
+        self.assertEqual(features_required_order, expected_order, "Schema required properties ordering does not match Master Graph")
+        
+        # Implementation order preservation (this test guards against silent ordering changes)
+        features = build_mock_features("TEST")
+        actual_feature_keys = list(features["static_features"][0].keys())[1:]
+        self.assertEqual(actual_feature_keys, expected_order, "Producer output ordering does not match Master Graph")
+        
+        ml_results = build_mock_ml_results(features, "TEST")
+        actual_shap_keys = list(ml_results["shap_attributions"].keys())
+        self.assertEqual(actual_shap_keys, expected_order, "Producer output shap ordering does not match Master Graph")
+
 
 class TestMockRealLifecycle(unittest.TestCase):
     def test_mock_status_enforced(self):
@@ -85,11 +121,18 @@ class TestMockRealLifecycle(unittest.TestCase):
             build_mock_risk_results(ml_results, "TEST")
 
 
+
+
+
 class TestArtifactFailureModes(unittest.TestCase):
-    def test_missing_artifact(self):
+    def test_missing_artifacts(self):
         """Test missing artifact files."""
         with self.assertRaises(FileNotFoundError):
             validate_artifact(Path("non_existent_features.json"), CONTRACT_DIR / "features.schema.json")
+        with self.assertRaises(FileNotFoundError):
+            validate_artifact(Path("non_existent_ml_results.json"), CONTRACT_DIR / "ml_results.schema.json")
+        with self.assertRaises(FileNotFoundError):
+            validate_artifact(Path("non_existent_risk_results.json"), CONTRACT_DIR / "risk_results.schema.json")
 
     def test_corrupted_artifact(self):
         """Test corrupted JSON artifact."""
@@ -102,12 +145,19 @@ class TestArtifactFailureModes(unittest.TestCase):
         finally:
             os.remove(tmp_name)
 
-    def test_stale_provenance(self):
+    def test_stale_artifact_status(self):
+        """Test that an explicitly STALE artifact is rejected."""
+        features = build_mock_features("TEST")
+        features["mock_status"] = "STALE"
+        with self.assertRaisesRegex(ValueError, "P1 MOCK"):
+            build_mock_ml_results(features, "TEST")
+
+    def test_stale_provenance_d8(self):
         """
-        Record limitation: Stale-artifact rejection is not currently implemented in Phase 1 
-        mock pipeline because D8 (Model staleness protection) remains REQUIRED.
+        Record limitation: Stale-provenance rejection (generation_commit mismatch) 
+        is genuinely dependent on unresolved D8.
         """
-        pass
+        raise unittest.SkipTest("BLOCKED: D8 (Model staleness protection) remains REQUIRED")
 
 
 class TestPipelineFailurePropagation(unittest.TestCase):
