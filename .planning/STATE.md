@@ -188,14 +188,14 @@ D9.12 does **not** silently resolve transitive dependency versions. Transitive r
 
 The authoritative environment must capture **all direct and transitive runtime dependencies** in a fully pinned reproducibility artifact. The lock artifact must not rely on resolver-selected floating transitive versions at authoritative verification time.
 
-The lock artifact may be generated from a successfully resolved authoritative Python 3.11 CPU environment; it must record the exact versions required for that environment rather than manually inventing transitive versions. pip documents that a fully pinned requirements file can capture top-level and transitive dependencies for repeatable installs. citeturn0search1turn0search2
+The lock artifact may be generated from a successfully resolved authoritative Python 3.11 CPU environment; it must record the exact versions required for that environment rather than manually inventing transitive versions. pip documents that a fully pinned requirements file can capture top-level and transitive dependencies for repeatable installs.
 
 The lock artifact is a reproducibility record, not permission to change any already locked direct dependency version.
 
 #### D9.14 — Package Hash Integrity
 **Status: LOCKED.**
 
-The authoritative reproducibility artifact must include cryptographic hashes for installable package artifacts and authoritative installation must enforce hash checking. pip documents `--require-hashes` for repeatable installs and hash-checking as protection against package/index or artifact tampering. citeturn0search0turn0search1
+The authoritative reproducibility artifact must include cryptographic hashes for installable package artifacts and authoritative installation must enforce hash checking. pip documents `--require-hashes` for repeatable installs and hash-checking as protection against package/index or artifact tampering.
 
 The artifact must account for platform-specific package artifacts where applicable; one hash must not be falsely represented as universal when different wheels are authoritative for different supported environments.
 
@@ -216,7 +216,7 @@ Rules:
 - The artifact is authoritative for reproducible installation/verification; ordinary unpinned `requirements.txt` content is not sufficient by itself.
 - Because package artifacts can vary by platform, the lock artifact must represent each authoritative supported platform/artifact set explicitly rather than falsely treating a platform-specific hash as universal.
 
-This choice is grounded in pip's documented requirements-file hash-checking support; pip's newer `pylock.toml` support is documented as experimental, and generated lock files are platform/Python-version scoped. citeturn0search0turn0search1turn0search2
+This choice is grounded in pip's documented requirements-file hash-checking support; pip's newer `pylock.toml` support is documented as experimental, and generated lock files are platform/Python-version scoped.
 
 #### D9.16 — Authoritative Environment Verification
 **Status: LOCKED.**
@@ -243,24 +243,22 @@ The authoritative reproducibility scope is:
 - **Python 3.11.x**
 - **CPU-only** execution
 
-The lock artifact must represent platform-specific package artifacts and hashes explicitly for each supported platform where artifacts differ. A platform-specific artifact/hash must not be treated as universal. Unsupported platforms are **BLOCKED** for authoritative verification.
-
-This scope is consistent with the official PyTorch 2.3.1 / torchvision 0.18.1 CPU wheel availability documented for Linux and Windows. citeturn0search0turn0search4
+Platform-specific wheels and hashes must be represented explicitly for each supported platform/artifact set. A platform-specific hash must not be treated as universal. Any unsupported platform, architecture, Python major/minor version, or non-CPU execution target is **BLOCKED** for authoritative verification.
 
 #### D9.18 — Authoritative Dependency Installation Procedure
 **Status: LOCKED.**
 
-The authoritative environment shall be installed only through a documented clean-environment procedure:
+The authoritative installation procedure is a clean-environment, verification-first process:
 
 1. Create a clean Python **3.11.x** environment.
-2. Use the generated authoritative requirements lock artifact for installation.
-3. Use the official PyTorch CPU wheel index for `torch` / `torchvision` as required by D9.11.
-4. Enforce pip hash checking with `--require-hashes`; all requirements must be pinned and hashed.
-5. Do not use Git/VCS sources, arbitrary repositories, local unpublished packages, source distributions, or unpinned substitutions as authoritative inputs.
-6. Run the D9.16 environment verification after installation.
-7. Any installation or verification mismatch results in **BLOCKED**; the procedure must not auto-repair the environment and then claim authoritative verification.
+2. Install from the generated authoritative hashed requirements lock artifact.
+3. Use PyPI for standard runtime dependencies and the official PyTorch CPU wheel index for `torch` / `torchvision`, consistent with D9.11.
+4. Enforce pip hash checking with `--require-hashes`; installation must not proceed with missing or mismatched hashes.
+5. Do not silently resolve, upgrade, downgrade, or substitute dependencies outside the authoritative lock artifact.
+6. Complete D9.16 environment verification after installation.
+7. Any installation or verification mismatch results in **BLOCKED**; the environment must be corrected and re-verified rather than treating an altered environment as the originally verified environment.
 
-pip documents `--require-hashes` and requires pinned/hash-covered requirements in hash-checking mode. citeturn0search3turn0search5
+pip documents that `--require-hashes` requires hashes for all requirements and that requirements must be pinned; it also supports multiple hashes per package for platform-varying artifacts. citeturn0search0turn0search1
 
 #### D9.19 and later — NOT YET RESOLVED
 
