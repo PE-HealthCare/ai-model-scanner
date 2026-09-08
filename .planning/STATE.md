@@ -195,7 +195,7 @@ The lock artifact is a reproducibility record, not permission to change any alre
 #### D9.14 — Package Hash Integrity
 **Status: LOCKED.**
 
-The authoritative reproducibility artifact must include cryptographic hashes for installable package artifacts and authoritative installation must enforce hash checking. pip documents `--require-hashes` for repeatable installs and hash-checking as protection against package/index or artifact tampering.
+The authoritative reproducibility artifact must include cryptographic hashes for installable package artifacts and authoritative installation must enforce hash checking.
 
 The artifact must account for platform-specific package artifacts where applicable; one hash must not be falsely represented as universal when different wheels are authoritative for different supported environments.
 
@@ -215,8 +215,6 @@ Rules:
 - Do not manually invent transitive versions or hashes.
 - The artifact is authoritative for reproducible installation/verification; ordinary unpinned `requirements.txt` content is not sufficient by itself.
 - Because package artifacts can vary by platform, the lock artifact must represent each authoritative supported platform/artifact set explicitly rather than falsely treating a platform-specific hash as universal.
-
-This choice is grounded in pip's documented requirements-file hash-checking support; pip's newer `pylock.toml` support is documented as experimental, and generated lock files are platform/Python-version scoped.
 
 #### D9.16 — Authoritative Environment Verification
 **Status: LOCKED.**
@@ -258,9 +256,28 @@ The authoritative installation procedure is a clean-environment, verification-fi
 6. Complete D9.16 environment verification after installation.
 7. Any installation or verification mismatch results in **BLOCKED**; the environment must be corrected and re-verified rather than treating an altered environment as the originally verified environment.
 
-pip documents that `--require-hashes` requires hashes for all requirements and that requirements must be pinned; it also supports multiple hashes per package for platform-varying artifacts. citeturn0search0turn0search1
+#### D9.19 — Dependency Change Control
+**Status: LOCKED.**
 
-#### D9.19 and later — NOT YET RESOLVED
+Locked dependency policy is immutable by implementation convenience. Any change to a direct or transitive dependency version, installation source, hash, or authoritative supported-platform artifact set requires an explicit new dependency decision.
+
+A dependency-contract change invalidates the affected reproducibility artifact until the artifact is regenerated from a successfully resolved authoritative environment and the environment verification procedure passes again. No dependency change may be introduced silently through resolver drift, opportunistic upgrades/downgrades, or source substitution.
+
+#### D9.20 — Dependency Completion Criterion
+**Status: LOCKED.**
+
+D9 may be marked fully **RESOLVED** only after both policy and implementation evidence exist:
+
+1. all required D9 sub-decisions are explicitly locked;
+2. authoritative platform lock artifacts actually exist;
+3. direct and transitive versions are fully pinned;
+4. required artifact hashes are populated and enforced;
+5. the authoritative installation procedure is implemented/documented;
+6. D9.16 environment verification passes on the authoritative environment(s).
+
+Until these implementation and verification conditions are satisfied, D9 remains **REQUIRED / PARTIALLY RESOLVED** and must not be represented as fully complete merely because the policy decisions are locked.
+
+#### D9.21 and later — NOT YET RESOLVED
 
 Any remaining dependency-policy details remain **REQUIRED** until explicitly agreed. No implementation choice may silently resolve a remaining D9 sub-decision.
 
@@ -390,9 +407,9 @@ Quantized models bypass behavioral probing under the finalized format-adaptive d
 
 ## Next Permitted Action
 
-Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.18 are LOCKED, while D9.19+ remain REQUIRED. Continue only with the next explicitly proposed D9 sub-decisions and obtain explicit agreement before recording them as LOCKED.
+Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED. Continue only with the next explicitly proposed D9 sub-decisions and obtain explicit agreement before recording them as LOCKED.
 
-**Current D9 frontier: D9.19 — remaining dependency-policy details.**
+**Current D9 frontier: D9.21 — remaining dependency-policy details.**
 
 ## Final Rule
 
