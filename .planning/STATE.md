@@ -134,16 +134,26 @@ This is the pinned NumPy dependency for the Python 3.11 / PyTorch 2.3.1 compatib
 #### D9.7 — SciPy
 **Status: LOCKED.** `scipy==1.13.1`.
 
-This is the pinned SciPy dependency for the Python 3.11 / NumPy 1.26.4 numerical baseline. SciPy 1.13.1 provides CPython 3.11 wheels and supports NumPy versions below 2.3.0. citeturn0search1turn0search2
+This is the pinned SciPy dependency for the Python 3.11 / NumPy 1.26.4 numerical baseline.
 
 #### D9.8 — LightGBM
 **Status: LOCKED.** `lightgbm==4.3.0`.
 
-This is the pinned LightGBM dependency for the P3 classifier. LightGBM 4.3.0 is a production/stable release with Python 3.11 support and published wheels. citeturn0search0
+This is the pinned LightGBM dependency for the P3 classifier.
 
-#### D9.9 and later — NOT YET RESOLVED
+#### D9.9 — SHAP
+**Status: LOCKED.** `shap==0.45.1`.
 
-SHAP, jsonschema, installation-source/reproducibility details, and any other dependency-policy details remain **REQUIRED** until explicitly agreed.
+This is the pinned SHAP dependency for TreeSHAP attribution. SHAP 0.45.1 is a production/stable release and provides CPython 3.11 wheels. citeturn0search0
+
+#### D9.10 — jsonschema
+**Status: LOCKED.** `jsonschema==4.22.0`.
+
+This is the pinned JSON Schema validation dependency for the project contracts.
+
+#### D9.11 and later — NOT YET RESOLVED
+
+Installation-source/reproducibility details, dependency hashes/lockfile policy, and any other dependency-policy details remain **REQUIRED** until explicitly agreed.
 
 No implementation choice may silently resolve a remaining D9 sub-decision.
 
@@ -277,7 +287,7 @@ Quantized models bypass behavioral probing under the finalized format-adaptive d
 
 Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2–D6 remain REQUIRED. D9 is partially resolved; continue only with the next explicitly proposed D9 sub-decisions and obtain explicit agreement before recording them as LOCKED.
 
-**Current D9 frontier: D9.9 — SHAP version; D9.10 — jsonschema version.**
+**Current D9 frontier: D9.11 — installation-source/reproducibility policy and remaining dependency locking details.**
 
 ## Final Rule
 
