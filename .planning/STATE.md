@@ -30,15 +30,26 @@ Complete Phase 1 by establishing the exact JSON contract fields and producing cl
 
 ### D1 — Exact Contract Schemas
 
-**Status: RESOLVED.**
+**Status: REQUIRED — REOPENED.**
 
-The project/team explicitly approved the following exact cross-phase contract:
+The previous six-feature D1 resolution is superseded because it conflicts with the frozen Master Graph. The Master Graph is the sole architectural authority for the static feature set and must be followed exactly for the final P1 feature contract.
 
-* `contracts/features.schema.json`: required top-level fields are `producer`, `mock_status`, `contract_version`, `generation_commit`, `input_domain`, `is_quantized`, `layer_count`, and `static_features`. Each `static_features` item requires `layer_name`, `entropy`, `pov_chi2`, `lsb_kl`, `ks_stat`, `sparsity`, and `outlier_pct`.
-* `contracts/ml_results.schema.json`: required top-level fields are `producer`, `mock_status`, `contract_version`, `generation_commit`, `p_tamper`, `shap_attributions`, and `model_version`. `shap_attributions` is a feature-level object keyed by the approved static feature field names.
-* `contracts/risk_results.schema.json`: required top-level fields are `producer`, `mock_status`, `contract_version`, `generation_commit`, `mrs_score`, `verdict`, `s_static`, `p_tamper`, and `s_behavior`. `s_behavior` is a union of `number` or `null`; `null` represents skipped behavioral probing for quantized models.
+The authoritative FP32/FP16 static feature set is **10 features**:
 
-The exact schema files in `contracts/` are the executable representation of this decision. No additional D1 fields, types, ordering, or semantics may be invented by implementation agents.
+1. `entropy`
+2. `pov_chi2`
+3. `lsb_kl`
+4. `ks_stat`
+5. `mean`
+6. `std`
+7. `skewness`
+8. `kurtosis`
+9. `sparsity`
+10. `outlier_pct`
+
+The current six-feature executable schema is therefore **not the final D1 contract**. Do not silently treat it as authoritative, extend it by inference, or invent alternate feature semantics. Before real P1 feature finalization, D1 must be explicitly resolved against the Master Graph and the executable schemas must be reconciled to that decision.
+
+The Master Graph remains the source of truth. Any implementation, downstream contract, feature ordering, feature semantics, or TreeSHAP mapping must follow the explicitly resolved Master Graph feature definitions; unresolved differences are a hard stop.
 
 ---
 
@@ -74,7 +85,7 @@ Only a `PASS` checkpoint permits advancement.
 
 | Decision                            | Status   |
 | ----------------------------------- | -------- |
-| D1 — Exact contracts                | RESOLVED |
+| D1 — Exact contracts                | REQUIRED |
 | D2 — Trusted graph handoff          | REQUIRED |
 | D3 — STRIP baseline                 | REQUIRED |
 | D4 — Behavioral normalization       | REQUIRED |
@@ -236,15 +247,15 @@ TreeSHAP attribution and highest-risk-layer determination remain separate mechan
 
 ## Next Permitted Action
 
-**Execute Phase 1 — Mock Pipeline.**
+**Resolve D1 against the Master Graph before CP1.**
 
-D1 is explicitly resolved. The next permitted actions are:
+The six-feature executable schema is not authoritative. The next permitted actions are:
 
-1. mechanically validate all three contract schemas;
-2. produce Phase 1 mock outputs;
-3. run Phase 1 verification;
-4. mark CP1 `PASS`, `BLOCKED`, or `FAIL` based on evidence;
-5. advance only if CP1 is `PASS`.
+1. use the frozen Master Graph as the sole authority for the final 10-feature P1 static feature set;
+2. explicitly resolve D1 against those 10 features and their exact semantics/order;
+3. reconcile the executable schemas to the resolved D1 contract;
+4. mechanically validate the reconciled schemas;
+5. rerun Phase 1 verification and CP1 only after D1 is `RESOLVED`.
 
 No dependent phase may be treated as active merely because Phase 1 work has started.
 
