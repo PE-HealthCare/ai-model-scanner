@@ -162,3 +162,50 @@ def build_mock_features(generation_commit: str) -> dict:
             {"layer_name": "mock.layer2", "entropy": 0.95, "pov_chi2": 1.10, "lsb_kl": 0.03, "ks_stat": 0.15, "mean": -0.02, "std": 0.27, "skewness": 0.11, "kurtosis": 3.12, "sparsity": 0.10, "outlier_pct": 0.40},
         ],
     }
+
+def extract_features(context: TrustedModelContext, generation_commit: str) -> dict:
+    """
+    Phase 3: Real Static Feature Extractor.
+    Extracts the 10-feature schema layer-by-layer from the trusted model context.
+    """
+    if context is None or context.model is None:
+        raise ValueError("Integrity violated: Valid TrustedModelContext required")
+        
+    state_dict = context.model.state_dict()
+    layer_names = list(state_dict.keys())
+    
+    if len(layer_names) == 0:
+        raise ValueError("Integrity violated: Model contains no layers")
+        
+    # Setup for exact ordering
+    expected_order = [
+        "entropy", "pov_chi2", "lsb_kl", "ks_stat", 
+        "mean", "std", "skewness", "kurtosis", "sparsity", "outlier_pct"
+    ]
+    
+    static_features = []
+    
+    for layer_name in layer_names:
+        tensor = state_dict[layer_name]
+        
+        if tensor.numel() == 0:
+            raise ValueError(f"Integrity violated: empty tensor {layer_name}")
+            
+        if context.is_quantized:
+            # Quantized: whole-weight KS only, skip mantissa/LSB
+            raise NotImplementedError("BLOCKED: Unresolved statistical semantics for quantized KS (reference distribution, NaN/Inf handling)")
+        else:
+            # FP32/FP16
+            raise NotImplementedError("BLOCKED: Unresolved statistical semantics for FP features (bins, normalizations, epsilon, estimators, thresholds, NaN/Inf handling)")
+            
+    # This point is unreachable until semantics are resolved, but demonstrates the output contract
+    return {
+        "producer": "P1",
+        "mock_status": "VERIFIED-REAL",
+        "contract_version": "1.0",
+        "generation_commit": generation_commit,
+        "input_domain": context.input_domain,
+        "is_quantized": context.is_quantized,
+        "layer_count": len(layer_names),
+        "static_features": static_features
+    }
