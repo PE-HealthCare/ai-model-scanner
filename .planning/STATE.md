@@ -69,6 +69,24 @@ D2 does not resolve D3, D4, D5, or D6.
 
 **Implementation / verification status:** The D2 architectural decision is locked, but its implementation and verification evidence remain pending. `RESOLVED / LOCKED` here does not mean the real P1→P2 handoff has been implemented, tested, or accepted at CP2.
 
+### D3 — STRIP Entropy Baseline
+
+**Status: RESOLVED / LOCKED — METHODOLOGY ONLY; EMPIRICAL CALIBRATION PENDING.**
+
+For non-quantized models, behavioral probing SHALL compute Shannon entropy over the model's softmax output probability distribution for the existing 32 domain-appropriate probes.
+
+The STRIP baseline SHALL be empirical and domain-specific. Separate `VISION` and `NLP` baseline distributions SHALL be established from a fixed, scanner-controlled set of clean reference models for the corresponding domain.
+
+The reference models and resulting calibration evidence SHALL be explicitly recorded before D3 is considered fully evidenced for authoritative behavioral scoring.
+
+The baseline SHALL NOT be derived from the uploaded model itself, and no arbitrary universal numeric entropy threshold may be introduced without corresponding calibration evidence.
+
+D3 defines the entropy measurement and baseline methodology only. The conversion of baseline deviation into `S_behavior ∈ [0,1]` remains D4. Final behavioral anomaly thresholds and risk aggregation remain governed by their respective decisions.
+
+Quantized models do not use the behavioral baseline because behavioral probing is skipped under the finalized quantized path.
+
+**Implementation / empirical-evidence status:** The D3 methodology is locked, but calibration execution, measured baseline distributions, and supporting evidence remain pending. Agents MUST NOT invent baseline values. After the approved calibration run completes, the agent MUST return to this D3 section, record the measured evidence and any evidence-dependent parameters, and re-verify downstream consistency before treating D3 as fully evidenced.
+
 ### Decision 1 — Trusted Architecture Registry
 
 **Status: RESOLVED / LOCKED.**
@@ -190,8 +208,6 @@ The authoritative installation sources are:
 
 The installation-source policy is a reproducibility/security requirement. It does not by itself pin transitive dependencies; those require the later lockfile/hash policy decision.
 
-The lock artifact may be generated from a successfully resolved authoritative Python 3.11 CPU environment; it must record the exact versions required for that environment rather than manually inventing transitive versions. pip documents that a fully pinned requirements file can capture top-level and transitive dependencies for repeatable installs.
-
 #### D9.12 — Exact Direct Runtime Dependency Pins
 **Status: LOCKED.**
 
@@ -311,28 +327,6 @@ Until these implementation and verification conditions are satisfied, D9 remains
 
 Any remaining dependency-policy details remain **REQUIRED** until explicitly agreed. No implementation choice may silently resolve a remaining D9 sub-decision.
 
-### D3 — STRIP Entropy Baseline
-
-**Status: RESOLVED / LOCKED — METHODOLOGY; EMPIRICAL CALIBRATION PENDING.**
-
-For non-quantized models, behavioral probing SHALL compute **Shannon entropy** over the model's **softmax output probability distribution** for the existing **32 domain-appropriate probes**.
-
-The STRIP baseline SHALL be **empirical and domain-specific**, with separate baseline distributions for `VISION` and `NLP`.
-
-Each domain baseline SHALL be established from a fixed, scanner-controlled set of clean reference models for that domain. Reference model identities, versions, artifact hashes, probe procedure, and resulting calibration data SHALL be recorded as verification evidence.
-
-The baseline SHALL NOT be derived from the uploaded model itself and SHALL NOT require access to the uploader's original training pipeline.
-
-D3 defines the entropy measurement and baseline methodology only. Conversion of baseline deviation into `S_behavior ∈ [0,1]`, behavioral normalization, and final anomaly/risk thresholds remain governed by D4 and the applicable downstream decisions.
-
-Quantized models do not use the behavioral baseline because behavioral probing is skipped under the finalized format-adaptive design.
-
-**Empirical calibration / verification status:** The methodology is locked, but the empirical baseline values/distributions and calibration evidence have not yet been produced. No numeric baseline, threshold, tolerance, or other empirical parameter may be invented or treated as verified before the approved calibration run is completed.
-
-**Required return/update rule:** After the approved calibration run produces the clean-reference evidence, the agent MUST return to this D3 section and update only the evidence-dependent fields (reference model identities/versions/hashes, measured baseline distributions/parameters, calibration evidence, and any explicitly authorized tolerances). The agent MUST NOT silently resolve D4, D5, D6, or unrelated decisions while performing that update.
-
-Until the calibration evidence is recorded and the applicable verification passes, D3 SHALL be treated as **methodologically locked but empirically pending**, and downstream work that requires the empirical D3 baseline SHALL remain blocked.
-
 ## Intentionally Unresolved Decisions
 
 | Decision | Status |
@@ -341,7 +335,7 @@ Until the calibration evidence is recorded and the applicable verification passe
 | D5 — Risk aggregation | REQUIRED |
 | D6 — Highest-risk-layer aggregation | REQUIRED |
 
-D3's methodology is now locked as a persistent project decision, but its empirical calibration remains pending as stated above. D3–D6 are not resolved by any implementation branch, placeholder, or prior agent choice beyond the explicit D3 methodology decision recorded above. D2 is resolved as a persistent project decision above; its implementation remains subject to Phase 2/CP2 verification.
+D4–D6 are not resolved by any implementation branch, placeholder, or prior agent choice. D2 is resolved as a persistent project decision above; its implementation remains subject to Phase 2/CP2 verification. D3 is methodologically resolved as a persistent project decision above; its empirical calibration/evidence remains pending and must not be invented.
 
 ## Phase Status
 
@@ -441,6 +435,8 @@ This file SHALL describe actual verified state, not intended state.
 
 Do not mark code implemented when scaffolded, outputs produced when mocks, phases complete before verification, decisions resolved because an agent selected an implementation, or dependencies verified merely because they appear in a file.
 
+When a decision is staged as methodologically resolved with empirical, implementation, or verification evidence pending, preserve that distinction explicitly and require the agent to return to the decision record when the pending evidence becomes available. Pending evidence must not be invented or implied by the locked methodology alone.
+
 ## Architecture Integrity
 
 The architecture remains frozen:
@@ -455,7 +451,7 @@ Quantized models bypass behavioral probing under the finalized format-adaptive d
 
 ## Next Permitted Action
 
-Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2 is RESOLVED as a project decision, while D3 methodology is RESOLVED as a project decision with empirical calibration pending. D4–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED. Continue Phase 2 only within the approved D2 handoff boundary and existing Phase 2 plan/verification; do not implement D3 behavioral code, D4–D6, or silently resolve remaining D9 details. After the approved D3 calibration run, return to the D3 section and update its evidence-dependent fields before treating D3 as empirically verified.
+Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2 is RESOLVED as a project decision, with implementation/verification pending. D3 is RESOLVED as a methodology decision, with empirical calibration/evidence pending. D4–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED. Continue Phase 2 only within the approved D2 handoff boundary and existing Phase 2 plan/verification; do not implement D3–D6 or silently resolve remaining D9 details.
 
 **Current D9 frontier: D9.21 — remaining dependency-policy details.**
 
