@@ -4,7 +4,7 @@
 **Architecture Status:** FROZEN
 **Current Phase:** Phase 1 — Mock Pipeline
 **Current Checkpoint:** CP1
-**Current Gate Status:** BLOCKED — D1 REQUIRES MASTER GRAPH RECONCILIATION
+**Current Gate Status:** BLOCKED — CP1 NOT VERIFIED
 **Last Verified Phase:** None
 **Next Permitted Phase:** Phase 1 completion after CP1 PASS
 
@@ -30,9 +30,9 @@ Resolve D1 against the frozen Master Graph, establish the exact 10-feature P1 co
 
 ### D1 — Exact Contract Schemas
 
-**Status: REQUIRED — REOPENED.**
+**Status: RESOLVED.**
 
-The previous six-feature D1 resolution is superseded because it conflicts with the frozen Master Graph. The Master Graph is the sole architectural authority for the static feature set and must be followed exactly for the final P1 feature contract.
+The previous six-feature D1 resolution is superseded because it conflicts with the frozen Master Graph. D1 is now explicitly resolved against the frozen Master Graph; the Master Graph is the sole architectural authority for the static feature set and must be followed exactly for the final P1 feature contract.
 
 The authoritative FP32/FP16 static feature set is **10 features**:
 
@@ -47,7 +47,7 @@ The authoritative FP32/FP16 static feature set is **10 features**:
 9. `sparsity`
 10. `outlier_pct`
 
-The current six-feature executable schema is therefore **not the final D1 contract**. Do not silently treat it as authoritative, extend it by inference, or invent alternate feature semantics. Before real P1 feature finalization, D1 must be explicitly resolved against the Master Graph and the executable schemas must be reconciled to that decision.
+The current six-feature executable schema was not the final D1 contract. D1 is resolved to the 10-feature Master Graph set, and the executable feature schema is reconciled to that decision. No alternate feature semantics are introduced.
 
 The Master Graph remains the source of truth. Any implementation, downstream contract, feature ordering, feature semantics, or TreeSHAP mapping must follow the explicitly resolved Master Graph feature definitions; unresolved differences are a hard stop.
 
@@ -85,7 +85,7 @@ Only a `PASS` checkpoint permits advancement.
 
 | Decision                            | Status   |
 | ----------------------------------- | -------- |
-| D1 — Exact contracts                | REQUIRED |
+| D1 — Exact contracts                | RESOLVED |
 | D2 — Trusted graph handoff          | REQUIRED |
 | D3 — STRIP baseline                 | REQUIRED |
 | D4 — Behavioral normalization       | REQUIRED |
@@ -247,15 +247,14 @@ TreeSHAP attribution and highest-risk-layer determination remain separate mechan
 
 ## Next Permitted Action
 
-**Resolve D1 against the Master Graph before CP1.**
+**D1 is resolved against the Master Graph; complete CP1 verification next.**
 
-The six-feature executable schema is not authoritative. The next permitted actions are:
+The six-feature executable schema is no longer authoritative. D1 is resolved to the frozen Master Graph 10-feature set in the listed order. The next permitted actions are:
 
-1. use the frozen Master Graph as the sole authority for the final 10-feature P1 static feature set;
-2. explicitly resolve D1 against those 10 features and their exact semantics/order;
-3. reconcile the executable schemas to the resolved D1 contract;
-4. mechanically validate the reconciled schemas;
-5. rerun Phase 1 verification and CP1 only after D1 is `RESOLVED`.
+1. mechanically validate the reconciled executable schemas;
+2. update/verify Phase 1 mock artifacts against the 10-feature contract;
+3. complete the remaining CP1 adversarial, failure-mode, regression, and review evidence;
+4. mark CP1 `PASS` only when every required criterion has evidence and authorized human/independent review is recorded.
 
 No dependent phase may be treated as active merely because Phase 1 work has started.
 

@@ -42,17 +42,17 @@ CP1 may be marked PASS only when all required criteria are PASS.
 
 ## D1 — Exact Contract Fields
 
-**Current D1 status: REQUIRED / REOPENED.** The frozen Master Graph is the sole authority for the final P1 static feature set. Its FP32/FP16 feature vector is: `entropy`, `pov_chi2`, `lsb_kl`, `ks_stat`, `mean`, `std`, `skewness`, `kurtosis`, `sparsity`, `outlier_pct`. The current six-feature executable schema must not be treated as final.
+**Current D1 status: RESOLVED.** The frozen Master Graph is the sole authority for the final P1 static feature set. Its FP32/FP16 feature vector is: `entropy`, `pov_chi2`, `lsb_kl`, `ks_stat`, `mean`, `std`, `skewness`, `kurtosis`, `sparsity`, `outlier_pct`. The executable schema has been reconciled to this 10-feature contract.
 
-* [ ] D1 is explicitly resolved against the Master Graph 10-feature set.
-* [ ] `features.schema.json` contains the explicitly resolved fields.
+* [x] D1 is explicitly resolved against the Master Graph 10-feature set.
+* [x] `features.schema.json` contains the explicitly resolved 10-feature fields.
 * [ ] `ml_results.schema.json` contains the explicitly approved fields.
 * [ ] `risk_results.schema.json` contains the explicitly approved fields.
 * [ ] No agent-invented contract fields exist.
 * [ ] Producer/consumer ownership is documented.
-* [ ] Feature ordering/semantics are explicitly defined where required.
-* [ ] No unresolved contract ambiguity remains.
-* [ ] No implementation has silently substituted the current six-feature schema for the Master Graph authority.
+* [x] Feature ordering is the frozen Master Graph order; each feature is a numeric per-layer static field, with `sparsity` constrained to [0,1] and `outlier_pct` to [0,100].
+* [x] No unresolved feature-name contract ambiguity remains.
+* [x] No implementation retains the six-feature mapping as the authoritative contract.
 
 **Evidence required:**
 

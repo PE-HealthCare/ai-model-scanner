@@ -2,7 +2,7 @@
 
 ## Status
 
-**Execution state:** IN PROGRESS; D1 is reopened because the prior six-feature resolution conflicts with the frozen Master Graph. CP1 is blocked pending explicit D1 reconciliation.
+**Execution state:** IN PROGRESS; D1 is RESOLVED against the frozen Master Graph 10-feature set. CP1 remains blocked pending full verification evidence.
 
 **Checkpoint:** CP1
 
@@ -95,9 +95,9 @@ D1 covers the exact fields and semantics of the three cross-phase contracts, wit
 * `ml_results.schema.json`;
 * `risk_results.schema.json`.
 
-The currently committed six-feature schema is a temporary inconsistency and is not the final contract. No implementation agent may resolve the difference by inference; D1 must be explicitly reconciled to the Master Graph before real P1 feature finalization.
+The previously committed six-feature schema was a temporary inconsistency. D1 is now explicitly resolved to the Master Graph 10-feature set in the listed order; executable schemas and dependent mappings must use exactly those names.
 
-If D1 is unresolved, Phase 1 is **BLOCKED**.
+D1 is resolved. Phase 1 remains **BLOCKED** until CP1 verification is complete.
 
 An unresolved decision can NEVER be interpreted as approval.
 
