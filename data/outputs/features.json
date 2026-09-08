@@ -1,0 +1,29 @@
+{
+  "producer": "P1",
+  "mock_status": "MOCK",
+  "contract_version": "1.0",
+  "generation_commit": "PHASE1-MOCK-VERIFY",
+  "input_domain": "VISION",
+  "is_quantized": false,
+  "layer_count": 2,
+  "static_features": [
+    {
+      "layer_name": "mock.layer1",
+      "entropy": 0.98,
+      "pov_chi2": 1.05,
+      "lsb_kl": 0.02,
+      "ks_stat": 0.12,
+      "sparsity": 0.08,
+      "outlier_pct": 0.3
+    },
+    {
+      "layer_name": "mock.layer2",
+      "entropy": 0.95,
+      "pov_chi2": 1.1,
+      "lsb_kl": 0.03,
+      "ks_stat": 0.15,
+      "sparsity": 0.1,
+      "outlier_pct": 0.4
+    }
+  ]
+}
