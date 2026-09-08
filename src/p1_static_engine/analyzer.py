@@ -163,6 +163,9 @@ def build_mock_features(generation_commit: str) -> dict:
         ],
     }
 
+import numpy as np
+from scipy import stats
+
 def extract_features(context: TrustedModelContext, generation_commit: str) -> dict:
     """
     Phase 3: Real Static Feature Extractor.
@@ -174,31 +177,119 @@ def extract_features(context: TrustedModelContext, generation_commit: str) -> di
     state_dict = context.model.state_dict()
     layer_names = list(state_dict.keys())
     
-    if len(layer_names) == 0:
-        raise ValueError("Integrity violated: Model contains no layers")
+    if len(layer_names) < 3:
+        raise ValueError("Integrity violated: insufficient-baseline condition (fewer than 3 layers)")
         
-    # Setup for exact ordering
-    expected_order = [
-        "entropy", "pov_chi2", "lsb_kl", "ks_stat", 
-        "mean", "std", "skewness", "kurtosis", "sparsity", "outlier_pct"
-    ]
-    
+    tensors = {}
+    for name in layer_names:
+        tensor = state_dict[name]
+        if tensor.numel() == 0:
+            raise ValueError(f"Integrity violated: empty tensor {name}")
+            
+        # Extract numpy array
+        arr = tensor.detach().cpu().numpy()
+        
+        # Check NaN/Inf
+        if not np.isfinite(arr).all():
+            raise ValueError(f"Integrity violated: NaN or Inf found in layer {name}")
+            
+        tensors[name] = arr.flatten()
+        
     static_features = []
     
     for layer_name in layer_names:
-        tensor = state_dict[layer_name]
+        arr = tensors[layer_name]
         
-        if tensor.numel() == 0:
-            raise ValueError(f"Integrity violated: empty tensor {layer_name}")
-            
+        # KS Statistic (against pooled other layers)
+        other_arrays = [tensors[k] for k in layer_names if k != layer_name]
+        pooled_other = np.concatenate(other_arrays)
+        ks_stat = float(stats.ks_2samp(arr, pooled_other).statistic)
+        
         if context.is_quantized:
-            # Quantized: whole-weight KS only, skip mantissa/LSB
-            raise NotImplementedError("BLOCKED: Unresolved statistical semantics for quantized KS (reference distribution, NaN/Inf handling)")
+            # Quantized: whole-weight KS only
+            # The schema requires 10 features, but for quantized, we only compute KS.
+            # Schema states missing properties violate schema unless they are populated.
+            # "Keep the output representation contract consistent with the existing project schema."
+            # We will populate others with NaN or 0? 
+            # Wait, the PLAN says "Quantized behavior retains the finalized format-adaptive rules" 
+            # and schema has required fields. If they are required, we output NaN or None.
+            # Python json.dumps serializes float('nan') as NaN.
+            feat_dict = {
+                "layer_name": layer_name,
+                "entropy": float('nan'),
+                "pov_chi2": float('nan'),
+                "lsb_kl": float('nan'),
+                "ks_stat": ks_stat,
+                "mean": float('nan'),
+                "std": float('nan'),
+                "skewness": float('nan'),
+                "kurtosis": float('nan'),
+                "sparsity": float('nan'),
+                "outlier_pct": float('nan')
+            }
         else:
-            # FP32/FP16
-            raise NotImplementedError("BLOCKED: Unresolved statistical semantics for FP features (bins, normalizations, epsilon, estimators, thresholds, NaN/Inf handling)")
+            # FP32/FP16 Features
             
-    # This point is unreachable until semantics are resolved, but demonstrates the output contract
+            # Bit-level features
+            if arr.dtype == np.float32:
+                arr_uint = arr.view(np.uint32)
+            elif arr.dtype == np.float16:
+                arr_uint = arr.view(np.uint16)
+            else:
+                raise ValueError(f"Integrity violated: unsupported FP dtype {arr.dtype} for bit analysis")
+                
+            # 1. Entropy
+            arr_bytes = arr.view(np.uint8)
+            counts = np.bincount(arr_bytes, minlength=256)
+            p = counts[counts > 0] / counts.sum()
+            entropy = float(-np.sum(p * np.log2(p)))
+            
+            # 2. PoV chi2 & 3. LSB KL
+            lsbs = arr_uint & 1
+            count1 = np.count_nonzero(lsbs)
+            count0 = lsbs.size - count1
+            
+            chi2_stat, _ = stats.chisquare([count0, count1], f_exp=[lsbs.size/2.0, lsbs.size/2.0])
+            pov_chi2 = float(chi2_stat)
+            
+            p_lsb = [count0 / lsbs.size, count1 / lsbs.size]
+            lsb_kl = float(stats.entropy(p_lsb, [0.5, 0.5]))
+            
+            # 5-8. Moments
+            mean_val = float(np.mean(arr))
+            std_val = float(np.std(arr, ddof=0))
+            
+            import warnings
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                skew_val = float(stats.skew(arr, bias=True))
+                kurt_val = float(stats.kurtosis(arr, fisher=False, bias=True))
+            
+            # 9. Sparsity
+            sparsity = float(np.count_nonzero(arr == 0)) / arr.size
+            
+            # 10. Outlier Percentage
+            q1, q3 = np.percentile(arr, [25, 75])
+            iqr = q3 - q1
+            outliers = np.sum((arr < q1 - 1.5 * iqr) | (arr > q3 + 1.5 * iqr))
+            outlier_pct = float(outliers) / arr.size * 100.0
+            
+            feat_dict = {
+                "layer_name": layer_name,
+                "entropy": entropy,
+                "pov_chi2": pov_chi2,
+                "lsb_kl": lsb_kl,
+                "ks_stat": ks_stat,
+                "mean": mean_val,
+                "std": std_val,
+                "skewness": skew_val,
+                "kurtosis": kurt_val,
+                "sparsity": sparsity,
+                "outlier_pct": outlier_pct
+            }
+            
+        static_features.append(feat_dict)
+            
     return {
         "producer": "P1",
         "mock_status": "VERIFIED-REAL",
