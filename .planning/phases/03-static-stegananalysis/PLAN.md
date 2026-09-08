@@ -11,7 +11,7 @@ Phase 3 produces the first verified real `features.json` using the verified Phas
 
 ## 1. Agent Execution Control
 
-If CP2 is not APPROVED, the agent is BLOCKED for real static implementation.
+If CP2 is not PASS, the agent is BLOCKED for real static implementation.
 
 The agent may prepare tests and isolated scaffolding while waiting, but must not mark any feature artifact VERIFIED-REAL.
 

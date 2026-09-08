@@ -109,4 +109,4 @@ Provenance:
 Final state: PASS / FAIL / BLOCKED
 ```
 
-CP5 is APPROVED only after every required criterion is PASS and independent approval is recorded.
+CP5 may be marked PASS only after every required criterion is PASS and independent approval is recorded.

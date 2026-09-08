@@ -20,7 +20,7 @@ Before changing code, the agent MUST:
 5. Modify only authorized Phase-2 files.
 6. Record evidence for every verification criterion.
 
-If CP1 is not APPROVED, Phase 2 is **BLOCKED**. The agent may inspect code and prepare non-authoritative design notes, but must not implement real intake against an unapproved contract.
+If CP1 is not PASS, Phase 2 is **BLOCKED**. The agent may inspect code and prepare non-authoritative design notes, but must not implement real intake against an unapproved contract.
 
 ## 2. Ownership and File Scope
 
