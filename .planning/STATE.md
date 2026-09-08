@@ -4,7 +4,7 @@
 **Architecture Status:** FROZEN
 **Current Phase:** Phase 1 — Mock Pipeline
 **Current Checkpoint:** CP1
-**Current Gate Status:** READY FOR CP1 EXECUTION
+**Current Gate Status:** BLOCKED — D1 REQUIRES MASTER GRAPH RECONCILIATION
 **Last Verified Phase:** None
 **Next Permitted Phase:** Phase 1 completion after CP1 PASS
 
@@ -22,7 +22,7 @@ It SHALL NOT redefine the architecture or silently resolve design decisions.
 
 ## Current Objective
 
-Complete Phase 1 by establishing the exact JSON contract fields and producing clearly identified mock artifacts that conform to those contracts.
+Resolve D1 against the frozen Master Graph, establish the exact 10-feature P1 contract, reconcile the executable schemas, and only then complete CP1 mock verification.
 
 ---
 
