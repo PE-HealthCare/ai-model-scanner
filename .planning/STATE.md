@@ -110,46 +110,36 @@ Downstream stages consume outputs from the current pipeline execution only. `gen
 D9 is being resolved as explicit sub-decisions. Only the sub-decisions listed as LOCKED below are settled. Remaining D9 sub-decisions remain REQUIRED and must not be inferred from this file.
 
 #### D9.1 — Python baseline
-
-**Status: LOCKED.**
-
-- Python **3.11.x** is the project baseline.
+**Status: LOCKED.** Python **3.11.x**.
 
 #### D9.2 — Execution hardware
-
-**Status: LOCKED.**
-
-- **CPU-only** is the authoritative execution environment.
-- GPU/CUDA is not required for the authoritative pipeline or PASS/REVIEW/FAIL result.
+**Status: LOCKED.** **CPU-only** is the authoritative execution environment; GPU/CUDA is not required for the authoritative pipeline or PASS/REVIEW/FAIL result.
 
 #### D9.3 — PyTorch stack
-
-**Status: LOCKED.**
-
-- `torch==2.3.1`
-- `torchvision==0.18.1`
-
-This is the pinned PyTorch/torchvision pair for the project CPU execution environment.
+**Status: LOCKED.** `torch==2.3.1`, `torchvision==0.18.1`.
 
 #### D9.4 — Transformers
+**Status: LOCKED.** `transformers==4.41.2`.
 
-**Status: LOCKED.**
+#### D9.5 — SafeTensors
+**Status: LOCKED.** `safetensors==0.4.3`.
 
-- `transformers==4.41.2`
+This is the pinned SafeTensors dependency for the security-critical P1 zero-trust intake boundary.
 
-This is the pinned Transformers dependency for the trusted `distilbert` architecture.
+#### D9.6 — NumPy
+**Status: LOCKED.** `numpy==1.26.4`.
 
-#### D9.5 and later — NOT YET RESOLVED
+This is the pinned NumPy dependency for the Python 3.11 / PyTorch 2.3.1 compatibility baseline.
 
-SafeTensors, NumPy, SciPy, LightGBM, SHAP, jsonschema, installation-source/reproducibility details, and any other dependency-policy details remain **REQUIRED** until explicitly agreed.
+#### D9.7 and later — NOT YET RESOLVED
+
+SciPy, LightGBM, SHAP, jsonschema, installation-source/reproducibility details, and any other dependency-policy details remain **REQUIRED** until explicitly agreed.
 
 No implementation choice may silently resolve a remaining D9 sub-decision.
 
 ---
 
 ## Intentionally Unresolved Decisions
-
-The following remain **REQUIRED** and must be explicitly decided before dependent implementation where applicable:
 
 | Decision | Status |
 |---|---|
@@ -187,8 +177,6 @@ D2–D6 are not resolved by any implementation branch, placeholder, or prior age
 
 Only a `PASS` checkpoint permits advancement.
 
----
-
 ## Verified Implementation Status
 
 - Real P1 zero-trust intake: **not verified**
@@ -198,8 +186,6 @@ Only a `PASS` checkpoint permits advancement.
 - Final integration: **not verified**
 
 Locked decisions are requirements for implementation; they are not evidence that implementation exists.
-
----
 
 ## Current Dependency Chain
 
@@ -228,8 +214,6 @@ Phase 6 Integration
  ↓
 CP6 PASS
 ```
-
----
 
 ## Hard-Stop Conditions
 
@@ -275,33 +259,15 @@ The architecture remains frozen:
 P1 → P3 → P2 → P3
 ```
 
-with:
-
-```text
-P1 Zero-Trust Intake
-       ↓
-P1 Static Steganalysis
-       ↓
-features.json
-       ↓
-P3 LightGBM + TreeSHAP
-       ↓
-ml_results.json
-       ↓
-P2 STRIP + Risk Aggregation
-       ↓
-risk_results.json
-       ↓
-P3 Security Report / Dashboard
-```
+with P1 zero-trust intake → static steganalysis → `features.json` → P3 LightGBM + TreeSHAP → `ml_results.json` → P2 STRIP + risk aggregation → `risk_results.json` → P3 security report/dashboard.
 
 Quantized models bypass behavioral probing under the finalized format-adaptive design. TreeSHAP attribution and highest-risk-layer determination remain separate mechanisms.
 
 ## Next Permitted Action
 
-Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2–D6 remain REQUIRED. D9 is partially resolved; continue only with the next explicitly proposed D9 sub-decision and obtain explicit agreement before recording it as LOCKED.
+Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2–D6 remain REQUIRED. D9 is partially resolved; continue only with the next explicitly proposed D9 sub-decisions and obtain explicit agreement before recording them as LOCKED.
 
-**Current D9 frontier: D9.5 — SafeTensors version.**
+**Current D9 frontier: D9.7 — SciPy version; D9.8 — LightGBM version.**
 
 ## Final Rule
 
