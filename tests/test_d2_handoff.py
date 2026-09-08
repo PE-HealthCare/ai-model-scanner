@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from src.p1_static_engine.analyzer import TrustedModelContext
-from src import scan_model
+import scan_model
 
 
 class TestD2Handoff(unittest.TestCase):
