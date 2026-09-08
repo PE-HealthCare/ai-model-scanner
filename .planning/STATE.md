@@ -233,7 +233,36 @@ Verification must confirm:
 
 Any mismatch, missing package, version drift, unresolved lock entry, hash-integrity failure, or unsupported environment condition results in **BLOCKED** verification. The verifier must not auto-upgrade, auto-downgrade, or silently repair the environment and then claim the original environment was verified.
 
-#### D9.17 and later — NOT YET RESOLVED
+#### D9.17 — Authoritative Platform Scope
+**Status: LOCKED.**
+
+The authoritative reproducibility scope is:
+
+- **Windows x86-64**
+- **Linux x86-64**
+- **Python 3.11.x**
+- **CPU-only** execution
+
+The lock artifact must represent platform-specific package artifacts and hashes explicitly for each supported platform where artifacts differ. A platform-specific artifact/hash must not be treated as universal. Unsupported platforms are **BLOCKED** for authoritative verification.
+
+This scope is consistent with the official PyTorch 2.3.1 / torchvision 0.18.1 CPU wheel availability documented for Linux and Windows. citeturn0search0turn0search4
+
+#### D9.18 — Authoritative Dependency Installation Procedure
+**Status: LOCKED.**
+
+The authoritative environment shall be installed only through a documented clean-environment procedure:
+
+1. Create a clean Python **3.11.x** environment.
+2. Use the generated authoritative requirements lock artifact for installation.
+3. Use the official PyTorch CPU wheel index for `torch` / `torchvision` as required by D9.11.
+4. Enforce pip hash checking with `--require-hashes`; all requirements must be pinned and hashed.
+5. Do not use Git/VCS sources, arbitrary repositories, local unpublished packages, source distributions, or unpinned substitutions as authoritative inputs.
+6. Run the D9.16 environment verification after installation.
+7. Any installation or verification mismatch results in **BLOCKED**; the procedure must not auto-repair the environment and then claim authoritative verification.
+
+pip documents `--require-hashes` and requires pinned/hash-covered requirements in hash-checking mode. citeturn0search3turn0search5
+
+#### D9.19 and later — NOT YET RESOLVED
 
 Any remaining dependency-policy details remain **REQUIRED** until explicitly agreed. No implementation choice may silently resolve a remaining D9 sub-decision.
 
@@ -363,9 +392,9 @@ Quantized models bypass behavioral probing under the finalized format-adaptive d
 
 ## Next Permitted Action
 
-Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.16 are LOCKED, while D9.17+ remain REQUIRED. Continue only with the next explicitly proposed D9 sub-decisions and obtain explicit agreement before recording them as LOCKED.
+Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.18 are LOCKED, while D9.19+ remain REQUIRED. Continue only with the next explicitly proposed D9 sub-decisions and obtain explicit agreement before recording them as LOCKED.
 
-**Current D9 frontier: D9.17 — remaining dependency-policy details.**
+**Current D9 frontier: D9.19 — remaining dependency-policy details.**
 
 ## Final Rule
 
