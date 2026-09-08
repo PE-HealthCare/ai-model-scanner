@@ -2,7 +2,7 @@
 
 ## Status
 
-**Execution state:** BLOCKED until the required contract decision is resolved.
+**Execution state:** IN PROGRESS; D1 is resolved and CP1 verification is pending.
 
 **Checkpoint:** CP1
 

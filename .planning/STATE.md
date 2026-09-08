@@ -26,7 +26,7 @@ Complete Phase 1 by establishing the exact JSON contract fields and producing cl
 
 ---
 
-## Current Blocker
+## Current D1 Decision Record
 
 ### D1 — Exact Contract Schemas
 
