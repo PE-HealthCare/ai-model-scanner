@@ -53,7 +53,7 @@ Establish the initial contracts and validate the intended end-to-end flow using 
 
 Exact contract fields must be agreed.
 
-This is **D1 — DECISION REQUIRED**.
+This was **D1 — now RESOLVED / LOCKED**.
 
 ### Verification Gate
 
@@ -86,7 +86,8 @@ P3 may prepare ML/training scaffolding in parallel, but such preparation is prov
 * trusted standard-library architecture instantiation;
 * `input_domain` tagging;
 * `is_quantized` tagging;
-* bounded/mmap-safe weight access.
+* bounded/mmap-safe weight access;
+* trusted-model handoff consistent with locked D2.
 
 ### Dependency
 
@@ -106,7 +107,10 @@ CP2 requires verification of:
 * domain identification;
 * quantization identification;
 * no uploader-supplied code execution;
-* no unrestricted pickle loading.
+* no unrestricted pickle loading;
+* D2 handoff behavior where exercised.
+
+D2 is architecturally resolved, but its real implementation and verification remain pending and are not implied by the decision record alone.
 
 ---
 
@@ -228,6 +232,14 @@ If P1 feature semantics change after training:
 
 Verified upstream outputs, including P3's real `P_tamper`.
 
+### Decision dependencies
+
+* **D3:** methodology RESOLVED / LOCKED; empirical calibration/evidence pending. Baseline values SHALL NOT be invented and must be populated from the approved calibration process before authoritative behavioral scoring is considered fully evidenced.
+* **D4:** REQUIRED — exact `S_behavior` normalization remains unresolved.
+* **D5:** REQUIRED — exact per-layer → model-level risk aggregation remains unresolved.
+* **D6:** REQUIRED — exact highest-risk-layer aggregation remains unresolved.
+* **D7:** RESOLVED / LOCKED.
+
 ### Verification Gate
 
 **CP5 — Behavioral/Risk Gate**
@@ -241,11 +253,10 @@ CP5 requires:
 * applicable MAD guard behavior;
 * MRS computation;
 * verdict computation;
-* risk contract satisfaction.
+* risk contract satisfaction;
+* all evidence-dependent decisions completed and verified.
 
-If D3, D4, D5, or D7 remains required for completion:
-
-**CP5 = BLOCKED**
+If D4, D5, or D6 remains required, or D3's required empirical calibration/evidence remains incomplete, CP5 is `BLOCKED`. D3's locked methodology alone does not constitute full D3 evidence.
 
 No silent substitute behavior is permitted.
 
@@ -351,6 +362,8 @@ When blocked:
 3. stop dependent work;
 4. do not silently choose a value.
 
+For a staged decision, the agent MUST distinguish the locked methodology from pending implementation, calibration, or verification evidence and MUST return to that decision record when the pending evidence becomes available.
+
 ---
 
 # Execution Sequence
@@ -383,19 +396,19 @@ CP6 PASS
 
 ---
 
-# Decision-Required Register
+# Decision Status Register
 
-* **D1:** Exact contract schemas and fields/types/layout
-* **D2:** Exact in-process trusted-graph handoff mechanism
-* **D3:** STRIP entropy baseline definition
-* **D4:** Exact `S_behavior` normalization
-* **D5:** Per-layer → model-level risk aggregation
-* **D6:** Highest-risk-layer aggregation
-* **D7:** MAD zero/near-zero and low-layer-count guard
-* **D8:** Model staleness protection
-* **D9:** Dependency population and pinning
+* **D1:** RESOLVED / LOCKED — exact contract schemas and fields/types/layout.
+* **D2:** RESOLVED / LOCKED — exact in-process trusted-graph handoff mechanism; implementation/verification pending.
+* **D3:** RESOLVED / LOCKED — STRIP entropy baseline methodology; empirical calibration/evidence pending; values MUST NOT be invented.
+* **D4:** REQUIRED — exact `S_behavior` normalization.
+* **D5:** REQUIRED — per-layer → model-level risk aggregation.
+* **D6:** REQUIRED — highest-risk-layer aggregation.
+* **D7:** RESOLVED / LOCKED — MAD zero/near-zero and low-layer-count guard.
+* **D8:** RESOLVED / LOCKED — model staleness protection.
+* **D9:** REQUIRED / PARTIALLY RESOLVED — D9.1–D9.20 locked; D9.21+ remains required.
 
-These decisions remain unresolved until explicitly resolved.
+These statuses are decision-state records, not implementation or checkpoint evidence.
 
 ---
 
@@ -411,5 +424,6 @@ These decisions remain unresolved until explicitly resolved.
 8. Final P3 training depends on P1's verified real feature extractor.
 9. TreeSHAP attribution and highest-risk-layer determination are separate mechanisms.
 10. Quantized models skip behavioral probing under the finalized design.
-11. Unresolved items are `DECISION REQUIRED`.
-12. Future agents must not silently invent unresolved behavior.
+11. Unresolved items remain `DECISION REQUIRED`.
+12. A locked methodology with pending evidence MUST be represented as pending evidence, not as verified completion.
+13. Future agents must not silently invent unresolved behavior or pending empirical values.
