@@ -31,9 +31,11 @@ A persistent model artifact MUST be traceable to:
 `generation_commit` identifies the producer code revision. `contract_version` identifies the applicable data contract; these values MUST NOT be conflated.
 
 ## 5. STALENESS / RE-VERIFICATION
-If P1 changes feature names, meanings, representation, ordering, or other semantics consumed by the classifier, the existing LightGBM artifact MUST be treated as stale until P3 retrains and re-verifies the model and TreeSHAP mapping.
+D8 is **RESOLVED / LOCKED**. If P1 changes feature names, meanings, representation, ordering, or other semantics consumed by the classifier, the existing LightGBM artifact MUST be treated as stale until P3 retrains and re-verifies the model and TreeSHAP mapping.
 
-If the project has not explicitly resolved D8 (artifact staleness protection), do not invent a different production policy. Record the dependency as DECISION REQUIRED where it blocks final behavior.
+`generation_commit` provides artifact generation identity. Consumers must reject or block stale/mismatched artifacts rather than silently reuse them.
+
+D8 being locked does not itself constitute implementation or verification evidence.
 
 ## 6. SECURITY BOUNDARIES
 - Never execute arbitrary uploaded content from this directory.
