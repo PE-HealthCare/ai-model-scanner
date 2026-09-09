@@ -2,7 +2,7 @@ import struct
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import torch
 from safetensors.torch import save_file
@@ -10,14 +10,15 @@ from safetensors.torch import save_file
 from src.p1_static_engine import analyzer
 from src.p1_static_engine.analyzer import TrustedModelContext
 
+
 class TestZeroTrustIntake(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.test_dir = Path(self.temp_dir.name)
-        
+
     def tearDown(self):
         self.temp_dir.cleanup()
-        
+
     def test_missing_architecture(self):
         path = self.test_dir / "valid.safetensors"
         with open(path, "wb") as f:
@@ -36,11 +37,11 @@ class TestZeroTrustIntake(unittest.TestCase):
     def test_malformed_safetensors(self):
         path = self.test_dir / "malformed.safetensors"
         with open(path, "wb") as f:
-            f.write(struct.pack("<Q", 10)) # Valid header size
+            f.write(struct.pack("<Q", 10))
             f.write(b"NOT_A_JSON")
         with self.assertRaisesRegex(ValueError, "Integrity violated: malformed SafeTensors file"):
             analyzer.intake_model(path, declared_architecture="resnet18")
-            
+
     def test_file_too_small(self):
         path = self.test_dir / "small.safetensors"
         with open(path, "wb") as f:
@@ -87,8 +88,7 @@ class TestZeroTrustIntake(unittest.TestCase):
         path = self.test_dir / "high_rank.safetensors"
         from torchvision.models import resnet18
         m = resnet18()
-        sd = m.state_dict()
-        save_file(sd, path)
+        save_file(m.state_dict(), path)
         with self.assertRaisesRegex(ValueError, "Limit violated: tensor .* rank"):
             analyzer.intake_model(path, declared_architecture="resnet18")
 
@@ -101,17 +101,17 @@ class TestZeroTrustIntake(unittest.TestCase):
         save_file(sd, path)
         with self.assertRaisesRegex(ValueError, "architecture mismatch. Missing tensors: 1"):
             analyzer.intake_model(path, declared_architecture="resnet18")
-            
+
     def test_resnet18_wrong_shape(self):
         path = self.test_dir / "wrong_shape.safetensors"
         from torchvision.models import resnet18
         m = resnet18()
         sd = m.state_dict()
-        sd["conv1.weight"] = torch.zeros(1, 1, 1, 1) # wrong shape
+        sd["conv1.weight"] = torch.zeros(1, 1, 1, 1)
         save_file(sd, path)
         with self.assertRaisesRegex(ValueError, "shape mismatch for tensor conv1.weight"):
             analyzer.intake_model(path, declared_architecture="resnet18")
-            
+
     def test_distilbert_wrong_keys(self):
         path = self.test_dir / "wrong_keys_db.safetensors"
         from transformers import DistilBertConfig, DistilBertModel
@@ -126,24 +126,18 @@ class TestZeroTrustIntake(unittest.TestCase):
         path = self.test_dir / "incompatible_dtype.safetensors"
         from torchvision.models import resnet18
         m = resnet18()
-        sd = m.state_dict()
-        save_file(sd, path)
-        
-        # Monkeypatch safe_open to simulate unknown dtype
+        save_file(m.state_dict(), path)
+
         original_safe_open = analyzer.safe_open
         class MockSlice:
             def __init__(self, s): self.s = s
             def get_shape(self): return self.s.get_shape()
-            def get_dtype(self): return "F128" # unknown dtype
-        
+            def get_dtype(self): return "F128"
+
         class MockSafeOpen:
-            def __init__(self, *args, **kwargs):
-                self.st = original_safe_open(*args, **kwargs)
-            def __enter__(self):
-                self.ctx = self.st.__enter__()
-                return self
-            def __exit__(self, *args):
-                return self.st.__exit__(*args)
+            def __init__(self, *args, **kwargs): self.st = original_safe_open(*args, **kwargs)
+            def __enter__(self): self.ctx = self.st.__enter__(); return self
+            def __exit__(self, *args): return self.st.__exit__(*args)
             def metadata(self): return self.ctx.metadata()
             def keys(self): return self.ctx.keys()
             def get_slice(self, key): return MockSlice(self.ctx.get_slice(key))
@@ -152,7 +146,7 @@ class TestZeroTrustIntake(unittest.TestCase):
         with patch("src.p1_static_engine.analyzer.safe_open", new=MockSafeOpen):
             with self.assertRaisesRegex(ValueError, "unknown or incompatible dtype"):
                 analyzer.intake_model(path, declared_architecture="resnet18")
-                
+
     def test_mixed_dtype(self):
         path = self.test_dir / "mixed_dtype.safetensors"
         from torchvision.models import resnet18
@@ -160,56 +154,55 @@ class TestZeroTrustIntake(unittest.TestCase):
         sd = m.state_dict()
         sd["conv1.weight"] = sd["conv1.weight"].to(torch.int8)
         save_file(sd, path)
-        
         with self.assertRaisesRegex(ValueError, "mixed/inconsistent dtype state"):
             analyzer.intake_model(path, declared_architecture="resnet18")
-            
-    def test_quantized_unsupported(self):
+
+    def test_quantized_int8_is_accepted_and_preserved(self):
         path = self.test_dir / "quant.safetensors"
         from torchvision.models import resnet18
         m = resnet18()
         sd = m.state_dict()
-        for k in sd.keys():
-            if sd[k].dtype in (torch.float32, torch.float16):
-                sd[k] = sd[k].to(torch.int8)
+        for key, tensor in list(sd.items()):
+            if tensor.is_floating_point():
+                sd[key] = tensor.to(torch.int8)
         save_file(sd, path)
-        with self.assertRaisesRegex(ValueError, "unsupported-quantized-graph"):
-            analyzer.intake_model(path, declared_architecture="resnet18")
+
+        ctx = analyzer.intake_model(path, declared_architecture="resnet18")
+        self.assertIsInstance(ctx, TrustedModelContext)
+        self.assertTrue(ctx.is_quantized)
+        self.assertIsInstance(ctx.model, dict)
+        self.assertEqual(ctx.model["conv1.weight"].dtype, torch.int8)
+        self.assertEqual(ctx.model["conv1.weight"].flatten()[0].item(), sd["conv1.weight"].flatten()[0].item())
 
     def test_successful_resnet18(self):
         path = self.test_dir / "success_rn18.safetensors"
         from torchvision.models import resnet18
         m = resnet18()
         sd = m.state_dict()
-        
-        # Modify a weight to prove it's loaded correctly
         sd["conv1.weight"].fill_(42.0)
-        
         save_file(sd, path)
-        
+
         ctx = analyzer.intake_model(path, declared_architecture="resnet18")
         self.assertIsInstance(ctx, TrustedModelContext)
         self.assertIsNotNone(ctx.model)
         self.assertEqual(ctx.architecture, "resnet18")
         self.assertEqual(ctx.input_domain, "VISION")
-        self.assertEqual(ctx.is_quantized, False)
-        
-        # Prove the returned model contains the submitted values, not random initialization
-        self.assertEqual(ctx.model.conv1.weight[0,0,0,0].item(), 42.0)
-        
+        self.assertFalse(ctx.is_quantized)
+        self.assertEqual(ctx.model.conv1.weight[0, 0, 0, 0].item(), 42.0)
+
     def test_successful_distilbert(self):
         path = self.test_dir / "success_db.safetensors"
         from transformers import DistilBertConfig, DistilBertModel
         m = DistilBertModel(DistilBertConfig())
-        sd = m.state_dict()
-        save_file(sd, path)
-        
+        save_file(m.state_dict(), path)
+
         ctx = analyzer.intake_model(path, declared_architecture="distilbert")
         self.assertIsInstance(ctx, TrustedModelContext)
         self.assertIsNotNone(ctx.model)
         self.assertEqual(ctx.architecture, "distilbert")
         self.assertEqual(ctx.input_domain, "NLP")
-        self.assertEqual(ctx.is_quantized, False)
+        self.assertFalse(ctx.is_quantized)
+
 
 if __name__ == "__main__":
     unittest.main()
