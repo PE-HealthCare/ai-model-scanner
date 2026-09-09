@@ -21,6 +21,8 @@ If CP4 is not PASS, final P_tamper consumption is BLOCKED.
 
 If required upstream artifacts are missing/stale/malformed, final risk output is BLOCKED.
 
+When a decision is methodologically locked but implementation, calibration, or verification evidence is pending, the agent MUST preserve that distinction and MUST NOT invent the pending evidence.
+
 ## 2. Allowed Files
 
 Allowed:
@@ -62,9 +64,20 @@ Time and resource limits must also be respected where required.
 
 ## 4. D3 — STRIP Baseline
 
-The exact STRIP entropy baseline remains DECISION REQUIRED until explicitly resolved.
+D3 methodology is **RESOLVED / LOCKED**, but empirical calibration/evidence is pending.
 
-Do not invent a baseline.
+The locked methodology is:
+
+- non-quantized models only;
+- Shannon entropy over the model's softmax output probability distribution;
+- existing 32 domain-appropriate probes;
+- empirical, domain-specific baseline distributions;
+- fixed, scanner-controlled clean reference models for the corresponding domain;
+- no baseline derived from the uploaded model itself.
+
+The actual calibrated baseline distributions and supporting evidence are not yet populated. **Do not invent baseline values.** After the approved calibration run completes, return to the D3 decision record in `.planning/STATE.md`, record the measured evidence/evidence-dependent parameters, and re-verify downstream consistency.
+
+D3 does not determine the conversion from baseline deviation to `S_behavior ∈ [0,1]`; that remains D4.
 
 ## 5. D4 — Behavioral Normalization
 
@@ -98,9 +111,11 @@ FAIL: 70–100
 
 D5 remains DECISION REQUIRED for exact per-layer→model aggregation.
 
-D7 remains DECISION REQUIRED for zero/near-zero MAD and insufficient-layer handling.
+D6 remains DECISION REQUIRED for exact highest-risk-layer aggregation.
 
-Do not silently choose those semantics.
+D7 is **RESOLVED / LOCKED**. The approved zero/near-zero MAD and insufficient-layer behavior is recorded in `.planning/STATE.md` and must be followed exactly; no fallback may be invented.
+
+Do not silently choose D5 or D6 semantics.
 
 ## 7. Mock / Real Lifecycle
 
@@ -112,7 +127,7 @@ A real risk artifact requires:
 
 - verified-real P1 inputs;
 - verified-real P3 `ml_results.json`;
-- approved D3/D4/D5/D7 semantics;
+- approved D3/D4/D5/D6/D7 semantics and all required D3 calibration evidence;
 - actual P2 execution;
 - provenance;
 - verification PASS.
@@ -166,7 +181,7 @@ CP5 PASS requires all required decisions resolved and:
 - domain-adaptive probes;
 - approved bounded inference;
 - quantized bypass;
-- approved H_STRIP baseline;
+- approved H_STRIP baseline methodology and completed calibration evidence;
 - approved S_behavior normalization;
 - approved aggregation;
 - approved MAD handling;
@@ -177,4 +192,4 @@ CP5 PASS requires all required decisions resolved and:
 - adversarial tests;
 - evidence.
 
-Required unresolved D3/D4/D5/D7 = BLOCKED, never PASS.
+D3 methodology being locked does not by itself complete D3 evidence. Required unresolved D4/D5/D6, or pending D3 empirical calibration/evidence, blocks CP5; never substitute guessed values.

@@ -6,9 +6,11 @@ Exactly:
 
 PASS / FAIL / BLOCKED
 
-Required unresolved decision = BLOCKED.
+Required unresolved decision or required pending evidence = BLOCKED for the affected authoritative completion criterion.
 
 A checkbox without evidence is not verification.
+
+A methodology that is locked while implementation/calibration evidence is pending SHALL NOT be treated as fully verified.
 
 ## 2. Prerequisites
 
@@ -35,19 +37,39 @@ If production bound is unresolved: BLOCKED.
 
 ## 5. D3 / D4
 
-- [ ] STRIP baseline explicitly resolved.
-- [ ] H_STRIP→S_behavior normalization explicitly resolved.
-- [ ] no invented baseline/threshold/fallback exists.
+### D3 — STRIP baseline
 
-Unresolved D3 or D4 = BLOCKED.
+- [ ] D3 methodology matches the locked project decision:
+  - non-quantized models only;
+  - Shannon entropy over softmax output probabilities;
+  - existing 32 domain-appropriate probes;
+  - empirical, domain-specific baseline distributions;
+  - fixed scanner-controlled clean reference models;
+  - no baseline derived from the uploaded model.
+- [ ] required empirical calibration run completed;
+- [ ] measured VISION/NLP baseline evidence recorded in `.planning/STATE.md`;
+- [ ] evidence-dependent parameters, if any, are explicitly recorded;
+- [ ] no invented baseline values, thresholds, or fallback behavior exists.
+
+D3 methodology being locked is not sufficient for full authoritative behavioral verification while required calibration evidence is pending.
+
+### D4 — Behavioral normalization
+
+- [ ] H_STRIP→S_behavior normalization explicitly resolved.
+- [ ] no invented threshold, clipping, normalization, or fallback behavior exists.
+
+Unresolved D4 or incomplete required D3 calibration/evidence = BLOCKED.
 
 ## 6. Risk Aggregation
 
 - [ ] per-layer→model aggregation follows approved D5;
-- [ ] D7 MAD handling follows approved decision;
+- [ ] highest-risk-layer aggregation follows approved D6;
+- [ ] D7 MAD handling follows approved locked decision;
 - [ ] final non-quantized formula exact;
 - [ ] final quantized formula exact;
 - [ ] verdict ranges exact.
+
+Unresolved D5 or D6 = BLOCKED for the affected authoritative risk/reporting completion.
 
 ## 7. Mandatory Adversarial Tests
 
@@ -84,10 +106,10 @@ NO FABRICATED OUTPUT
 
 ## 9. Scope
 
-- [ ] only Phase-5 files changed;
+- [ ] only Phase-5 implementation/test files changed during Phase-5 implementation;
 - [ ] no P1/P3 implementation changes;
 - [ ] no unauthorized integration changes;
-- [ ] no governance changes.
+- [ ] governance/documentation synchronization is separately authorized and recorded when required.
 
 ## 10. CP5 Evidence
 
@@ -98,9 +120,11 @@ Reviewer:
 CP4:
 Probe evidence:
 Bound evidence:
-D3:
+D3 methodology:
+D3 empirical calibration/evidence:
 D4:
 D5:
+D6:
 D7:
 MRS:
 Verdict:
@@ -109,4 +133,4 @@ Provenance:
 Final state: PASS / FAIL / BLOCKED
 ```
 
-CP5 may be marked PASS only after every required criterion is PASS and independent approval is recorded.
+CP5 may be marked PASS only after every required criterion is PASS, all required evidence is present, and independent approval is recorded.

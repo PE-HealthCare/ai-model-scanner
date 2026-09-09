@@ -78,20 +78,16 @@ Do not invent epsilon values, bins, thresholds, or fallbacks.
 
 ## 5. D7 — MAD Guard
 
-Detection of degenerate MAD or insufficient comparable layers is allowed.
+D7 is **RESOLVED / LOCKED**. Its implementation semantics are fixed and must not be replaced by an agent-selected fallback:
 
-Choosing an unapproved numerical fallback is forbidden.
+- finite nonzero MAD: use the actual MAD directly; no epsilon;
+- exact MAD = 0 and target = median: deterministic zero anomaly;
+- exact MAD = 0 and target != median: `DEGENERATE_DEVIATION`;
+- 1–2 comparable layers: baseline evidence unavailable; block downstream scoring requiring it;
+- invalid numeric data (NaN/Inf/missing): invalid; no imputation;
+- very small nonzero MAD: use the actual value.
 
-Until D7 is resolved:
-
-```text
-condition detected
-→ record condition
-→ do not invent fallback
-→ final risk evidence BLOCKED
-```
-
-Do not silently replace zero MAD with an arbitrary epsilon.
+Verification evidence for these locked semantics is still required at the applicable gate. A locked decision is not itself implementation evidence.
 
 ## 6. Mock / Real Lifecycle
 

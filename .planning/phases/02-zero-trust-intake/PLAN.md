@@ -54,7 +54,7 @@ Phase 2 requires:
 
 The agent MUST WAIT/BLOCK if any required prerequisite is missing.
 
-The agent MUST NOT resolve D1 or D9 by guessing.
+D1 is RESOLVED/LOCKED. D2 is RESOLVED/LOCKED at the architectural level, but its real implementation and verification evidence are COMPLETE and were demonstrated and accepted at CP2. D9.1–D9.20 are locked; remaining D9.21+ details remain required. The agent MUST NOT silently resolve any remaining D9 item.
 
 ## 4. Security Boundary
 
@@ -83,7 +83,25 @@ SafeTensors processing MUST enforce approved finite resource limits covering, as
 - maximum memory/resource use;
 - maximum processing time.
 
-If exact limits are not approved, the agent MUST NOT invent production values. The affected behavior is BLOCKED until the limit is resolved.
+The authoritative hard production limits are:
+
+| Resource | Hard limit |
+|---|---:|
+| SafeTensors header | **5 MB** |
+| Metadata | 1 MB |
+| Tensor count | 10,000 |
+| Maximum tensor rank | 8 |
+| Maximum dimension | 1,000,000 |
+| Model file size | 2 GB |
+
+Operational targets remain:
+
+- Intake memory target: `<50 MB`
+- Intake processing-time target: `<0.5 sec`
+
+The 5 MB SafeTensors header limit is the explicitly locked resolution to the previously identified conflict between the 100 MB header boundary, the `<50 MB` operational memory target, and the mandatory native `safetensors.safe_open()` parser. It is a hard production security limit, not an illustrative test value.
+
+When a hard limit is exceeded, intake fails closed and reports the exact exceeded limit. No per-tensor quota heuristics, no configuration-file override, and no limit-tuning CLI flag are part of this decision.
 
 A test may use a fixture-specific bound only when that bound is explicitly identified as a test fixture limit and not represented as the production policy.
 
@@ -143,7 +161,7 @@ A successful intake must make available the trusted graph and approved metadata 
 
 The trusted graph MUST NOT be independently reloaded unsafely by downstream phases.
 
-The exact P1→P2 handoff mechanism remains governed by D2. Do not invent a cross-process or serialization mechanism.
+D2 is now the locked architectural handoff: P1 constructs the trusted, weight-loaded model; `scan_model.py` passes the already-created trusted model/context to P2 by in-process Python object reference during the same pipeline execution. No downstream serialization/reload or alternative model construction is permitted. The exact Python representation remains an implementation detail. Real implementation and verification evidence are COMPLETE; CP2 PASS was independently reviewed and accepted.
 
 ## 10. Failure Behavior
 

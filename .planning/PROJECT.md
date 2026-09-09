@@ -139,16 +139,20 @@ Specifically:
 * SafeTensors header parsing is bounded.
 * Uploaded weight bytes are treated as untrusted input.
 
-## Key Limitations
+## Decision Status / Current Limitations
+
+The project distinguishes **locked decision methodology**, **implementation/verification status**, and **empirical evidence**. A locked decision does not by itself prove implementation or checkpoint completion.
 
 * The static baseline is intra-model (layer-vs-layer); no external clean reference model is required or used at runtime.
-* Intra-model MAD baselines can be weak when a model has very few layers.
-* MAD zero/near-zero and low-layer-count guard behavior remains unresolved.
+* D2 (trusted graph handoff) is resolved and locked; its real implementation and CP2 verification are COMPLETE and have been independently approved.
+* D3 (STRIP entropy baseline) is methodologically resolved and locked, but its empirical calibration/evidence is pending. Baseline values must not be invented; the approved calibration run must populate the evidence before D3 is considered fully evidenced for authoritative behavioral scoring.
+* D4 (behavioral normalization), D5 (per-layer to model-level risk aggregation), and D6 (highest-risk-layer aggregation) remain explicitly unresolved and must not be silently invented.
+* D7 (MAD degenerate/insufficient-baseline guard) is resolved and locked.
+* D8 (artifact staleness protection) is resolved and locked.
+* D9 remains partially resolved: D9.1–D9.20 are locked, while D9.21+ remain required.
 * TreeSHAP explains feature contribution to the classifier prediction; it does not by itself determine the highest-risk neural-network layer.
-* Feature-to-layer aggregation for highest-risk-layer reporting remains explicitly unresolved unless separately specified.
 * A `PASS` verdict is evidence only within the scanner's detection scope; it is **not** a guarantee of absolute security.
-* Several contract, aggregation, normalization, dependency, and reproducibility details remain `DECISION REQUIRED`.
-* Future implementation must not silently invent unresolved behavior.
+* Future implementation must not silently invent unresolved behavior or treat pending implementation/evidence as already verified.
 
 ## Source of Truth
 
@@ -167,4 +171,6 @@ Future agents must:
 5. never treat scaffolding as implementation;
 6. never treat mock artifacts as real outputs;
 7. never silently invent unresolved decisions;
-8. stop when a required dependency or decision is blocking progress.
+8. distinguish a locked methodology from pending implementation or empirical evidence;
+9. when pending evidence becomes available, return to the corresponding decision record, update only the evidence-dependent portion, and re-verify downstream consistency;
+10. stop when a required dependency or decision is blocking progress.

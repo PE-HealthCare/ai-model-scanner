@@ -18,8 +18,6 @@ This state file records execution status only. It SHALL NOT redefine the archite
 
 The explicit project decisions recorded below are persistent execution decisions already agreed by the project team. They do not by themselves constitute implementation verification or checkpoint PASS.
 
----
-
 ## Persistent Locked Decisions
 
 ### D1 — Exact Static Feature Contract
@@ -69,6 +67,25 @@ D2 does not change the artifact contracts (`features.json`, `ml_results.json`, o
 
 D2 does not resolve D3, D4, D5, or D6.
 
+**Implementation / verification status:** D2 implementation and verification evidence are COMPLETE.
+D2 was implemented, tested, independently reviewed, accepted at CP2, and integrated into main.
+
+**Status: RESOLVED / LOCKED — METHODOLOGY ONLY; EMPIRICAL CALIBRATION PENDING.**
+
+For non-quantized models, behavioral probing SHALL compute Shannon entropy over the model's softmax output probability distribution for the existing 32 domain-appropriate probes.
+
+The STRIP baseline SHALL be empirical and domain-specific. Separate `VISION` and `NLP` baseline distributions SHALL be established from a fixed, scanner-controlled set of clean reference models for the corresponding domain.
+
+The reference models and resulting calibration evidence SHALL be explicitly recorded before D3 is considered fully evidenced for authoritative behavioral scoring.
+
+The baseline SHALL NOT be derived from the uploaded model itself, and no arbitrary universal numeric entropy threshold may be introduced without corresponding calibration evidence.
+
+D3 defines the entropy measurement and baseline methodology only. The conversion of baseline deviation into `S_behavior ∈ [0,1]` remains D4. Final behavioral anomaly thresholds and risk aggregation remain governed by their respective decisions.
+
+Quantized models do not use the behavioral baseline because behavioral probing is skipped under the finalized quantized path.
+
+**Implementation / empirical-evidence status:** The D3 methodology is locked, but calibration execution, measured baseline distributions, and supporting evidence remain pending. Agents MUST NOT invent baseline values. After the approved calibration run completes, the agent MUST return to this D3 section, record the measured evidence and any evidence-dependent parameters, and re-verify downstream consistency before treating D3 as fully evidenced.
+
 ### Decision 1 — Trusted Architecture Registry
 
 **Status: RESOLVED / LOCKED.**
@@ -97,7 +114,7 @@ Hard fail-closed production limits:
 
 | Resource | Hard limit |
 |---|---:|
-| SafeTensors header | 100 MB |
+| SafeTensors header | **5 MB** |
 | Metadata | 1 MB |
 | Tensor count | 10,000 |
 | Maximum tensor rank | 8 |
@@ -109,9 +126,9 @@ Operational targets (not hard security walls):
 - Intake memory target: `<50 MB`
 - Intake processing-time target: `<0.5 sec`
 
-When a hard limit is exceeded, intake fails closed and reports the exact exceeded limit. No per-tensor quota heuristics, no configuration-file override, and no limit-tuning CLI flag are part of this decision.
+The SafeTensors header limit is **5 MB** and is the locked project boundary. This explicitly supersedes the previous 100 MB header value and resolves the identified conflict between the header boundary, the `<50 MB` operational memory target, and mandatory native `safetensors.safe_open()` parsing. The 5 MB value is a hard production security limit, not an illustrative value.
 
-The 100 MB header value is the locked project limit; it is not merely the illustrative `e.g. 100MB` wording in the original pipeline document.
+When a hard limit is exceeded, intake fails closed and reports the exact exceeded limit. No per-tensor quota heuristics, no configuration-file override, and no limit-tuning CLI flag are part of this decision.
 
 ### D7 — MAD Degenerate Baseline Guard
 
@@ -309,18 +326,15 @@ Until these implementation and verification conditions are satisfied, D9 remains
 
 Any remaining dependency-policy details remain **REQUIRED** until explicitly agreed. No implementation choice may silently resolve a remaining D9 sub-decision.
 
----
-
 ## Intentionally Unresolved Decisions
 
 | Decision | Status |
 |---|---|
-| D3 — STRIP baseline | REQUIRED |
 | D4 — Behavioral normalization | REQUIRED |
 | D5 — Risk aggregation | REQUIRED |
 | D6 — Highest-risk-layer aggregation | REQUIRED |
 
-D3–D6 are not resolved by any implementation branch, placeholder, or prior agent choice. D2 is resolved as a persistent project decision above; its implementation remains subject to Phase 2/CP2 verification.
+D4–D6 are not resolved by any implementation branch, placeholder, or prior agent choice. D2 is resolved as a persistent project decision above; its implementation and verification are COMPLETE with CP2 PASS. D3 is methodologically resolved as a persistent project decision above; its empirical calibration/evidence remains pending and must not be invented.
 
 ## Phase Status
 
@@ -420,6 +434,8 @@ This file SHALL describe actual verified state, not intended state.
 
 Do not mark code implemented when scaffolded, outputs produced when mocks, phases complete before verification, decisions resolved because an agent selected an implementation, or dependencies verified merely because they appear in a file.
 
+When a decision is staged as methodologically resolved with empirical, implementation, or verification evidence pending, preserve that distinction explicitly and require the agent to return to the decision record when the pending evidence becomes available. Pending evidence must not be invented or implied by the locked methodology alone.
+
 ## Architecture Integrity
 
 The architecture remains frozen:
@@ -428,13 +444,13 @@ The architecture remains frozen:
 P1 → P3 → P2 → P3
 ```
 
-with P1 zero-trust intake → static steganalysis → `features.json` → P3 LightGBM + TreeSHAP → `ml_results.json` → P2 STRIP + risk aggregation → `risk_results.json` → P3 security report/dashboard.
+with P1 zero-trust intake → static steganalysis → `features.json` → P3 LightGBM + TreeSHAP → `ml_results.json` → P2 STRIP + risk aggregation → `risk_results.json` → P3 security report.
 
 Quantized models bypass behavioral probing under the finalized format-adaptive design. TreeSHAP attribution and highest-risk-layer determination remain separate mechanisms.
 
 ## Next Permitted Action
 
-Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2 is RESOLVED as a project decision, while D3–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED. Continue Phase 2 only within the approved D2 handoff boundary and existing Phase 2 plan/verification; do not implement D3–D6 or silently resolve remaining D9 details.
+Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2 is RESOLVED as a project decision, with implementation/verification COMPLETE — CP2 PASS. D3 is RESOLVED as a methodology decision, with empirical calibration/evidence pending. D4–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED. Continue Phase 2 only within the approved D2 handoff boundary and existing Phase 2 plan/verification; do not implement D3–D6 or silently resolve remaining D9 details.
 
 **Current D9 frontier: D9.21 — remaining dependency-policy details.**
 
