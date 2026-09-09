@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Risk Aggregation Results",
+  "type": "object",
+  "required": [
+    "producer",
+    "mock_status",
+    "contract_version",
+    "generation_commit",
+    "mrs_score",
+    "verdict",
+    "s_static",
+    "p_tamper",
+    "s_behavior"
+  ],
+  "properties": {
+    "producer": {
+      "type": "string",
+      "enum": [
+        "P2"
+      ]
+    },
+    "mock_status": {
+      "type": "string",
+      "enum": [
+        "MOCK",
+        "VERIFIED-REAL",
+        "STALE"
+      ]
+    },
+    "contract_version": {
+      "type": "string"
+    },
+    "generation_commit": {
+      "type": "string"
+    },
+    "mrs_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "REVIEW",
+        "FAIL"
+      ]
+    },
+    "s_static": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "p_tamper": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "s_behavior": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Null if quantized model skipped probing"
+    }
+  },
+  "additionalProperties": false
+}
