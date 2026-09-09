@@ -1,11 +1,53 @@
 {
-  "producer": "P2",
-  "mock_status": "MOCK",
-  "contract_version": "1.0",
-  "generation_commit": "PHASE1-MOCK-VERIFY",
-  "mrs_score": 8.05,
-  "verdict": "PASS",
-  "s_static": 0.1,
-  "p_tamper": 0.08,
-  "s_behavior": 0.05
+  "mrs": 68.58,
+  "verdict": "REVIEW",
+  "highest_risk_layer": "layer1.0.bn2.weight",
+  "s_behavior": 0.2239395401692257,
+  "bypassed_behavior": false,
+  "p_tamper": 0.6566691853904387,
+  "s_static": 1.0,
+  "shap_explanation": {
+    "entropy": 0.11313247583287589,
+    "pov_chi2": 0.002143407271015996,
+    "lsb_kl": -0.42107816114090185,
+    "ks_stat": -0.4031803024022174,
+    "mean": 0.4811111039214247,
+    "std": 0.0907584462570003,
+    "skewness": -0.016375551735336343,
+    "kurtosis": 0.4691911101960223,
+    "sparsity": 0.3951676351615002,
+    "outlier_pct": -0.16630838862623903
+  },
+  "behavioral_note": "STRIP H_STRIP = 5.111, S_behavior = 0.224",
+  "assumptions_and_limitations": "This assessment is based on static steganalysis and behavioral probing within the tool's detection scope. PASS does not guarantee absolute security or absence of all manipulation. Results are probabilistic and should be used as part of a broader security review.",
+  "_provenance": {
+    "execution_mode": "authoritative",
+    "features_source": {
+      "file": "D:\\TY_SEM_5\\GE HealthCare\\PCC 2026 Problem Statements & Template\\ai-model-scanner-phase-3-static-stegananalysis\\data/inputs/features.json",
+      "producer": "P1",
+      "mock_status": "VERIFIED-REAL",
+      "contract_version": "1.0",
+      "generation_commit": "992eefedc25166b2c9bb29965107732c6b602c45",
+      "hash": "5b87e3c968259f80a8d917cd05cdf6537b8d7b10faf1ba4302df4d157b37eb30"
+    },
+    "ml_source": {
+      "file": "D:\\TY_SEM_5\\GE HealthCare\\PCC 2026 Problem Statements & Template\\ai-model-scanner-phase-3-static-stegananalysis\\data/inputs/ml_results.json",
+      "producer": "P3",
+      "mock_status": "VERIFIED-REAL",
+      "contract_version": "1.0",
+      "generation_commit": "ddd122a760591f91e209371a18bcd96832e3ea27",
+      "hash": "8ebc9d11fb474eebaf99a5c7a470c7da0eb2960e5ca672f3c122bf4bc8087870"
+    },
+    "calibration_hash": "56bebbd4e1afc7a4ba950a9e9a0022c914ce5f3e0672bce2e8476770f4da47de",
+    "p2_commit": "9f05fa1d88c315615cdf33222bdb5367d6c24c38",
+    "run_id": "12df09a1-9cd6-4643-8731-b06df619bc38",
+    "decisions": {
+      "d3": "LOCKED (methodology) / evidence verified",
+      "d4": "LOCKED (formula) / verified",
+      "d5": "LOCKED",
+      "d6": "LOCKED",
+      "d7": "LOCKED"
+    },
+    "timestamp": "2026-09-10T02:44:46.335116"
+  }
 }

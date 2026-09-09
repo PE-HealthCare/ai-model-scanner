@@ -1,7 +1,9 @@
 """Root pipeline orchestration surface with zero-trust D2 handoff boundary."""
 
 from __future__ import annotations
-
+# scan_model.py (updated)
+from src.p2_behavioral_risk.handoff import receive_trusted_model
+# ... rest of the orchestration
 import json
 from pathlib import Path
 

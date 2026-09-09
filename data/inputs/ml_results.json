@@ -1,0 +1,20 @@
+{
+  "producer": "P3",
+  "mock_status": "VERIFIED-REAL",
+  "contract_version": "1.0",
+  "generation_commit": "ddd122a760591f91e209371a18bcd96832e3ea27",
+  "p_tamper": 0.6566691853904387,
+  "shap_attributions": {
+    "entropy": 0.11313247583287589,
+    "pov_chi2": 0.002143407271015996,
+    "lsb_kl": -0.42107816114090185,
+    "ks_stat": -0.4031803024022174,
+    "mean": 0.4811111039214247,
+    "std": 0.0907584462570003,
+    "skewness": -0.016375551735336343,
+    "kurtosis": 0.4691911101960223,
+    "sparsity": 0.3951676351615002,
+    "outlier_pct": -0.16630838862623903
+  },
+  "model_version": "lightgbm-phase4-final"
+}
