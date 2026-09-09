@@ -3,7 +3,7 @@
 **Owner:** P3 reporting / security report surface  
 **Phase:** Phase 6 — Risk Integration + Demo  
 **Gate:** CP6  
-**Status:** **UNRESOLVED — DECISION BOUNDARY REVISED; EXACT SELECTION RULE PENDING**
+**Status:** **PART 1 RESOLVED / LOCKED — AUTHORITY & EVIDENCE CONTRACT; PART 2 PENDING**
 
 ## 1. Purpose
 
@@ -11,20 +11,20 @@ D6 defines how the final security report identifies the highest-risk neural-netw
 
 D6 is a **selection/reporting decision**, not a second model-level risk aggregation algorithm.
 
-## 2. Architectural Boundary
+## 2. Part 1 Locked Architectural Boundary
 
-The intended relationship is:
+Part 1 locks the following ownership and evidence boundary:
 
 ```text
 P1
 ↓
-per-layer feature / layer identity
+authoritative per-layer static evidence + authoritative layer identity
 ↓
 D7 validity / degeneracy handling
 ↓
-D5 per-layer → model-level risk aggregation
+D5 exact per-layer → model-level aggregation
 │
-├── model-level risk evidence
+├── model-level static risk evidence
 │
 └── preserved per-layer evidence + identity
                     ↓
@@ -35,27 +35,47 @@ D5 per-layer → model-level risk aggregation
                P3 security report
 ```
 
-The exact ownership boundary between P1's production/preservation of layer identity and P3's final selection/reporting must be reconciled against the authoritative Master Graph before D6 is locked. The current execution state treats D6 as P3-owned reporting semantics; no implementation change is authorized from this draft alone.
+**Ownership lock:**
 
-## 3. D6 Inputs
+- **P1 owns authoritative production and preservation of per-layer evidence and authoritative layer identity.**
+- **P3/D6 owns final highest-risk-layer selection and security-report presentation.**
+- P1 does not create a competing final D6 selection result.
+- D6 does not recalculate P1 evidence or duplicate D5 model-level aggregation.
 
-D6 SHALL consume only authoritative, valid per-layer evidence already produced/preserved by the upstream pipeline.
+This resolves the historical ownership wording that listed “highest-risk layer” under P1 by distinguishing **production/preservation of the evidence and identity** from **final selection/reporting**. The current architecture assigns static analysis to P1 and reporting/dashboard responsibilities to P3; this Part 1 wording preserves both responsibilities without introducing a fourth owner or redesigning the pipeline.
 
-The final input contract must explicitly identify:
+## 3. Locked D6 Input Contract — Part 1
 
-- the authoritative layer identifier;
-- the per-layer anomaly/risk evidence available to D6;
-- validity status after applicable D7 handling;
-- any provenance/contract information required to ensure the evidence is current.
+D6 SHALL consume preserved upstream per-layer evidence with its authoritative identity and validity/provenance context.
 
-D6 SHALL NOT manufacture new upstream evidence.
+Conceptually, each D6 input record contains:
+
+```text
+{
+  layer_id,
+  per_layer_evidence,
+  validity_state,
+  provenance
+}
+```
+
+The exact serialization/schema remains an implementation contract and is not invented by Part 1.
+
+The following semantics are locked:
+
+- `layer_id` is the authoritative upstream layer identifier.
+- `per_layer_evidence` is evidence already produced through the authoritative P1 → baseline/D7 → D5 path; D6 does not manufacture a new evidence quantity.
+- `validity_state` preserves applicable D7 validity/degeneracy semantics.
+- `provenance` is retained sufficiently to establish that the evidence belongs to the current upstream production path; exact fields are an implementation/schema matter.
+
+Layer identity SHALL remain attached to its evidence throughout the handoff to D6.
 
 ## 4. D6 Does NOT Own
 
 D6 SHALL NOT:
 
 - calculate static steganalysis features;
-- calculate `S_static` normalization;
+- recalculate or redefine `S_static`;
 - calculate behavioral entropy or `S_behavior`;
 - calculate `P_tamper`;
 - create a layer-level `P_tamper` unless an authoritative upstream contract explicitly defines one;
@@ -64,11 +84,33 @@ D6 SHALL NOT:
 - modify PASS / REVIEW / FAIL thresholds;
 - replace or duplicate D5's per-layer → model-level risk aggregation;
 - introduce a new statistical baseline or threshold merely for layer selection;
+- invent a new tensor/module/block hierarchy for reporting;
 - use TreeSHAP as a highest-risk-layer algorithm.
 
-## 5. TreeSHAP Separation
+## 5. D7 Validity Boundary — Part 1 Lock
 
-TreeSHAP and highest-risk-layer reporting are separate relationships.
+D6 SHALL respect D7 as the upstream authority for evidence validity and degeneracy.
+
+Therefore D6 SHALL NOT silently:
+
+- convert invalid evidence to zero;
+- impute missing evidence;
+- convert `DEGENERATE_DEVIATION` into normal evidence;
+- fabricate evidence when the baseline is unavailable.
+
+The exact selection treatment of these states belongs to Part 2's final selection/edge-case decision; Part 1 only locks that D6 cannot rewrite them into valid evidence.
+
+## 6. Layer Granularity — Part 1 Lock
+
+D6 SHALL use the authoritative layer identity supplied by the upstream contract.
+
+D6 SHALL NOT invent a new layer/module/block hierarchy solely for reporting.
+
+The identifier semantics must therefore be inherited from the authoritative P1 contract rather than reconstructed from dashboard order, tensor position, or implementation convenience.
+
+## 7. TreeSHAP Separation — Part 1 Lock
+
+TreeSHAP and highest-risk-layer reporting remain separate relationships:
 
 ```text
 TreeSHAP:
@@ -78,80 +120,59 @@ D6:
 per-layer evidence + layer identity → highest-risk-layer report
 ```
 
-TreeSHAP SHALL NOT be used as a shortcut for selecting the highest-risk layer, nor used to create a layer-risk score unless an explicit future decision changes this contract.
+TreeSHAP SHALL NOT be used as a shortcut for layer selection and SHALL NOT create a layer-risk score under this decision.
 
-## 6. Selection Rule — Still Pending
-
-The exact deterministic selection rule remains **DECISION REQUIRED**.
-
-Before locking it, the project must determine whether D5's final per-layer evidence contract already implies the selection operation. In particular, an `argmax`-style selection must not be assumed merely because it is implementation-convenient.
-
-No choice among `max`, weighted scoring, thresholding, voting, or another mechanism is authorized by this draft.
-
-## 7. Layer Granularity
-
-D6 SHALL use the authoritative layer identity supplied by the upstream contract.
-
-D6 SHALL NOT invent a new tensor/module/block hierarchy solely for reporting.
-
-The exact identifier semantics must be confirmed before implementation.
-
-## 8. Edge Cases
-
-The locked decision must define deterministic handling for:
-
-- **Tie:** do not silently select an arbitrary layer; exact tie behavior must be explicitly specified.
-- **No eligible layer:** report highest-risk-layer as unavailable and do not fabricate a fallback.
-- **Single eligible layer:** that layer is the highest-risk layer, subject to the final validity contract.
-- **Invalid/missing per-layer evidence:** reject/block the affected selection rather than impute or fabricate values.
-
-D6 does not introduce a separate special rule such as “fewer than five layers”; upstream D7 validity/degeneracy rules remain authoritative.
-
-## 9. Quantized Models
+## 8. Quantized Models — Part 1 Lock
 
 D6 SHALL NOT invent behavioral evidence for quantized models.
 
-Quantized models follow the authoritative format-adaptive upstream path. If valid per-layer evidence is available, D6 applies the same locked selection semantics to that evidence unless an explicit decision states otherwise.
+If valid per-layer evidence exists on the quantized static-analysis path, D6 uses that authoritative evidence under the same selection contract to be finalized in Part 2.
 
-The absence of `S_behavior` for quantized models does not by itself require a separate D6 algorithm.
+The absence of `S_behavior` for quantized models does not create a separate D6 algorithm.
 
-## 10. Dependencies
+## 9. What Part 1 Does Not Resolve
 
-### Direct decision dependencies
+Part 1 intentionally does **not** select the final mathematical operation used to identify the highest-risk layer.
 
-- D5 per-layer evidence contract and its preservation of layer identity;
-- D7 validity/degeneracy handling;
-- authoritative layer identity semantics.
+The following remain Part 2 decisions:
 
-### Execution dependencies
+- exact selection operation;
+- tie semantics;
+- no-eligible-layer behavior;
+- single-layer behavior as a final selection rule;
+- final invalid/degenerate eligibility treatment;
+- exact implementation/reporting representation.
 
-Phase 6 requires the current project gates and artifacts specified by the Phase 6 plan, including CP4 PASS, CP5 PASS, and VERIFIED-REAL/current upstream artifacts.
+Part 1 therefore does not authorize `argmax`, thresholding, voting, weighted scoring, or another selection operation.
 
-D6 does not independently redefine those checkpoint dependencies.
+## 10. Verification Basis
 
-## 11. Required Pre-Lock Audit
+Part 1 was cross-checked against the authoritative project graph and the current D6 boundary.
 
-Before D6 is resolved:
+The cross-check confirms:
 
-1. Reconcile the authoritative Master Graph's P1/P3 ownership wording for highest-risk-layer.
-2. Inspect the authoritative D5 contract and determine exactly what per-layer evidence survives to D6.
-3. Confirm the layer identifier/granularity.
-4. Determine whether the final selection operation is already implied by D5 or remains an explicit project decision.
-5. Define tie and no-eligible-layer behavior.
-6. Confirm quantized handling without introducing behavioral evidence.
-7. Confirm TreeSHAP remains feature-level only.
-8. Record the final decision in `STATE.md` before implementation.
+1. P1 is the static-analysis/evidence producer.
+2. P3 owns ML/explainability/dashboard/reporting.
+3. Layer identity must remain available for highest-risk-layer reporting.
+4. Highest-risk-layer determination is separate from TreeSHAP attribution.
+5. D6 is a reporting/selection boundary rather than a new model-level risk aggregation stage.
+6. Quantized models do not receive invented behavioral evidence.
+7. The frozen architecture and existing D5/D7 decisions are not changed by Part 1.
 
-## 12. Implementation Gate
+The historical Master Graph phrase that P1 is responsible for “highest-risk layer” is reconciled here as P1's responsibility for the authoritative evidence/identity needed for that determination; **final selection/reporting remains P3/D6-owned**.
 
-No Phase 6 dashboard implementation may rely on this draft as if D6 were resolved.
+## 11. Implementation Gate
 
-After D6 is explicitly locked:
+Part 1 being locked does **not** authorize Phase 6 implementation yet.
+
+The implementation gate remains:
 
 ```text
-D6 locked
+D6 Part 1 locked
 ↓
-update authoritative decision records
+D6 Part 2 locked
+↓
+update authoritative decision/status records
 ↓
 implement Phase 6 report selection
 ↓
@@ -162,27 +183,10 @@ run Phase 6 integration / E2E verification
 CP6
 ```
 
-## 13. Verification Requirements
+## 12. Current Classification
 
-At minimum:
+**D6 Part 1: RESOLVED / LOCKED.**
 
-- valid per-layer evidence selects the expected layer;
-- repeated execution is deterministic;
-- ties follow the locked rule;
-- no eligible layer produces no fabricated layer;
-- invalid/missing evidence is handled safely;
-- single-layer case is handled correctly;
-- quantized path is handled according to the locked rule;
-- TreeSHAP is not used for layer selection;
-- report displays the authoritative layer identity;
-- D6 does not recalculate MRS or upstream risk signals.
+> P1 owns authoritative production/preservation of per-layer evidence and layer identity; P3/D6 owns final highest-risk-layer selection and security-report presentation. D6 consumes preserved upstream evidence without recalculating upstream signals, rewriting D7 validity, inventing layer granularity, inventing quantized behavioral evidence, or using TreeSHAP for layer selection.
 
-## 14. Current Classification
-
-**D6 remains UNRESOLVED.**
-
-What is now resolved at the planning level is the **boundary**:
-
-> D6 is highest-risk-layer **selection and reporting from authoritative per-layer evidence**; it is not a new model-level risk aggregation stage and is not TreeSHAP attribution.
-
-The exact selection rule, final ownership wording, input contract, tie semantics, and implementation remain pending explicit resolution.
+**D6 Part 2 remains pending and will lock the exact selection operation and edge-case semantics.**
