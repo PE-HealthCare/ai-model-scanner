@@ -1,19 +1,20 @@
 # AI Model Scanner — Synchronized Decision Status
 
-**Status:** Documentation synchronization registry — 2026-09-09
-**Branch:** `docs/synchronize-decision-status`
+**Status:** Documentation synchronization registry — 2026-09-09  
+**Canonical branch:** `main`  
+**Current execution baseline:** Phase 3 Static Steganalysis completed and merged; Phase 4 may proceed from `main`.  
 **Purpose:** Record the current approved decision state without changing the frozen architecture or silently resolving unresolved decisions.
 
 ## Decision Register
 
 | Decision | Current status | Locked scope / evidence state |
 |---|---|---|
-| D1 | **RESOLVED / LOCKED** | Exact 10-feature FP32/FP16 feature set and order: entropy, pov_chi2, lsb_kl, ks_stat, mean, std, skewness, kurtosis, sparsity, outlier_pct. Implementation/verification evidence remains subject to phase gates. |
-| D2 | **RESOLVED / LOCKED** | Trusted graph handoff is an in-process Python object reference during the same execution. No serialization, persistence, reload, or alternative downstream model construction. Implementation/verification evidence COMPLETE — CP2 PASS. |
+| D1 | **RESOLVED / LOCKED** | Exact 10-feature FP32/FP16 feature set and order: entropy, pov_chi2, lsb_kl, ks_stat, mean, std, skewness, kurtosis, sparsity, outlier_pct. Phase 3 implementation and verification evidence are recorded. |
+| D2 | **RESOLVED / LOCKED** | Trusted graph handoff is an in-process Python object reference during the same execution. No serialization, persistence, reload, or alternative downstream model construction. Implementation/verification COMPLETE — CP2 PASS; integrated into main. |
 | D3 | **RESOLVED / LOCKED (methodology)** | STRIP methodology is locked. Empirical calibration/evidence is still pending. No numerical calibration value may be invented. |
-| D4 | **REQUIRED** | STRIP entropy baseline remains unresolved. |
-| D5 | **REQUIRED** | Behavioral normalization / `H_STRIP → S_behavior` remains unresolved. |
-| D6 | **REQUIRED** | Model-level / highest-risk-layer aggregation details remain unresolved where specified by the authoritative phase/decision context. |
+| D4 | **REQUIRED** | STRIP entropy baseline / exact `H_STRIP → S_behavior` normalization remains unresolved. |
+| D5 | **REQUIRED** | Exact per-layer → model-level risk aggregation remains unresolved. |
+| D6 | **REQUIRED** | Exact highest-risk-layer aggregation/selection details remain unresolved where specified by the authoritative phase/decision context. |
 | D7 | **RESOLVED / LOCKED** | Finite nonzero MAD uses actual MAD; exact MAD=0 with target==median gives deterministic zero anomaly; exact MAD=0 with target!=median gives `DEGENERATE_DEVIATION`; 1–2 layers have unavailable baseline evidence and block downstream scoring; invalid numeric data is invalid; no epsilon or near-zero threshold. |
 | D8 | **RESOLVED / LOCKED** | Artifacts carry `generation_commit`; consumers reject generation mismatches. |
 | D9 | **PARTIALLY RESOLVED** | D9.1–D9.20 are locked: Python 3.11.x; CPU-only authoritative execution; exact direct pins; fully pinned transitive lock; hashes; Windows/Linux x86-64; clean hashed installation; mismatch BLOCKED; dependency changes require a new decision. Actual complete lock artifact, hashes and verification evidence remain required for full D9 resolution. |
@@ -27,6 +28,12 @@
 
 A populated file, passing test, or implementation artifact does not by itself resolve a project decision.
 
-## Current Synchronization Boundary
+## Current Execution Boundary
 
-This registry does not modify the frozen Master Graph and does not authorize implementation of D4–D6 or unresolved D9 completion work. It is a synchronization aid while lower-authority documentation is reconciled.
+- Phase 1: complete.
+- Phase 2: complete; CP2 PASS and D2 handoff independently approved/integrated.
+- Phase 3: complete; CP3 evidence recorded, independently reviewed, and merged into `main` at `b19a26cef97c3980d80f3784679ec314e35a4492`.
+- Phase 4: active/downstream work may proceed from the verified Phase 3 baseline.
+- Phase 5 and Phase 6 remain dependent on their own gates and unresolved decision requirements.
+
+This registry does not authorize silent implementation of D4–D6 or completion claims for unresolved D9 evidence. The frozen architecture remains authoritative.
