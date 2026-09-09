@@ -67,9 +67,8 @@ D2 does not change the artifact contracts (`features.json`, `ml_results.json`, o
 
 D2 does not resolve D3, D4, D5, or D6.
 
-**Implementation / verification status:** The D2 architectural decision is locked, but its implementation and verification evidence remain pending. `RESOLVED / LOCKED` here does not mean the real P1→P2 handoff has been implemented, tested, or accepted at CP2.
-
-### D3 — STRIP Entropy Baseline
+**Implementation / verification status:** D2 implementation and verification evidence are COMPLETE.
+D2 was implemented, tested, independently reviewed, accepted at CP2, and integrated into main.
 
 **Status: RESOLVED / LOCKED — METHODOLOGY ONLY; EMPIRICAL CALIBRATION PENDING.**
 
@@ -335,7 +334,7 @@ Any remaining dependency-policy details remain **REQUIRED** until explicitly agr
 | D5 — Risk aggregation | REQUIRED |
 | D6 — Highest-risk-layer aggregation | REQUIRED |
 
-D4–D6 are not resolved by any implementation branch, placeholder, or prior agent choice. D2 is resolved as a persistent project decision above; its implementation remains subject to Phase 2/CP2 verification. D3 is methodologically resolved as a persistent project decision above; its empirical calibration/evidence remains pending and must not be invented.
+D4–D6 are not resolved by any implementation branch, placeholder, or prior agent choice. D2 is resolved as a persistent project decision above; its implementation and verification are COMPLETE with CP2 PASS. D3 is methodologically resolved as a persistent project decision above; its empirical calibration/evidence remains pending and must not be invented.
 
 ## Phase Status
 
@@ -451,7 +450,7 @@ Quantized models bypass behavioral probing under the finalized format-adaptive d
 
 ## Next Permitted Action
 
-Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2 is RESOLVED as a project decision, with implementation/verification pending. D3 is RESOLVED as a methodology decision, with empirical calibration/evidence pending. D4–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED. Continue Phase 2 only within the approved D2 handoff boundary and existing Phase 2 plan/verification; do not implement D3–D6 or silently resolve remaining D9 details.
+Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2 is RESOLVED as a project decision, with implementation/verification COMPLETE — CP2 PASS. D3 is RESOLVED as a methodology decision, with empirical calibration/evidence pending. D4–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED. Continue Phase 2 only within the approved D2 handoff boundary and existing Phase 2 plan/verification; do not implement D3–D6 or silently resolve remaining D9 details.
 
 **Current D9 frontier: D9.21 — remaining dependency-policy details.**
 

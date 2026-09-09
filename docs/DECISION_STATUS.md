@@ -9,7 +9,7 @@
 | Decision | Current status | Locked scope / evidence state |
 |---|---|---|
 | D1 | **RESOLVED / LOCKED** | Exact 10-feature FP32/FP16 feature set and order: entropy, pov_chi2, lsb_kl, ks_stat, mean, std, skewness, kurtosis, sparsity, outlier_pct. Implementation/verification evidence remains subject to phase gates. |
-| D2 | **RESOLVED / LOCKED** | Trusted graph handoff is an in-process Python object reference during the same execution. No serialization, persistence, reload, or alternative downstream model construction. Implementation/verification evidence pending. |
+| D2 | **RESOLVED / LOCKED** | Trusted graph handoff is an in-process Python object reference during the same execution. No serialization, persistence, reload, or alternative downstream model construction. Implementation/verification evidence COMPLETE — CP2 PASS. |
 | D3 | **RESOLVED / LOCKED (methodology)** | STRIP methodology is locked. Empirical calibration/evidence is still pending. No numerical calibration value may be invented. |
 | D4 | **REQUIRED** | STRIP entropy baseline remains unresolved. |
 | D5 | **REQUIRED** | Behavioral normalization / `H_STRIP → S_behavior` remains unresolved. |

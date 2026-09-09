@@ -54,7 +54,7 @@ Phase 2 requires:
 
 The agent MUST WAIT/BLOCK if any required prerequisite is missing.
 
-D1 is RESOLVED/LOCKED. D2 is RESOLVED/LOCKED at the architectural level, but its real implementation and verification evidence remain pending and must be demonstrated at CP2. D9.1–D9.20 are locked; remaining D9.21+ details remain required. The agent MUST NOT silently resolve any remaining D9 item.
+D1 is RESOLVED/LOCKED. D2 is RESOLVED/LOCKED at the architectural level, but its real implementation and verification evidence are COMPLETE and were demonstrated and accepted at CP2. D9.1–D9.20 are locked; remaining D9.21+ details remain required. The agent MUST NOT silently resolve any remaining D9 item.
 
 ## 4. Security Boundary
 
@@ -161,7 +161,7 @@ A successful intake must make available the trusted graph and approved metadata 
 
 The trusted graph MUST NOT be independently reloaded unsafely by downstream phases.
 
-D2 is now the locked architectural handoff: P1 constructs the trusted, weight-loaded model; `scan_model.py` passes the already-created trusted model/context to P2 by in-process Python object reference during the same pipeline execution. No downstream serialization/reload or alternative model construction is permitted. The exact Python representation remains an implementation detail. Real implementation and verification evidence are still required for CP2.
+D2 is now the locked architectural handoff: P1 constructs the trusted, weight-loaded model; `scan_model.py` passes the already-created trusted model/context to P2 by in-process Python object reference during the same pipeline execution. No downstream serialization/reload or alternative model construction is permitted. The exact Python representation remains an implementation detail. Real implementation and verification evidence are COMPLETE; CP2 PASS was independently reviewed and accepted.
 
 ## 10. Failure Behavior
 

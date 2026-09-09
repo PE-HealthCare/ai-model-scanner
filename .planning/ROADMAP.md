@@ -110,7 +110,7 @@ CP2 requires verification of:
 * no unrestricted pickle loading;
 * D2 handoff behavior where exercised.
 
-D2 is architecturally resolved, but its real implementation and verification remain pending and are not implied by the decision record alone.
+D2 is architecturally resolved, but its real implementation and verification are COMPLETE, independently approved, and integrated into main.
 
 ---
 
@@ -399,7 +399,7 @@ CP6 PASS
 # Decision Status Register
 
 * **D1:** RESOLVED / LOCKED — exact contract schemas and fields/types/layout.
-* **D2:** RESOLVED / LOCKED — exact in-process trusted-graph handoff mechanism; implementation/verification pending.
+* **D2:** RESOLVED / LOCKED — exact in-process trusted-graph handoff mechanism; implementation/verification COMPLETE — CP2 PASS.
 * **D3:** RESOLVED / LOCKED — STRIP entropy baseline methodology; empirical calibration/evidence pending; values MUST NOT be invented.
 * **D4:** REQUIRED — exact `S_behavior` normalization.
 * **D5:** REQUIRED — per-layer → model-level risk aggregation.

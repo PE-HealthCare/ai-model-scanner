@@ -144,7 +144,7 @@ Specifically:
 The project distinguishes **locked decision methodology**, **implementation/verification status**, and **empirical evidence**. A locked decision does not by itself prove implementation or checkpoint completion.
 
 * The static baseline is intra-model (layer-vs-layer); no external clean reference model is required or used at runtime.
-* D2 (trusted graph handoff) is resolved and locked; its real implementation and CP2 verification remain pending.
+* D2 (trusted graph handoff) is resolved and locked; its real implementation and CP2 verification are COMPLETE and have been independently approved.
 * D3 (STRIP entropy baseline) is methodologically resolved and locked, but its empirical calibration/evidence is pending. Baseline values must not be invented; the approved calibration run must populate the evidence before D3 is considered fully evidenced for authoritative behavioral scoring.
 * D4 (behavioral normalization), D5 (per-layer to model-level risk aggregation), and D6 (highest-risk-layer aggregation) remain explicitly unresolved and must not be silently invented.
 * D7 (MAD degenerate/insufficient-baseline guard) is resolved and locked.
