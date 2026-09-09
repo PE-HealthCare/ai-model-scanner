@@ -3,11 +3,12 @@ import json
 import os
 import tempfile
 from pathlib import Path
+from typing import NoReturn
 
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError
 
-from src.common.utils import validate_artifact, ROOT
+from src.common.utils import validate_artifact, ROOT, get_generation_commit
 from src.p1_static_engine.analyzer import build_mock_features
 from src.p2_behavioral_risk.prober import build_mock_risk_results
 from src.p3_ml_dashboard.classifier import build_mock_ml_results
@@ -29,8 +30,13 @@ class TestContracts(unittest.TestCase):
         """Test successful validation of existing committed mock artifacts."""
         validate_artifact(OUTPUT_DIR / "features.json", CONTRACT_DIR / "features.schema.json")
         validate_artifact(OUTPUT_DIR / "ml_results.json", CONTRACT_DIR / "ml_results.schema.json")
-        validate_artifact(OUTPUT_DIR / "risk_results.json", CONTRACT_DIR / "risk_results.schema.json")
-        self.assertTrue(True)
+        # Generate mock risk results and validate
+        generation_commit = get_generation_commit()
+        risk_results = build_mock_risk_results(build_mock_ml_results(build_mock_features(generation_commit), generation_commit), generation_commit)
+        risk_path = OUTPUT_DIR / "risk_results.json"
+        risk_path.parent.mkdir(parents=True, exist_ok=True)
+        risk_path.write_text(json.dumps(risk_results, indent=2) + "\n", encoding="utf-8")
+        validate_artifact(risk_path, CONTRACT_DIR / "risk_results.schema.json")
 
     def test_missing_required_field(self):
         """Test rejection of missing required field."""
@@ -167,7 +173,7 @@ class TestPipelineFailurePropagation(unittest.TestCase):
     def test_p1_failure_prevents_downstream(self):
         """Test P1 failure prevents P3/P2 execution."""
         original_build = scan_model.build_mock_features
-        def failing_build(*args):
+        def failing_build(generation_commit: str) -> NoReturn:
             raise RuntimeError("P1 Failure")
 
         scan_model.build_mock_features = failing_build
@@ -183,7 +189,7 @@ class TestPipelineFailurePropagation(unittest.TestCase):
         def failing_build(*args):
             raise RuntimeError("P3 Failure")
 
-        scan_model.build_mock_ml_results = failing_build
+        scan_model.build_mock_ml_results = failing_build #type: ignore[assignment]
         try:
             with self.assertRaisesRegex(RuntimeError, "P3 Failure"):
                 scan_model.run_mock_pipeline()
@@ -193,7 +199,7 @@ class TestPipelineFailurePropagation(unittest.TestCase):
     def test_p2_failure_stops_pipeline(self):
         """Test P2 failure does not produce fabricated successful result."""
         original_build = scan_model.build_mock_risk_results
-        def failing_build(*args):
+        def failing_build(ml_results: dict, generation_commit: str) -> NoReturn:
             raise RuntimeError("P2 Failure")
 
         scan_model.build_mock_risk_results = failing_build

@@ -2,7 +2,7 @@
   "producer": "P1",
   "mock_status": "MOCK",
   "contract_version": "1.0",
-  "generation_commit": "PHASE1-D1-10FEATURE-VERIFY",
+  "generation_commit": "6646a25a9ae2ff67b2242e574bde363332ae1d19",
   "input_domain": "VISION",
   "is_quantized": false,
   "layer_count": 2,
