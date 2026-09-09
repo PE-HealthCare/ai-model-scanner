@@ -109,13 +109,13 @@ REVIEW: 35–69
 FAIL: 70–100
 ```
 
-D5 remains DECISION REQUIRED for exact per-layer→model aggregation.
+D5 is **RESOLVED / LOCKED at the methodology boundary**: it owns per-layer → model-level risk aggregation and must preserve authoritative per-layer evidence and layer identity for D6. The exact aggregation operator and supporting evidence remain DECISION REQUIRED; no operator may be silently selected.
 
-D6 remains DECISION REQUIRED for exact highest-risk-layer aggregation.
+D6 is **REQUIRED — BOUNDARY REVISED**: it owns highest-risk-layer selection/reporting from authoritative per-layer evidence, not model-level aggregation. Its exact selection rule, ownership wording, input contract, layer identity semantics, and tie behavior remain DECISION REQUIRED. TreeSHAP is not a D6 layer-selection mechanism.
 
 D7 is **RESOLVED / LOCKED**. The approved zero/near-zero MAD and insufficient-layer behavior is recorded in `.planning/STATE.md` and must be followed exactly; no fallback may be invented.
 
-Do not silently choose D5 or D6 semantics.
+Do not silently choose D4, the D5 aggregation operator, or D6 selection semantics.
 
 ## 7. Mock / Real Lifecycle
 
@@ -192,4 +192,4 @@ CP5 PASS requires all required decisions resolved and:
 - adversarial tests;
 - evidence.
 
-D3 methodology being locked does not by itself complete D3 evidence. Required unresolved D4/D5/D6, or pending D3 empirical calibration/evidence, blocks CP5; never substitute guessed values.
+D3 methodology being locked does not by itself complete D3 evidence. Required unresolved D4, pending D5 aggregation rule/evidence, unresolved D6 selection rule/evidence, or pending D3 empirical calibration/evidence blocks CP5; never substitute guessed values.
