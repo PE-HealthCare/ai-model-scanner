@@ -70,6 +70,8 @@ D2 does not resolve D3, D4, D5, or D6.
 **Implementation / verification status:** D2 implementation and verification evidence are COMPLETE.
 D2 was implemented, tested, independently reviewed, accepted at CP2, and integrated into main.
 
+### D3 — STRIP Entropy Baseline
+
 **Status: RESOLVED / LOCKED — METHODOLOGY ONLY; EMPIRICAL CALIBRATION PENDING.**
 
 For non-quantized models, behavioral probing SHALL compute Shannon entropy over the model's softmax output probability distribution for the existing 32 domain-appropriate probes.
@@ -85,6 +87,43 @@ D3 defines the entropy measurement and baseline methodology only. The conversion
 Quantized models do not use the behavioral baseline because behavioral probing is skipped under the finalized quantized path.
 
 **Implementation / empirical-evidence status:** The D3 methodology is locked, but calibration execution, measured baseline distributions, and supporting evidence remain pending. Agents MUST NOT invent baseline values. After the approved calibration run completes, the agent MUST return to this D3 section, record the measured evidence and any evidence-dependent parameters, and re-verify downstream consistency before treating D3 as fully evidenced.
+
+### D5 — Per-Layer → Model-Level Risk Aggregation
+
+**Status: RESOLVED / LOCKED — METHODOLOGY BOUNDARY; EXACT AGGREGATION RULE PENDING.**
+
+D5 owns the reduction of valid per-layer static/tampering evidence to the model-level evidence consumed by the frozen MRS formulas.
+
+The D5 aggregation stage SHALL operate only on valid, eligible per-layer evidence after the applicable D7 validity/degeneracy handling. It SHALL preserve layer identity and underlying per-layer evidence required for D6 highest-risk-layer reporting.
+
+D5 SHALL NOT:
+
+- fabricate, impute, or silently substitute missing or invalid per-layer evidence;
+- use TreeSHAP feature attribution as the highest-risk-layer aggregation mechanism;
+- redefine D4's `H_STRIP → S_behavior` normalization;
+- redefine D6's highest-risk-layer selection/reporting;
+- alter the frozen MRS formulas or their weights;
+- silently introduce an aggregation operator such as `max`, `mean`, `median`, top-k, or weighted aggregation without an explicit authorized decision and supporting evidence.
+
+The model-level flow remains:
+
+```text
+valid per-layer static/tampering evidence
+                ↓
+        D7 validity/guard handling
+                ↓
+       D5 model-level aggregation
+                ↓
+      model-level S_static / P_tamper
+                ↓
+             MRS
+```
+
+The exact mathematical operator and any evidence-backed parameters for per-layer → model-level aggregation remain pending explicit authorization/evidence. They MUST NOT be inferred from implementation convenience or selected autonomously by an agent.
+
+D5 is independent of D3's entropy calibration methodology for purposes of defining the aggregation boundary, but end-to-end P2 risk implementation still requires the separately resolved D4/D3 inputs where applicable.
+
+**Implementation / verification status:** The D5 ownership, inputs, invariants, and separation from D4/D6 are locked. The exact aggregation rule, implementation, and verification evidence remain pending. After the authorized aggregation decision/evidence is available, the agent MUST return to this D5 section, record the exact rule and supporting evidence, and re-verify downstream consistency before treating D5 as fully evidenced.
 
 ### Decision 1 — Trusted Architecture Registry
 
@@ -331,10 +370,10 @@ Any remaining dependency-policy details remain **REQUIRED** until explicitly agr
 | Decision | Status |
 |---|---|
 | D4 — Behavioral normalization | REQUIRED |
-| D5 — Risk aggregation | REQUIRED |
+| D5 — Risk aggregation | PARTIALLY RESOLVED — methodology boundary locked; exact aggregation rule pending |
 | D6 — Highest-risk-layer aggregation | REQUIRED |
 
-D4–D6 are not resolved by any implementation branch, placeholder, or prior agent choice. D2 is resolved as a persistent project decision above; its implementation and verification are COMPLETE with CP2 PASS. D3 is methodologically resolved as a persistent project decision above; its empirical calibration/evidence remains pending and must not be invented.
+D4 and D6 are not resolved by any implementation branch, placeholder, or prior agent choice. D2 is resolved as a persistent project decision above; its implementation and verification are COMPLETE with CP2 PASS. D3 is methodologically resolved as a persistent project decision above; its empirical calibration/evidence remains pending and must not be invented. D5 has a locked ownership/invariant boundary above, but its exact aggregation operator remains pending and MUST NOT be inferred.
 
 ## Phase Status
 
@@ -450,7 +489,7 @@ Quantized models bypass behavioral probing under the finalized format-adaptive d
 
 ## Next Permitted Action
 
-Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2 is RESOLVED as a project decision, with implementation/verification COMPLETE — CP2 PASS. D3 is RESOLVED as a methodology decision, with empirical calibration/evidence pending. D4–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED. Continue Phase 2 only within the approved D2 handoff boundary and existing Phase 2 plan/verification; do not implement D3–D6 or silently resolve remaining D9 details.
+Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2 is RESOLVED as a project decision, with implementation/verification COMPLETE — CP2 PASS. D3 is RESOLVED as a methodology decision, with empirical calibration/evidence pending. D4 remains REQUIRED. D5 is methodologically locked but its exact aggregation rule, implementation, and verification evidence remain pending. D6 remains REQUIRED. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED. Continue Phase 2 only within the approved D2 handoff boundary and existing Phase 2 plan/verification; do not implement D3–D6 or silently resolve remaining D9 details.
 
 **Current D9 frontier: D9.21 — remaining dependency-policy details.**
 
