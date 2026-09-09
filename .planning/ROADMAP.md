@@ -1,429 +1,179 @@
 # AI Model Scanner — Execution Roadmap
 
-**Status:** DISCOVERY → EXECUTION
+**Status:** EXECUTION  
+**Canonical architecture source:** Final Master Discovery & Dependency Graph  
+**Current execution phase:** Phase 4 — ML Classification  
+**Current gate:** CP3 PASS; CP4 in progress  
 
-The roadmap implements the frozen five-stage detection architecture through six implementation phases.
-
-**Phase 6 is final integration and demonstration, not a sixth detection stage.**
-
-No phase advances until its verification gate passes.
-
----
+The frozen detection architecture is implemented through six execution phases. Phase 6 is final integration/demo, not a sixth detection stage. No phase advances without its verification gate.
 
 ## Gate Outcomes
 
-Every phase verification has exactly one of three outcomes:
+**PASS** — all applicable verification criteria are satisfied and no required unresolved decision/dependency blocks completion.
 
-### PASS
+**BLOCKED** — a required dependency, contract, decision, calibration item, or evidence item is unresolved/unavailable.
 
-The applicable verification criteria are objectively satisfied, and no required unresolved decision or dependency prevents completion.
+**FAIL** — verification was attempted and one or more required criteria failed.
 
-### BLOCKED
+Unresolved decisions MUST NOT be guessed or silently implemented.
 
-Verification cannot legitimately complete because a required dependency, contract, or `DECISION REQUIRED` item is unresolved or unavailable.
+## Phase 1 — Mock Pipeline
 
-`BLOCKED` is **not** a pass and the phase cannot advance.
+**Owners:** P1 + P2 + P3  
+**Gate:** CP1 PASS
 
-### FAIL
+Establish and validate the initial artifact contracts and mock end-to-end flow. Mocks MUST remain explicitly marked as mocks.
 
-Verification was attempted, but one or more required criteria were not satisfied.
+D1 is RESOLVED / LOCKED.
 
-An unresolved decision must never be guessed or silently implemented merely to obtain `PASS`.
+## Phase 2 — Zero-Trust Intake
 
----
+**Owner:** P1  
+**Gate:** CP2 PASS
 
-# Phase 1 — Mock Pipeline
+Requires bounded SafeTensors intake, declared-architecture validation, trusted architecture construction, domain/quantization tagging, safe weight access, and the D2 trusted-model handoff.
 
-**Owners:** P1 + P2 + P3 in parallel
+D2 is RESOLVED / LOCKED and independently approved/integrated.
 
-### Purpose
+## Phase 3 — Static Steganalysis
 
-Establish the initial contracts and validate the intended end-to-end flow using clearly identified mock artifacts.
+**Owner:** P1  
+**Gate:** CP3 PASS
 
-### Deliverables
+Produces verified-real per-layer static features using the frozen format-adaptive contract.
 
-* exact contract field agreement;
-* mock `features.json`;
-* mock `ml_results.json`;
-* mock `risk_results.json`;
-* dependency plan;
-* mock end-to-end `scan_model.py` execution.
+FP32/FP16 feature order:
 
-### Dependency
+1. entropy
+2. pov_chi2
+3. lsb_kl
+4. ks_stat
+5. mean
+6. std
+7. skewness
+8. kurtosis
+9. sparsity
+10. outlier_pct
 
-Exact contract fields must be agreed.
+Quantized path uses the approved whole-weight KS behavior and does not invent mantissa/LSB features. Layer identity and provenance are preserved in `features.json`.
 
-This was **D1 — now RESOLVED / LOCKED**.
+CP3 is complete and merged into `main`.
 
-### Verification Gate
+## Phase 4 — ML Classification
 
-**CP1 — Phase 1 Mock Gate**
+**Owner:** P3  
+**Branch:** `phase-4/ml-classification`  
+**Gate:** CP4
 
-CP1 may be `PASS` only when:
+Deliverables:
 
-* contract fields are agreed;
-* mock artifacts conform to those agreed contracts;
-* schema validation succeeds;
-* mock runner execution succeeds;
-* mocks are explicitly identified as mocks.
+- synthetic tampering methodology;
+- LightGBM classifier;
+- `P_tamper`;
+- TreeSHAP feature attribution;
+- `ml_results.json`;
+- approved model artifact.
 
-If D1 remains required for completion:
+Final training MUST use the verified-real P1 extractor and the exact frozen feature names/order/semantics. Mock data may be used only for scaffolding tests and MUST NOT generate the authoritative classifier artifact.
 
-**CP1 = BLOCKED**
+TreeSHAP is feature attribution/explanation. It is NOT a highest-risk-layer selection mechanism.
 
----
+D8 staleness protection applies: material upstream semantic/name/order/representation changes stale the classifier and require retraining/reverification.
 
-# Phase 2 — Zero-Trust Intake
+CP4 requires real P1 provenance, no mock leakage, classifier/P_tamper verification, TreeSHAP name/order verification, provenance, staleness validity, adversarial regression evidence, and independent approval.
 
-**Owner:** P1
+## Phase 5 — Behavioral + Risk
 
-P3 may prepare ML/training scaffolding in parallel, but such preparation is provisional and cannot be treated as final training.
+**Owner:** P2  
+**Gate:** CP5
 
-### Deliverables
+Deliverables:
 
-* bounded SafeTensors header parsing;
-* declared-architecture validation;
-* trusted standard-library architecture instantiation;
-* `input_domain` tagging;
-* `is_quantized` tagging;
-* bounded/mmap-safe weight access;
-* trusted-model handoff consistent with locked D2.
+- domain-aware STRIP probing;
+- bounded inference;
+- `H_STRIP`;
+- `S_behavior`;
+- quantized behavioral bypass;
+- per-layer/model-level risk aggregation;
+- MAD handling;
+- MRS;
+- verdict;
+- `risk_results.json`.
 
-### Dependency
+Decision boundaries:
 
-`CP1 = PASS`
+- **D3:** methodology RESOLVED / LOCKED; empirical calibration/evidence pending; values MUST NOT be invented.
+- **D4:** REQUIRED — exact `H_STRIP → S_behavior` normalization remains unresolved.
+- **D5:** RESOLVED / LOCKED at methodology boundary. D5 owns valid per-layer → model-level aggregation and preserves authoritative per-layer evidence/layer identity for D6. Exact aggregation operator and supporting evidence remain pending explicit authorization.
+- **D6:** REQUIRED — boundary revised. D6 owns highest-risk-layer selection/reporting from authoritative per-layer evidence. It does NOT perform model-level aggregation and does NOT use TreeSHAP. Exact selection rule, ownership wording, input contract, layer identity semantics, and tie behavior remain pending.
+- **D7:** RESOLVED / LOCKED — MAD zero/near-zero and insufficient-layer guards.
 
-Required dependencies must also be available.
-
-### Verification Gate
-
-**CP2 — Intake Gate**
-
-CP2 requires verification of:
-
-* declared architecture handling;
-* bounded SafeTensors handling;
-* trusted graph instantiation;
-* domain identification;
-* quantization identification;
-* no uploader-supplied code execution;
-* no unrestricted pickle loading;
-* D2 handoff behavior where exercised.
-
-D2 is architecturally resolved, but its real implementation and verification are COMPLETE, independently approved, and integrated into main.
-
----
-
-# Phase 3 — Static Steganalysis
-
-**Owner:** P1
-
-This phase is the critical handoff to P3.
-
-### Deliverables
-
-Real per-layer static feature extraction using the finalized format-adaptive design.
-
-For FP32/FP16:
-
-* entropy;
-* PoV chi-square;
-* LSB KL-divergence;
-* KS statistic;
-* moments;
-* sparsity;
-* outlier percentage.
-
-For quantized formats:
-
-* whole-weight KS only.
-
-Also required:
-
-* intra-model baseline evidence;
-* preserved layer identity;
-* `features.json` production.
-
-### Dependency
-
-`CP2 = PASS`
-
-Exact feature semantics required for downstream training must be available.
-
-### Verification Gate
-
-**CP3 — Static Gate**
-
-CP3 requires:
-
-* real feature extraction;
-* correct format-adaptive behavior;
-* intra-model baseline;
-* preserved layer identity;
-* contract-compliant output;
-* verified feature semantics.
-
-If required feature semantics remain undecided:
-
-**CP3 = BLOCKED**
-
-### Critical Handoff
-
-P1's verified real feature extractor becomes the source consumed by final P3 classifier training.
-
----
-
-# Phase 4 — ML Classification
-
-**Owner:** P3
-
-### Deliverables
-
-* synthetic tampering methodology;
-* LightGBM classifier;
-* `P_tamper`;
-* TreeSHAP feature attribution;
-* `ml_results.json`;
-* `artifacts/lightgbm_model.txt`.
-
-### Dependency
-
-`CP3 = PASS`
-
-Final training cannot proceed using Phase 2 scaffolding alone.
-
-### Verification Gate
-
-**CP4 — ML Gate**
-
-CP4 requires:
-
-* the same verified P1 feature semantics used for training and inference;
-* LightGBM classifier produced;
-* `P_tamper` produced;
-* TreeSHAP feature names verified;
-* ML contract satisfied.
-
-If P1 feature semantics change after training:
-
-1. retrain P3;
-2. remap/reverify TreeSHAP;
-3. rerun applicable verification.
-
----
-
-# Phase 5 — Behavioral + Risk
-
-**Owner:** P2
-
-### Deliverables
-
-* domain-aware STRIP probing;
-* bounded inference;
-* `H_STRIP`;
-* `S_behavior`;
-* quantized-model bypass;
-* MAD-based risk aggregation;
-* MRS;
-* verdict;
-* `risk_results.json`.
-
-### Dependency
-
-Verified upstream outputs, including P3's real `P_tamper`.
-
-### Decision dependencies
-
-* **D3:** methodology RESOLVED / LOCKED; empirical calibration/evidence pending. Baseline values SHALL NOT be invented and must be populated from the approved calibration process before authoritative behavioral scoring is considered fully evidenced.
-* **D4:** REQUIRED — exact `S_behavior` normalization remains unresolved.
-* **D5:** REQUIRED — exact per-layer → model-level risk aggregation remains unresolved.
-* **D6:** REQUIRED — exact highest-risk-layer aggregation remains unresolved.
-* **D7:** RESOLVED / LOCKED.
-
-### Verification Gate
-
-**CP5 — Behavioral/Risk Gate**
-
-CP5 requires:
-
-* correct domain probes;
-* bounded inference;
-* quantized bypass;
-* applicable `S_behavior`;
-* applicable MAD guard behavior;
-* MRS computation;
-* verdict computation;
-* risk contract satisfaction;
-* all evidence-dependent decisions completed and verified.
-
-If D4, D5, or D6 remains required, or D3's required empirical calibration/evidence remains incomplete, CP5 is `BLOCKED`. D3's locked methodology alone does not constitute full D3 evidence.
-
-No silent substitute behavior is permitted.
-
----
-
-# Phase 6 — Integration + Demo
-
-**Owners:**
-
-* P2 — risk aggregation/MRS/verdict;
-* P3 — final security report/dashboard;
-* `scan_model.py` — orchestration only.
-
-### Deliverables
-
-* one-command end-to-end scan;
-* contract validation;
-* fixed orchestration;
-* final `risk_results.json`;
-* final security report/dashboard;
-* reproducibility;
-* graceful failure behavior.
-
-### Dependency
-
-`CP1` through `CP5` must all be `PASS`.
-
-### Ownership Rule
-
-P2 owns:
-
-* risk aggregation;
-* MRS;
-* verdict logic.
-
-`scan_model.py` invokes the owner implementation.
-
-It must **not** become a second implementation of P2 risk logic.
-
-### Verification Gate
-
-**CP6 — Demo Gate**
-
-CP6 requires:
-
-* complete end-to-end run;
-* valid contracts;
-* MRS;
-* verdict;
-* highest-risk layer;
-* TreeSHAP evidence;
-* behavioral evidence or explicit quantized bypass;
-* assumptions;
-* limitations;
-* reproducible execution;
-* graceful failure.
-
-Any applicable unresolved decision remains a blocker.
-
----
-
-# Critical Dependency Chain
+Frozen MRS formulas:
 
 ```text
-P3 Preparation
-      ↓
-P1 Phase 3 — Verified Real Feature Extractor
-      ↓
-P3 Phase 4 — Final Classifier Training
-      ↓
-P2 Phase 5 — Final Risk Aggregation
-      ↓
-Phase 6 — End-to-End Integration + Demo
+non-quantized:
+MRS = min(100, 40*S_static + 35*P_tamper + 25*S_behavior)
+
+quantized:
+MRS = min(100, 55*S_static + 45*P_tamper)
+
+PASS: 0–34
+REVIEW: 35–69
+FAIL: 70–100
 ```
 
----
+CP5 is BLOCKED while required D4, the exact D5 aggregation rule/evidence, the exact D6 selection rule/evidence, or required D3 empirical calibration remains incomplete.
 
-# Phase Advancement Rule
+## Phase 6 — Integration + Demo
 
-Only `PASS` advances a phase.
+**Owners:** P2 risk/MRS/verdict; P3 security report; `scan_model.py` orchestration only  
+**Gate:** CP6
 
-The following are insufficient:
+Requires CP1–CP5 PASS and current VERIFIED-REAL artifacts. The final report presents MRS, verdict, highest-risk layer, TreeSHAP feature evidence, behavioral evidence or explicit quantized bypass, provenance, assumptions, limitations, and failure behavior.
 
-* partial implementation;
-* scaffolding presented as implementation;
-* mocks presented as real outputs;
-* informal confidence without verification;
-* unresolved required decisions;
-* unverified dependencies;
-* unfulfilled verification criteria;
-* invented schemas;
-* invented values;
-* invented formulas;
-* invented thresholds;
-* invented dependencies;
-* invented fallback behavior;
-* invented feature semantics.
+Phase 6 MUST NOT duplicate P1/P2/P3 algorithms. `scan_model.py` invokes owner implementations and does not become a second risk engine.
 
-When blocked:
+D6 reporting MUST consume authoritative upstream per-layer evidence and MUST NOT manufacture layer-level `P_tamper`/`S_behavior` or use TreeSHAP as a layer selector.
 
-1. record the blocker;
-2. identify the required decision/dependency;
-3. stop dependent work;
-4. do not silently choose a value.
-
-For a staged decision, the agent MUST distinguish the locked methodology from pending implementation, calibration, or verification evidence and MUST return to that decision record when the pending evidence becomes available.
-
----
-
-# Execution Sequence
+## Critical Dependency Chain
 
 ```text
-Phase 1
-   ↓
 CP1 PASS
-   ↓
-Phase 2
-   ↓
+  ↓
 CP2 PASS
-   ↓
-Phase 3
-   ↓
+  ↓
 CP3 PASS
-   ↓
-Phase 4
-   ↓
-CP4 PASS
-   ↓
-Phase 5
-   ↓
-CP5 PASS
-   ↓
-Phase 6
-   ↓
-CP6 PASS
+  ↓
+Phase 4 / CP4
+  ↓
+Phase 5 / CP5
+  ↓
+Phase 6 / CP6
 ```
 
----
+## Decision Register
 
-# Decision Status Register
+| Decision | Current state |
+|---|---|
+| D1 | RESOLVED / LOCKED |
+| D2 | RESOLVED / LOCKED; CP2 PASS |
+| D3 | RESOLVED / LOCKED methodology; empirical calibration pending |
+| D4 | REQUIRED |
+| D5 | RESOLVED / LOCKED methodology boundary; exact operator/evidence pending |
+| D6 | REQUIRED; boundary revised to selection/reporting; exact rule/evidence pending |
+| D7 | RESOLVED / LOCKED |
+| D8 | RESOLVED / LOCKED |
+| D9 | PARTIALLY RESOLVED; remaining lock/hash/verification evidence required |
 
-* **D1:** RESOLVED / LOCKED — exact contract schemas and fields/types/layout.
-* **D2:** RESOLVED / LOCKED — exact in-process trusted-graph handoff mechanism; implementation/verification COMPLETE — CP2 PASS.
-* **D3:** RESOLVED / LOCKED — STRIP entropy baseline methodology; empirical calibration/evidence pending; values MUST NOT be invented.
-* **D4:** REQUIRED — exact `S_behavior` normalization.
-* **D5:** REQUIRED — per-layer → model-level risk aggregation.
-* **D6:** REQUIRED — highest-risk-layer aggregation.
-* **D7:** RESOLVED / LOCKED — MAD zero/near-zero and low-layer-count guard.
-* **D8:** RESOLVED / LOCKED — model staleness protection.
-* **D9:** REQUIRED / PARTIALLY RESOLVED — D9.1–D9.20 locked; D9.21+ remains required.
+## Non-Negotiable Rules
 
-These statuses are decision-state records, not implementation or checkpoint evidence.
-
----
-
-# Non-Negotiable Architecture Rules
-
-1. Do not redesign the finalized pipeline unless the team explicitly reopens a decision.
-2. Distinguish repository facts from design/inference.
-3. Empty schemas are empty.
-4. Conceptual fields are not implemented fields.
-5. Scaffolding is not implementation.
-6. Mock artifacts are not real outputs.
-7. `scan_model.py` is root orchestration, not a fourth owner.
-8. Final P3 training depends on P1's verified real feature extractor.
-9. TreeSHAP attribution and highest-risk-layer determination are separate mechanisms.
-10. Quantized models skip behavioral probing under the finalized design.
-11. Unresolved items remain `DECISION REQUIRED`.
-12. A locked methodology with pending evidence MUST be represented as pending evidence, not as verified completion.
-13. Future agents must not silently invent unresolved behavior or pending empirical values.
+1. The Master Graph is the architecture authority.
+2. Current committed decision records override historical audit wording.
+3. Scaffolding is not implementation; mocks are not real outputs.
+4. Verified-real provenance is required for authoritative downstream artifacts.
+5. TreeSHAP attribution and highest-risk-layer reporting are separate mechanisms.
+6. Quantized models do not receive invented behavioral evidence.
+7. D4–D6 unresolved portions MUST remain explicit; agents may not silently invent formulas, operators, thresholds, or fallbacks.
+8. Artifact generation mismatches are stale/blocked under D8.
+9. `scan_model.py` is orchestration only.
+10. Every phase requires its own verification and independent/human approval where specified.
