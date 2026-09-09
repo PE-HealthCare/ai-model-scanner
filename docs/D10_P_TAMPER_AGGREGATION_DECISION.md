@@ -100,9 +100,7 @@ D6 does not use `P_tamper` or TreeSHAP to redefine its selection rule.
 
 ## 9. Quantized boundary
 
-D10 does not invent a quantized classifier path.
-
-Where the current upstream P1 implementation rejects unsupported quantized graph handling before P3, D10 does not override that boundary or fabricate classifier evidence. Any future operational quantized P3 path requires its own upstream implementation/contract evidence and must remain consistent with the frozen architecture.
+D10 itself does not define the quantized feature representation or classifier artifact. **D11 now resolves that separate quantized-path contract.** Under D11, quantized P3 uses the dedicated `ks_stat`-only LightGBM artifact and the same D10 MAX aggregation operator. D10 therefore remains the sole model-level aggregation rule for both applicable classifier paths.
 
 ## 10. Verification boundary
 
@@ -111,19 +109,19 @@ Locking D10 resolves the architectural aggregation ambiguity. It does **not** co
 The following remain verification/execution requirements, not unresolved D10 operator choices:
 
 - real clean/tampered training corpus and reproducible provenance;
-- generation of the final LightGBM artifact;
+- generation of the final LightGBM artifact(s);
 - empirical validation of D10 behavior, including localized evidence and layer-count sensitivity/extreme-value effects;
 - persisted training/artifact provenance required by the Phase 4 contract;
 - adversarial, stale-contract, and mock-leakage regression evidence;
 - complete CP4 evidence and independent/human review.
 
-These activities may validate or reject the implementation against the locked D10 contract, but they do not authorize replacing the D10 operator with another aggregation rule without a new D10 decision.
+These activities may validate or reject the implementation against the locked D10/D11 contracts, but they do not authorize replacing the D10 operator with another aggregation rule without a new decision.
 
 ## 11. Explicit non-decisions
 
 D10 does not:
 
-- change the ten P1 features;
+- change the ten FP32/FP16 P1 features;
 - change P1 static analysis;
 - change D5 `S_static`;
 - change D6 highest-risk-layer selection;
@@ -135,10 +133,10 @@ D10 does not:
 - introduce a new public `classifier_evidence_layer` field;
 - claim probability calibration;
 - add layer-count normalization;
-- invent quantized behavioral/classifier evidence.
+- invent quantized behavioral evidence.
 
 ## 12. Locked outcome
 
 **D10 is RESOLVED / LOCKED.**
 
-Production Phase 4 implementation must reproduce the exact operator and boundaries above. Any change to the aggregation operator, required-layer semantics, prediction-completeness rule, or classifier-evidence/TreeSHAP boundary requires a new D10 decision.
+Production implementation must reproduce the exact D10 aggregation operator and boundaries above. Quantized feature/artifact semantics are governed by D11. Any change to the D10 aggregation operator, required-layer semantics, prediction-completeness rule, or classifier-evidence/TreeSHAP boundary requires a new D10 decision.
