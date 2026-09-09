@@ -13,47 +13,20 @@
     "static_features"
   ],
   "properties": {
-    "producer": {
-      "type": "string",
-      "enum": ["P1"]
-    },
-    "mock_status": {
-      "type": "string",
-      "enum": ["MOCK", "VERIFIED-REAL", "STALE"]
-    },
-    "contract_version": {
-      "type": "string"
-    },
-    "generation_commit": {
-      "type": "string"
-    },
-    "input_domain": {
-      "type": "string",
-      "enum": ["VISION", "NLP"]
-    },
-    "is_quantized": {
-      "type": "boolean"
-    },
-    "layer_count": {
-      "type": "integer",
-      "minimum": 1
-    },
+    "producer": {"type": "string", "enum": ["P1"]},
+    "mock_status": {"type": "string", "enum": ["MOCK", "VERIFIED-REAL", "STALE"]},
+    "contract_version": {"type": "string"},
+    "generation_commit": {"type": "string"},
+    "input_domain": {"type": "string", "enum": ["VISION", "NLP"]},
+    "is_quantized": {"type": "boolean"},
+    "layer_count": {"type": "integer", "minimum": 1},
     "static_features": {
       "type": "array",
       "items": {
         "type": "object",
         "required": [
-          "layer_name",
-          "entropy",
-          "pov_chi2",
-          "lsb_kl",
-          "ks_stat",
-          "mean",
-          "std",
-          "skewness",
-          "kurtosis",
-          "sparsity",
-          "outlier_pct"
+          "layer_name", "entropy", "pov_chi2", "lsb_kl", "ks_stat",
+          "mean", "std", "skewness", "kurtosis", "sparsity", "outlier_pct"
         ],
         "properties": {
           "layer_name": {"type": "string"},
@@ -68,12 +41,6 @@
           "sparsity": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
           "outlier_pct": {"type": ["number", "null"], "minimum": 0, "maximum": 100}
         },
-        "allOf": [
-          {
-            "if": {"properties": {"ks_stat": {"type": "number"}}},
-            "then": {}
-          }
-        ],
         "additionalProperties": false
       }
     }
