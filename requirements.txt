@@ -1,2 +1,3 @@
 # Project dependencies will be pinned during implementation.
 jsonschema
+streamlit>=1.35.0
