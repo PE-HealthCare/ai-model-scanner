@@ -1,176 +1,130 @@
 # AI Model Scanner — Project Definition
 
-**Project:** Precision Care Challenge 2026 — Detection of Steganographic Malware Hidden in AI Model Weights
-**Repository:** `PE-HealthCare/ai-model-scanner`
+**Project:** Precision Care Challenge 2026 — Detection of Steganographic Malware Hidden in AI Model Weights  
+**Repository:** `PE-HealthCare/ai-model-scanner`  
 **Status:** FROZEN FOR EXECUTION
 
 ## Problem Being Solved
 
-AI model weight files (e.g. `.safetensors`) can be used as a covert-storage medium: malicious payloads or hidden data can be steganographically embedded within tensor byte patterns, exploiting the fact that weight files are large, numeric, and not commonly inspected the way executable code is.
+Build a defensive scanner that inspects untrusted AI model weight files for statistical and behavioral evidence consistent with steganographic tampering, without executing uploader-supplied code.
 
-This project builds a scanner that inspects untrusted model weight files for statistical and behavioral evidence of tampering, without relying on the uploader's declared trustworthiness.
+The scanner provides evidence-backed `PASS / REVIEW / FAIL` signals. It detects within its defined scope; it does not extract malicious payloads or claim absolute security.
 
-## Defensive Security Purpose
+## Frozen Detection Pipeline
 
-The scanner is a **defensive** tool.
+The finalized detection architecture contains five detection stages and six implementation phases. Phase 6 is final integration/demo, not a sixth detection stage.
 
-It does not execute, patch, or neutralize threats. It produces evidence-backed risk signals (`PASS / REVIEW / FAIL`) so a human or downstream system can decide whether a model is safe to load into production.
+```text
+P1 Zero-Trust Intake / Trusted Graph
+        ↓
+P1 Static Steganalysis
+        ↓
+features.json
+        ↓
+P3 LightGBM + TreeSHAP
+        ↓
+ml_results.json
+        ↓
+P2 Behavioral + Risk
+        ↓
+risk_results.json
+        ↓
+P3 Security Report
+```
 
-The project is scoped to **detection and explainability**, not remediation.
-
-## Frozen Five-Stage Detection Pipeline + Phase 6 Integration/Demo
-
-The finalized detection architecture contains **five detection stages**.
-
-The repository uses **six implementation phases** because Phase 6 performs final integration and demonstration of the five-stage pipeline. Phase 6 is **not a sixth detection stage**.
-
-### Stage 1 — Zero-Trust Intake & Trusted Graph Instantiation
-
-Bounded parsing of the SafeTensors header and declared architecture.
-
-A trusted, standard-library architecture graph is instantiated and mapped to the supplied weights.
-
-No uploader-supplied code is trusted or executed.
-
-### Stage 2 — Format-Adaptive Static Steganalysis
-
-Per-layer statistical feature extraction is performed against an intra-model baseline.
-
-For FP32/FP16 formats, the planned feature family includes:
-
-* entropy
-* PoV chi-square
-* LSB KL-divergence
-* KS statistic
-* statistical moments
-* sparsity
-* outlier percentage
-
-For quantized formats, the finalized design uses **whole-weight KS only**.
-
-### Stage 3 — Explainable Anomaly Classification
-
-A LightGBM classifier trained from P1's verified feature-extractor output produces `P_tamper`.
-
-TreeSHAP provides feature-level attribution.
-
-TreeSHAP feature attribution is not itself the mechanism for determining the highest-risk neural-network layer.
-
-### Stage 4 — Domain-Aware Sandboxed Behavioral Probing
-
-STRIP-style probing is selected according to `input_domain`:
-
-* `VISION`
-* `NLP`
-
-Inference is bounded and performed without executing uploader-supplied code.
-
-Quantized models skip behavioral probing under the finalized format-adaptive design.
-
-The stage produces `S_behavior` where applicable.
-
-### Stage 5 — MAD-Calibrated Risk Aggregation
-
-Static anomaly evidence, classifier tampering probability, and applicable behavioral evidence are combined into a Model Risk Score (`MRS`).
-
-The final verdict is:
-
-* `PASS`
-* `REVIEW`
-* `FAIL`
-
-The stage feeds the final explainable security report.
+Root orchestration follows `P1 → P3 → P2 → P3`; `scan_model.py` is not a fourth subsystem owner.
 
 ## Implementation Phase Mapping
 
-| Implementation Phase | Purpose                              |
-| -------------------- | ------------------------------------ |
-| Phase 1              | Mock pipeline and contract agreement |
-| Phase 2              | Zero-trust intake                    |
-| Phase 3              | Real static steganalysis             |
-| Phase 4              | ML classification                    |
-| Phase 5              | Behavioral probing and risk          |
-| Phase 6              | Final integration and demo           |
+| Phase | Purpose | Gate |
+|---|---|---|
+| Phase 1 | Mock pipeline/contracts | CP1 PASS |
+| Phase 2 | Zero-trust intake | CP2 PASS |
+| Phase 3 | Real static steganalysis | CP3 PASS |
+| Phase 4 | ML classification | CP4 |
+| Phase 5 | Behavioral probing + risk | CP5 |
+| Phase 6 | Final integration + demo | CP6 |
 
-Phase 6 integrates the five detection stages. It does not introduce a new detection subsystem.
+**Current execution phase: Phase 4.** CP3 is complete and merged; CP4 is in progress.
+
+## Stage 1 — Zero-Trust Intake
+
+The uploader declares an approved architecture. The scanner instantiates only trusted scanner-controlled architecture definitions and maps the supplied weights into them.
+
+Current prototype registry:
+
+| Architecture | Domain | Trusted implementation |
+|---|---|---|
+| `resnet18` | VISION | `torchvision.models` |
+| `distilbert` | NLP | `transformers` |
+
+Current locked hard limits: SafeTensors header 5 MB, metadata 1 MB, tensor count 10,000, maximum rank 8, maximum dimension 1,000,000, model file size 2 GB. Operational targets are `<50 MB` intake memory and `<0.5 sec` processing time.
+
+D2 requires an in-process trusted-model/context handoff from P1 through `scan_model.py` to P2; no downstream reload or uploader-code execution.
+
+## Stage 2 — Static Steganalysis
+
+P1 performs format-adaptive per-layer analysis against an intra-model baseline.
+
+Authoritative FP32/FP16 feature order:
+
+`entropy, pov_chi2, lsb_kl, ks_stat, mean, std, skewness, kurtosis, sparsity, outlier_pct`.
+
+Quantized models use the finalized whole-weight KS path and do not receive invented mantissa/LSB features.
+
+## Stage 3 — Explainable Anomaly Classification
+
+P3 uses verified-real P1 features to train LightGBM and produce `P_tamper`. TreeSHAP provides feature-level classifier attribution.
+
+TreeSHAP is explicitly separate from highest-risk-layer determination.
+
+## Stage 4 — Domain-Aware Behavioral Probing
+
+Non-quantized models use the approved domain-aware STRIP methodology. Quantized models bypass behavioral probing. D3 methodology is locked but empirical calibration remains pending. D4 normalization remains required.
+
+## Stage 5 — Risk Aggregation
+
+Frozen MRS formulas:
+
+```text
+non-quantized:
+MRS = min(100, 40*S_static + 35*P_tamper + 25*S_behavior)
+
+quantized:
+MRS = min(100, 55*S_static + 45*P_tamper)
+```
+
+Verdicts: PASS 0–34, REVIEW 35–69, FAIL 70–100.
+
+D5 owns valid per-layer → model-level aggregation and preserves authoritative per-layer evidence/layer identity for D6. The exact D5 aggregation operator remains pending explicit authorization/evidence.
+
+D6 is a **highest-risk-layer selection/reporting** boundary from authoritative per-layer evidence. It is not a second model-level aggregation stage and is not TreeSHAP. Its exact selection rule, input contract, layer identity semantics, ownership wording, and tie behavior remain pending.
+
+D7 MAD validity/degeneracy handling is resolved/locked. D8 artifact generation/staleness protection is resolved/locked.
 
 ## Ownership
 
-| Subsystem                 | Owner                                               |
-| ------------------------- | --------------------------------------------------- |
-| P1 Static Engine          | `src/p1_static_engine/analyzer.py`                  |
-| P2 Behavioral/Risk Engine | `src/p2_behavioral_risk/prober.py`                  |
-| P3 ML/Dashboard           | `src/p3_ml_dashboard/classifier.py`, `dashboard.py` |
-| Shared utilities          | `src/common/utils.py`                               |
-| Root orchestration        | `scan_model.py`                                     |
+| Owner | Responsibilities |
+|---|---|
+| P1 | zero-trust intake, trusted graph, static steganalysis, feature extraction |
+| P2 | STRIP probing, behavioral scoring, risk aggregation, MRS, verdict |
+| P3 | LightGBM, synthetic training, TreeSHAP, `P_tamper`, security report/dashboard |
+| `scan_model.py` | orchestration only |
 
-`scan_model.py` is the integration/orchestration surface and is **not a fourth subsystem owner**.
+## Decision Status
 
-P2 owns risk aggregation, MRS, and verdict logic.
-
-## Mapping to PS Evaluation Criteria
-
-| Evaluation Criterion        | Pipeline Evidence                                                                             |
-| --------------------------- | --------------------------------------------------------------------------------------------- |
-| Cybersecurity Effectiveness | Zero-trust intake, no uploaded-code execution, combined evidence                              |
-| Steganography Awareness     | Entropy, PoV chi-square, LSB KL-divergence, KS statistic, statistical moments                 |
-| Technical Soundness         | Format-adaptive analysis, intra-model baseline, LightGBM, MAD aggregation, synthetic training |
-| Explainability              | TreeSHAP feature attribution and separately derived highest-risk-layer reporting              |
-| Practical Feasibility       | SafeTensors mmap-based access, bounded inference, no core-model backpropagation               |
-| Clarity of Demo             | PASS/REVIEW/FAIL verdict with evidence and assumptions/limitations                            |
-
-## Supported Input Assumption
-
-The uploader declares a recognizable architecture.
-
-The scanner instantiates a trusted, standard-library version of that declared architecture and maps the supplied weights into it.
-
-The scanner does **not** attempt to infer or execute an arbitrary, unknown, or self-describing architecture.
-
-## Explicit Security Boundary
-
-**The scanner never executes arbitrary uploaded code.**
-
-Specifically:
-
-* No uploader-supplied `model.py` is executed.
-* No unrestricted pickle loading is used.
-* Architecture instantiation is restricted to trusted, standard-library definitions.
-* SafeTensors header parsing is bounded.
-* Uploaded weight bytes are treated as untrusted input.
-
-## Decision Status / Current Limitations
-
-The project distinguishes **locked decision methodology**, **implementation/verification status**, and **empirical evidence**. A locked decision does not by itself prove implementation or checkpoint completion.
-
-* The static baseline is intra-model (layer-vs-layer); no external clean reference model is required or used at runtime.
-* D2 (trusted graph handoff) is resolved and locked; its real implementation and CP2 verification are COMPLETE and have been independently approved.
-* D3 (STRIP entropy baseline) is methodologically resolved and locked, but its empirical calibration/evidence is pending. Baseline values must not be invented; the approved calibration run must populate the evidence before D3 is considered fully evidenced for authoritative behavioral scoring.
-* D4 (behavioral normalization), D5 (per-layer to model-level risk aggregation), and D6 (highest-risk-layer aggregation) remain explicitly unresolved and must not be silently invented.
-* D7 (MAD degenerate/insufficient-baseline guard) is resolved and locked.
-* D8 (artifact staleness protection) is resolved and locked.
-* D9 remains partially resolved: D9.1–D9.20 are locked, while D9.21+ remain required.
-* TreeSHAP explains feature contribution to the classifier prediction; it does not by itself determine the highest-risk neural-network layer.
-* A `PASS` verdict is evidence only within the scanner's detection scope; it is **not** a guarantee of absolute security.
-* Future implementation must not silently invent unresolved behavior or treat pending implementation/evidence as already verified.
+- D1: RESOLVED / LOCKED.
+- D2: RESOLVED / LOCKED; CP2 PASS.
+- D3: methodology RESOLVED / LOCKED; empirical calibration pending.
+- D4: REQUIRED.
+- D5: methodology boundary RESOLVED / LOCKED; exact aggregation operator/evidence pending.
+- D6: boundary revised to highest-risk-layer selection/reporting; exact rule/input/tie semantics pending.
+- D7: RESOLVED / LOCKED.
+- D8: RESOLVED / LOCKED.
+- D9: PARTIALLY RESOLVED; D9.1–D9.20 locked and remaining dependency evidence pending.
 
 ## Source of Truth
 
-The **Final Master Discovery & Dependency Graph** is the authoritative architecture source.
+The Final Master Discovery & Dependency Graph is the authoritative architecture source. Current decision status is maintained in `docs/DECISION_STATUS.md`, D6 specifics in `docs/D6_HIGHEST_RISK_LAYER_DECISION.md`, and execution status in `.planning/STATE.md`.
 
-Project and planning documents must remain consistent with that frozen architecture.
-
-If an unresolved item conflicts with an implementation assumption, the unresolved item remains unresolved until explicitly decided.
-
-Future agents must:
-
-1. inspect the repository before changing it;
-2. preserve the frozen architecture;
-3. respect subsystem ownership;
-4. distinguish repository facts from inference;
-5. never treat scaffolding as implementation;
-6. never treat mock artifacts as real outputs;
-7. never silently invent unresolved decisions;
-8. distinguish a locked methodology from pending implementation or empirical evidence;
-9. when pending evidence becomes available, return to the corresponding decision record, update only the evidence-dependent portion, and re-verify downstream consistency;
-10. stop when a required dependency or decision is blocking progress.
+Historical audit text MUST NOT override newer committed decision records. When a required decision/evidence item is unavailable, the correct state is BLOCKED, not invention.
