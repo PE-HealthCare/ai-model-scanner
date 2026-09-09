@@ -1,4 +1,4 @@
-﻿import struct
+import struct
 import tempfile
 import unittest
 from pathlib import Path
@@ -181,6 +181,10 @@ class TestZeroTrustIntake(unittest.TestCase):
         from torchvision.models import resnet18
         m = resnet18()
         sd = m.state_dict()
+        
+        # Modify a weight to prove it's loaded correctly
+        sd["conv1.weight"].fill_(42.0)
+        
         save_file(sd, path)
         
         ctx = analyzer.intake_model(path, declared_architecture="resnet18")
@@ -189,6 +193,9 @@ class TestZeroTrustIntake(unittest.TestCase):
         self.assertEqual(ctx.architecture, "resnet18")
         self.assertEqual(ctx.input_domain, "VISION")
         self.assertEqual(ctx.is_quantized, False)
+        
+        # Prove the returned model contains the submitted values, not random initialization
+        self.assertEqual(ctx.model.conv1.weight[0,0,0,0].item(), 42.0)
         
     def test_successful_distilbert(self):
         path = self.test_dir / "success_db.safetensors"

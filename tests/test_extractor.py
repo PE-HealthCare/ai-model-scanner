@@ -45,19 +45,47 @@ class TestExtractor(unittest.TestCase):
         ctx = TrustedModelContext(MockModel({"l1": t1, "l2": t2, "l3": t3}), "resnet18", "VISION", False)
         res = extract_features(ctx, "commit123")
         self.assertIsNotNone(res["static_features"][0]["entropy"])
+
+    def test_integer_control_tensors_are_excluded(self):
+        tensors = {
+            "l1": torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32),
+            "l2": torch.tensor([2.0, 3.0, 4.0], dtype=torch.float32),
+            "l3": torch.tensor([10.0, 100.0, -50.0], dtype=torch.float32),
+            "batch_norm.num_batches_tracked": torch.tensor(1, dtype=torch.int64),
+        }
+
+        res = extract_features(
+            TrustedModelContext(MockModel(tensors), "resnet18", "VISION", False),
+            "commit123",
+        )
+
+        self.assertEqual(res["layer_count"], 3)
+        self.assertEqual(
+            [feature["layer_name"] for feature in res["static_features"]],
+            ["l1", "l2", "l3"],
+        )
         
     def test_quantized_features(self):
-        t1 = torch.tensor([1, 2, 3], dtype=torch.int8)
-        t2 = torch.tensor([2, 3, 4], dtype=torch.int8)
-        t3 = torch.tensor([10, 100, -50], dtype=torch.int8)
+        t1 = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+        t2 = torch.tensor([2.0, 3.0, 4.0], dtype=torch.float32)
+        t3 = torch.tensor([10.0, 100.0, -50.0], dtype=torch.float32)
         
         ctx = TrustedModelContext(MockModel({"l1": t1, "l2": t2, "l3": t3}), "resnet18", "VISION", True)
         res = extract_features(ctx, "commit123")
         
         l1 = res["static_features"][0]
         self.assertTrue(math.isnan(l1["entropy"]))
+        self.assertTrue(math.isnan(l1["pov_chi2"]))
+        self.assertTrue(math.isnan(l1["lsb_kl"]))
         self.assertTrue(math.isnan(l1["mean"]))
         self.assertFalse(math.isnan(l1["ks_stat"]))
+        self.assertEqual(
+            list(l1.keys()),
+            [
+                "layer_name", "entropy", "pov_chi2", "lsb_kl", "ks_stat",
+                "mean", "std", "skewness", "kurtosis", "sparsity", "outlier_pct",
+            ],
+        )
 
     def test_nan_rejection(self):
         t1 = torch.tensor([1.0, float('nan'), 3.0])

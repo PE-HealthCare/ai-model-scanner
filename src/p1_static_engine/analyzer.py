@@ -139,6 +139,14 @@ def intake_model(path: Path, declared_architecture: str = None) -> Optional[Trus
             if is_quantized is None:
                 is_quantized = False
 
+            # Load the validated weights from SafeTensors into the trusted model
+            trusted_model.requires_grad_(False)
+            loaded_state_dict = {}
+            for key in trusted_keys:
+                loaded_state_dict[key] = st.get_tensor(key)
+                
+            trusted_model.load_state_dict(loaded_state_dict, assign=True)
+
             return TrustedModelContext(
                 model=trusted_model,
                 architecture=declared_architecture,
@@ -175,14 +183,18 @@ def extract_features(context: TrustedModelContext, generation_commit: str) -> di
         raise ValueError("Integrity violated: Valid TrustedModelContext required")
         
     state_dict = context.model.state_dict()
-    layer_names = list(state_dict.keys())
+    # Integer state entries are framework control buffers, not FP weight layers.
+    feature_tensors = {
+        name: tensor for name, tensor in state_dict.items() if tensor.is_floating_point()
+    }
+    layer_names = list(feature_tensors.keys())
     
     if len(layer_names) < 3:
         raise ValueError("Integrity violated: insufficient-baseline condition (fewer than 3 layers)")
         
     tensors = {}
     for name in layer_names:
-        tensor = state_dict[name]
+        tensor = feature_tensors[name]
         if tensor.numel() == 0:
             raise ValueError(f"Integrity violated: empty tensor {name}")
             
