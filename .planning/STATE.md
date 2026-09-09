@@ -22,7 +22,7 @@ The explicit project decisions recorded below are persistent execution decisions
 
 ### D1 — Exact Static Feature Contract
 
-**Status: RESOLVED.**
+**Status: RESOLVED / LOCKED.**
 
 The authoritative FP32/FP16 static feature set and order are:
 
@@ -69,39 +69,31 @@ D3 defines entropy measurement and baseline methodology only. Conversion of base
 
 ### D4 — Behavioral Normalization
 
-**Status: REQUIRED.**
+**Status: TEAM-AGREED / FORMULA-LOCKED; IMPLEMENTATION/CALIBRATION UNDERWAY.**
 
-The exact conversion from `H_STRIP` evidence to `S_behavior ∈ [0,1]` remains unresolved. No thresholds, clipping, normalization, or fallback behavior may be invented.
+The team-agreed D4 formula is locked and P2 is currently implementing/calibrating it. This state record intentionally does not restate the mathematical formula or calibration values; agents MUST use the authoritative D4 decision artifact for exact technical semantics and MUST NOT invent or reinterpret them.
 
 ### D5 — Per-Layer → Model-Level Risk Aggregation
 
-**Status: RESOLVED / LOCKED — METHODOLOGY BOUNDARY; EXACT AGGREGATION RULE PENDING.**
+**Status: RESOLVED / LOCKED — EXACT OPERATOR.**
 
 D5 owns the reduction of valid per-layer static/tampering evidence to the model-level evidence consumed by the frozen MRS formulas.
 
-The D5 aggregation stage SHALL operate only on valid, eligible per-layer evidence after applicable D7 validity/degeneracy handling. It SHALL preserve layer identity and underlying per-layer evidence required for D6 highest-risk-layer reporting.
+The exact D5 operator is authoritative in `docs/D5_PART7_EXACT_OPERATOR_DECISION.md` and SHALL be followed exactly. It SHALL operate only on valid, eligible per-layer evidence after applicable D7 validity/degeneracy handling, preserve authoritative per-layer evidence/layer identity required by D6, and SHALL NOT fabricate, impute, or silently substitute missing/invalid evidence.
 
-D5 SHALL NOT fabricate, impute, or silently substitute missing/invalid evidence; use TreeSHAP as highest-risk-layer aggregation; redefine D4; redefine D6; alter frozen MRS formulas/weights; or silently introduce `max`, `mean`, `median`, top-k, weighted, or another aggregation operator without explicit authorization and supporting evidence.
+The exact operator is not redefined in this execution-state summary.
 
-The exact mathematical operator and evidence-backed parameters remain pending explicit authorization/evidence.
-
-**Implementation / verification status:** ownership, inputs, invariants, and separation from D4/D6 are locked. Exact aggregation rule, implementation, and verification evidence remain pending.
+**Implementation / verification status:** the D5 decision is locked; implementation and verification evidence remain governed by the applicable phase gates.
 
 ### D6 — Highest-Risk-Layer Selection & Reporting
 
-**Status: REQUIRED — BOUNDARY REVISED; EXACT SELECTION RULE PENDING.**
+**Status: RESOLVED / LOCKED — PARTS 1 & 2.**
 
-D6 owns highest-risk-layer **selection and reporting from authoritative per-layer evidence**. It is NOT a second model-level risk aggregation stage and is NOT TreeSHAP attribution.
+D6 owns highest-risk-layer selection and reporting from authoritative per-layer evidence. It is not a second model-level risk aggregation stage and is not TreeSHAP attribution.
 
-D6 SHALL consume only authoritative valid per-layer evidence already produced/preserved upstream, including authoritative layer identity, applicable per-layer anomaly/risk evidence, D7 validity status, and required provenance/current-generation information.
+The exact D6 selection semantics, input boundary, eligibility, and deterministic tie behavior are authoritative in `docs/D6_HIGHEST_RISK_LAYER_DECISION.md` and SHALL be followed exactly. D6 SHALL NOT recalculate upstream evidence, manufacture layer-level `P_tamper`/`S_behavior`, recalculate MRS, or use TreeSHAP as its selection algorithm.
 
-D6 SHALL NOT calculate static features, S_static, behavioral entropy/S_behavior, P_tamper, MRS, verdict thresholds, or a new statistical baseline. It SHALL NOT manufacture a layer-level P_tamper or S_behavior unless an authoritative upstream contract explicitly defines one. It SHALL NOT replace/duplicate D5 aggregation or use TreeSHAP for layer selection.
-
-The exact deterministic selection rule, final ownership wording, input contract, layer-identity semantics, and tie behavior remain DECISION REQUIRED. No choice among max/argmax, weighted scoring, thresholding, voting, or another mechanism may be assumed from implementation convenience.
-
-Quantized models SHALL NOT receive invented behavioral evidence. D6 applies only to valid authoritative evidence available through the finalized upstream path.
-
-**Current boundary:** D6 is P3 reporting/selection semantics from authoritative per-layer evidence; implementation is not authorized until the exact rule and input contract are explicitly resolved.
+**Implementation / verification status:** the D6 decision is locked; implementation and verification remain governed by Phase 6 and CP6 evidence.
 
 ### Decision 1 — Trusted Architecture Registry
 
@@ -135,7 +127,7 @@ The SafeTensors header limit is **5 MB** and supersedes the previous 100 MB valu
 
 ### D7 — MAD Degenerate Baseline Guard
 
-**Status: RESOLVED.**
+**Status: RESOLVED / LOCKED.**
 
 - Finite nonzero MAD: use actual MAD directly; no epsilon.
 - Exact MAD = 0 and target equals median: deterministic zero anomaly.
@@ -147,7 +139,7 @@ The SafeTensors header limit is **5 MB** and supersedes the previous 100 MB valu
 
 ### D8 — Artifact Staleness Protection
 
-**Status: RESOLVED.**
+**Status: RESOLVED / LOCKED.**
 
 Downstream stages consume outputs from the current pipeline execution only. `generation_commit` provides artifact provenance/generation identity. A stale/mismatched artifact must be rejected or blocked rather than silently reused.
 
@@ -181,11 +173,13 @@ D9.21 and later remain REQUIRED until explicitly resolved.
 
 | Decision | Status |
 |---|---|
-| D4 — Behavioral normalization | REQUIRED |
-| D5 — Risk aggregation | Methodology boundary LOCKED; exact aggregation rule/evidence pending |
-| D6 — Highest-risk-layer selection/reporting | Boundary revised/locked; exact selection rule/input/tie semantics pending |
+| D3 — STRIP empirical calibration/evidence | METHODOLOGY LOCKED; CALIBRATION PENDING |
+| D4 — Behavioral normalization | TEAM-AGREED / FORMULA-LOCKED; IMPLEMENTATION/CALIBRATION UNDERWAY |
+| D9 — Dependency pinning | PARTIALLY RESOLVED; required lock/evidence work remains |
 
-A locked methodology or boundary does not constitute implementation or checkpoint evidence.
+D5 and D6 are locked; D10 and D11 are resolved on the authoritative decision branch but their detailed records are not yet part of the current `main` baseline. Do not invent replacement D10/D11 records on `main`; synchronize them when the authoritative records are incorporated through the normal integration process.
+
+A locked methodology, decision, or boundary does not constitute implementation or checkpoint evidence.
 
 ## Phase Status
 
