@@ -13,99 +13,80 @@
     "static_features"
   ],
   "properties": {
-    "producer": {
-      "type": "string",
-      "enum": [
-        "P1"
-      ]
-    },
-    "mock_status": {
-      "type": "string",
-      "enum": [
-        "MOCK",
-        "VERIFIED-REAL",
-        "STALE"
-      ]
-    },
-    "contract_version": {
-      "type": "string"
-    },
-    "generation_commit": {
-      "type": "string"
-    },
-    "input_domain": {
-      "type": "string",
-      "enum": [
-        "VISION",
-        "NLP"
-      ]
-    },
-    "is_quantized": {
-      "type": "boolean"
-    },
-    "layer_count": {
-      "type": "integer",
-      "minimum": 1
-    },
+    "producer": {"type": "string", "enum": ["P1"]},
+    "mock_status": {"type": "string", "enum": ["MOCK", "VERIFIED-REAL", "STALE"]},
+    "contract_version": {"type": "string"},
+    "generation_commit": {"type": "string"},
+    "input_domain": {"type": "string", "enum": ["VISION", "NLP"]},
+    "is_quantized": {"type": "boolean"},
+    "layer_count": {"type": "integer", "minimum": 1},
     "static_features": {
       "type": "array",
       "items": {
         "type": "object",
         "required": [
-          "layer_name",
-          "entropy",
-          "pov_chi2",
-          "lsb_kl",
-          "ks_stat",
-          "mean",
-          "std",
-          "skewness",
-          "kurtosis",
-          "sparsity",
-          "outlier_pct"
+          "layer_name", "entropy", "pov_chi2", "lsb_kl", "ks_stat",
+          "mean", "std", "skewness", "kurtosis", "sparsity", "outlier_pct"
         ],
         "properties": {
-          "layer_name": {
-            "type": "string"
-          },
-          "entropy": {
-            "type": "number"
-          },
-          "pov_chi2": {
-            "type": "number"
-          },
-          "lsb_kl": {
-            "type": "number"
-          },
-          "ks_stat": {
-            "type": "number"
-          },
-          "mean": {
-            "type": "number"
-          },
-          "std": {
-            "type": "number"
-          },
-          "skewness": {
-            "type": "number"
-          },
-          "kurtosis": {
-            "type": "number"
-          },
-          "sparsity": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1
-          },
-          "outlier_pct": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 100
-          }
+          "layer_name": {"type": "string"},
+          "entropy": {"type": ["number", "null"]},
+          "pov_chi2": {"type": ["number", "null"]},
+          "lsb_kl": {"type": ["number", "null"]},
+          "ks_stat": {"type": "number", "minimum": 0, "maximum": 1},
+          "mean": {"type": ["number", "null"]},
+          "std": {"type": ["number", "null"]},
+          "skewness": {"type": ["number", "null"]},
+          "kurtosis": {"type": ["number", "null"]},
+          "sparsity": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+          "outlier_pct": {"type": ["number", "null"], "minimum": 0, "maximum": 100}
         },
         "additionalProperties": false
       }
     }
   },
+  "allOf": [
+    {
+      "if": {"properties": {"is_quantized": {"const": true}}},
+      "then": {
+        "properties": {
+          "static_features": {
+            "items": {
+              "properties": {
+                "entropy": {"type": "null"},
+                "pov_chi2": {"type": "null"},
+                "lsb_kl": {"type": "null"},
+                "mean": {"type": "null"},
+                "std": {"type": "null"},
+                "skewness": {"type": "null"},
+                "kurtosis": {"type": "null"},
+                "sparsity": {"type": "null"},
+                "outlier_pct": {"type": "null"}
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "static_features": {
+            "items": {
+              "properties": {
+                "entropy": {"type": "number"},
+                "pov_chi2": {"type": "number"},
+                "lsb_kl": {"type": "number"},
+                "mean": {"type": "number"},
+                "std": {"type": "number"},
+                "skewness": {"type": "number"},
+                "kurtosis": {"type": "number"},
+                "sparsity": {"type": "number", "minimum": 0, "maximum": 1},
+                "outlier_pct": {"type": "number", "minimum": 0, "maximum": 100}
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
   "additionalProperties": false
 }
