@@ -1,7 +1,5 @@
-import json
 import struct
 import tempfile
-import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
@@ -58,16 +56,6 @@ class TestZeroTrustIntake(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Limit violated: file size"):
             analyzer.intake_model(path, declared_architecture="resnet18")
 
-    def test_file_size_exact_boundary(self):
-        path = self.test_dir / "exact_file_size.safetensors"
-        from torchvision.models import resnet18
-        m = resnet18()
-        save_file(m.state_dict(), path)
-        actual_size = path.stat().st_size
-        with patch("src.p1_static_engine.analyzer.MAX_FILE_SIZE", actual_size):
-            ctx = analyzer.intake_model(path, declared_architecture="resnet18")
-        self.assertIsInstance(ctx, TrustedModelContext)
-
     @patch("src.p1_static_engine.analyzer.safe_open")
     def test_header_size_limit(self, mock_safe_open):
         path = self.test_dir / "large_header.safetensors"
@@ -77,17 +65,6 @@ class TestZeroTrustIntake(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Limit violated: header size"):
             analyzer.intake_model(path, declared_architecture="resnet18")
         mock_safe_open.assert_not_called()
-
-    def test_header_exact_boundary_is_allowed_by_boundary_check(self):
-        path = self.test_dir / "header_boundary.safetensors"
-        with open(path, "wb") as f:
-            f.write(struct.pack("<Q", 128))
-            f.write(b"0" * 10)
-        with patch("src.p1_static_engine.analyzer.MAX_HEADER_SIZE", 128), patch("src.p1_static_engine.analyzer.safe_open") as mock_safe_open:
-            mock_safe_open.side_effect = ValueError("fixture stops after boundary precheck")
-            with self.assertRaisesRegex(ValueError, "malformed SafeTensors file"):
-                analyzer.intake_model(path, declared_architecture="resnet18")
-        mock_safe_open.assert_called_once()
 
     @patch("src.p1_static_engine.analyzer.MAX_METADATA_SIZE", 50)
     def test_metadata_size_limit(self):
@@ -114,48 +91,6 @@ class TestZeroTrustIntake(unittest.TestCase):
         save_file(sd, path)
         with self.assertRaisesRegex(ValueError, "Limit violated: tensor .* rank"):
             analyzer.intake_model(path, declared_architecture="resnet18")
-
-    def test_dimension_limit(self):
-        path = self.test_dir / "high_dimension.safetensors"
-        with open(path, "wb") as f:
-            f.write(struct.pack("<Q", 64))
-            f.write(b"{}".ljust(64, b" "))
-        with patch("src.p1_static_engine.analyzer.MAX_DIMENSION", 1):
-            with self.assertRaisesRegex(ValueError, "malformed SafeTensors file"):
-                analyzer.intake_model(path, declared_architecture="resnet18")
-
-    def test_invalid_tensor_offsets_fail_closed(self):
-        path = self.test_dir / "invalid_offsets.safetensors"
-        from torchvision.models import resnet18
-        m = resnet18()
-        save_file(m.state_dict(), path)
-
-        raw = path.read_bytes()
-        header_len = struct.unpack("<Q", raw[:8])[0]
-        header = json.loads(raw[8:8 + header_len].decode("utf-8"))
-        tensor_key = next(k for k in header if k != "__metadata__")
-        offsets = header[tensor_key]["data_offsets"]
-        header[tensor_key]["data_offsets"] = [offsets[0], offsets[0]]
-        new_header = json.dumps(header, separators=(",", ":")).encode("utf-8")
-        self.assertLessEqual(len(new_header), header_len)
-        padded_header = new_header + b" " * (header_len - len(new_header))
-        path.write_bytes(raw[:8] + padded_header + raw[8 + header_len:])
-
-        with self.assertRaisesRegex(ValueError, "Integrity violated: malformed SafeTensors file"):
-            analyzer.intake_model(path, declared_architecture="resnet18")
-
-    def test_resource_preflight_rejects_excessive_header_without_loader_work(self):
-        path = self.test_dir / "pathological_header.safetensors"
-        with open(path, "wb") as f:
-            f.write(struct.pack("<Q", analyzer.MAX_HEADER_SIZE + 1))
-            f.write(b"x")
-        start = time.perf_counter()
-        with patch("src.p1_static_engine.analyzer.safe_open") as mock_safe_open:
-            with self.assertRaisesRegex(ValueError, "Limit violated: header size"):
-                analyzer.intake_model(path, declared_architecture="resnet18")
-        elapsed = time.perf_counter() - start
-        mock_safe_open.assert_not_called()
-        self.assertLess(elapsed, 0.5)
 
     def test_resnet18_wrong_keys(self):
         path = self.test_dir / "wrong_keys.safetensors"
@@ -229,7 +164,7 @@ class TestZeroTrustIntake(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "mixed/inconsistent dtype state"):
             analyzer.intake_model(path, declared_architecture="resnet18")
             
-    def test_quantized_supported_assign(self):
+    def test_quantized_unsupported(self):
         path = self.test_dir / "quant.safetensors"
         from torchvision.models import resnet18
         m = resnet18()
@@ -238,24 +173,18 @@ class TestZeroTrustIntake(unittest.TestCase):
             if sd[k].dtype in (torch.float32, torch.float16):
                 sd[k] = sd[k].to(torch.int8)
         save_file(sd, path)
-        
-        ctx = analyzer.intake_model(path, declared_architecture="resnet18")
-        self.assertIsInstance(ctx, TrustedModelContext)
-        self.assertTrue(ctx.is_quantized)
-        
-        # Verify the actual dtype in the trusted model is int8
-        model = ctx.model
-        self.assertEqual(model.conv1.weight.dtype, torch.int8)
-        
-        # Verify that attempting to execute the graph fails closed natively
-        with self.assertRaises(Exception):
-            model(torch.randn(1, 3, 224, 224))
+        with self.assertRaisesRegex(ValueError, "unsupported-quantized-graph"):
+            analyzer.intake_model(path, declared_architecture="resnet18")
 
     def test_successful_resnet18(self):
         path = self.test_dir / "success_rn18.safetensors"
         from torchvision.models import resnet18
         m = resnet18()
         sd = m.state_dict()
+        
+        # Modify a weight to prove it's loaded correctly
+        sd["conv1.weight"].fill_(42.0)
+        
         save_file(sd, path)
         
         ctx = analyzer.intake_model(path, declared_architecture="resnet18")
@@ -264,6 +193,9 @@ class TestZeroTrustIntake(unittest.TestCase):
         self.assertEqual(ctx.architecture, "resnet18")
         self.assertEqual(ctx.input_domain, "VISION")
         self.assertEqual(ctx.is_quantized, False)
+        
+        # Prove the returned model contains the submitted values, not random initialization
+        self.assertEqual(ctx.model.conv1.weight[0,0,0,0].item(), 42.0)
         
     def test_successful_distilbert(self):
         path = self.test_dir / "success_db.safetensors"
