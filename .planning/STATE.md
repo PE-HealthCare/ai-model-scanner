@@ -7,7 +7,6 @@
 **Current Gate Status:** PASS — CP3 VERIFIED  
 **Last Verified Phase:** Phase 3 — Static Steganalysis  
 **Next Permitted Phase:** Phase 4 — ML Classification
-**Next Permitted Phase:** Phase 2 — Zero-Trust Intake
 
 ---
 
@@ -48,28 +47,13 @@ P1 SHALL construct the trusted, weight-loaded model as part of the zero-trust in
 
 `scan_model.py` SHALL hand the already-created trusted model/context to P2 by in-process Python object reference during the same pipeline execution.
 
-The D2 handoff SHALL NOT:
-
-- serialize or persist the trusted model for downstream loading;
-- independently reload the model in P2;
-- provide the original untrusted model artifact as P2's loading source;
-- create an alternative architecture in P2.
+The D2 handoff SHALL NOT serialize or persist the trusted model for downstream loading, independently reload the model in P2, provide the original untrusted artifact as P2's loading source, or create an alternative architecture in P2.
 
 P2 SHALL consume the received trusted model for bounded, inference-only behavioral analysis. P2's inference-only contract prohibits training, gradient/backward execution, optimizer use, weight modification, or independent model loading.
 
-The handoff SHALL carry the trusted metadata required by P2, including:
+The handoff SHALL carry `input_domain` (`VISION` or `NLP`) and `is_quantized` (`true` or `false`). The exact Python class/function representation is an implementation detail.
 
-- `input_domain` (`VISION` or `NLP`);
-- `is_quantized` (`true` or `false`).
-
-The exact Python class, function names, type annotations, and module location used to represent this handoff are implementation details and are NOT fixed by D2.
-
-D2 does not change the artifact contracts (`features.json`, `ml_results.json`, or `risk_results.json`) because the trusted-model handoff is an in-process runtime mechanism rather than a JSON artifact.
-
-D2 does not resolve D3, D4, D5, or D6.
-
-**Implementation / verification status:** D2 implementation and verification evidence are COMPLETE.
-D2 was implemented, tested, independently reviewed, accepted at CP2, and integrated into main.
+**Implementation / verification status:** D2 implementation and verification evidence are COMPLETE. D2 was implemented, tested, independently reviewed, accepted at CP2, and integrated into main.
 
 ### D3 — STRIP Entropy Baseline
 
@@ -77,17 +61,17 @@ D2 was implemented, tested, independently reviewed, accepted at CP2, and integra
 
 For non-quantized models, behavioral probing SHALL compute Shannon entropy over the model's softmax output probability distribution for the existing 32 domain-appropriate probes.
 
-The STRIP baseline SHALL be empirical and domain-specific. Separate `VISION` and `NLP` baseline distributions SHALL be established from a fixed, scanner-controlled set of clean reference models for the corresponding domain.
+The STRIP baseline SHALL be empirical and domain-specific, using fixed scanner-controlled clean reference models. It SHALL NOT be derived from the uploaded model and no arbitrary universal numeric entropy threshold may be introduced without calibration evidence.
 
-The reference models and resulting calibration evidence SHALL be explicitly recorded before D3 is considered fully evidenced for authoritative behavioral scoring.
+D3 defines entropy measurement and baseline methodology only. Conversion of baseline deviation into `S_behavior ∈ [0,1]` remains D4.
 
-The baseline SHALL NOT be derived from the uploaded model itself, and no arbitrary universal numeric entropy threshold may be introduced without corresponding calibration evidence.
+**Implementation / empirical-evidence status:** methodology is locked; calibration execution, measured baseline distributions, and supporting evidence remain pending. Agents MUST NOT invent baseline values.
 
-D3 defines the entropy measurement and baseline methodology only. The conversion of baseline deviation into `S_behavior ∈ [0,1]` remains D4. Final behavioral anomaly thresholds and risk aggregation remain governed by their respective decisions.
+### D4 — Behavioral Normalization
 
-Quantized models do not use the behavioral baseline because behavioral probing is skipped under the finalized quantized path.
+**Status: REQUIRED.**
 
-**Implementation / empirical-evidence status:** The D3 methodology is locked, but calibration execution, measured baseline distributions, and supporting evidence remain pending. Agents MUST NOT invent baseline values. After the approved calibration run completes, the agent MUST return to this D3 section, record the measured evidence and any evidence-dependent parameters, and re-verify downstream consistency before treating D3 as fully evidenced.
+The exact conversion from `H_STRIP` evidence to `S_behavior ∈ [0,1]` remains unresolved. No thresholds, clipping, normalization, or fallback behavior may be invented.
 
 ### D5 — Per-Layer → Model-Level Risk Aggregation
 
@@ -95,36 +79,29 @@ Quantized models do not use the behavioral baseline because behavioral probing i
 
 D5 owns the reduction of valid per-layer static/tampering evidence to the model-level evidence consumed by the frozen MRS formulas.
 
-The D5 aggregation stage SHALL operate only on valid, eligible per-layer evidence after the applicable D7 validity/degeneracy handling. It SHALL preserve layer identity and underlying per-layer evidence required for D6 highest-risk-layer reporting.
+The D5 aggregation stage SHALL operate only on valid, eligible per-layer evidence after applicable D7 validity/degeneracy handling. It SHALL preserve layer identity and underlying per-layer evidence required for D6 highest-risk-layer reporting.
 
-D5 SHALL NOT:
+D5 SHALL NOT fabricate, impute, or silently substitute missing/invalid evidence; use TreeSHAP as highest-risk-layer aggregation; redefine D4; redefine D6; alter frozen MRS formulas/weights; or silently introduce `max`, `mean`, `median`, top-k, weighted, or another aggregation operator without explicit authorization and supporting evidence.
 
-- fabricate, impute, or silently substitute missing or invalid per-layer evidence;
-- use TreeSHAP feature attribution as the highest-risk-layer aggregation mechanism;
-- redefine D4's `H_STRIP → S_behavior` normalization;
-- redefine D6's highest-risk-layer selection/reporting;
-- alter the frozen MRS formulas or their weights;
-- silently introduce an aggregation operator such as `max`, `mean`, `median`, top-k, or weighted aggregation without an explicit authorized decision and supporting evidence.
+The exact mathematical operator and evidence-backed parameters remain pending explicit authorization/evidence.
 
-The model-level flow remains:
+**Implementation / verification status:** ownership, inputs, invariants, and separation from D4/D6 are locked. Exact aggregation rule, implementation, and verification evidence remain pending.
 
-```text
-valid per-layer static/tampering evidence
-                ↓
-        D7 validity/guard handling
-                ↓
-       D5 model-level aggregation
-                ↓
-      model-level S_static / P_tamper
-                ↓
-             MRS
-```
+### D6 — Highest-Risk-Layer Selection & Reporting
 
-The exact mathematical operator and any evidence-backed parameters for per-layer → model-level aggregation remain pending explicit authorization/evidence. They MUST NOT be inferred from implementation convenience or selected autonomously by an agent.
+**Status: REQUIRED — BOUNDARY REVISED; EXACT SELECTION RULE PENDING.**
 
-D5 is independent of D3's entropy calibration methodology for purposes of defining the aggregation boundary, but end-to-end P2 risk implementation still requires the separately resolved D4/D3 inputs where applicable.
+D6 owns highest-risk-layer **selection and reporting from authoritative per-layer evidence**. It is NOT a second model-level risk aggregation stage and is NOT TreeSHAP attribution.
 
-**Implementation / verification status:** The D5 ownership, inputs, invariants, and separation from D4/D6 are locked. The exact aggregation rule, implementation, and verification evidence remain pending. After the authorized aggregation decision/evidence is available, the agent MUST return to this D5 section, record the exact rule and supporting evidence, and re-verify downstream consistency before treating D5 as fully evidenced.
+D6 SHALL consume only authoritative valid per-layer evidence already produced/preserved upstream, including authoritative layer identity, applicable per-layer anomaly/risk evidence, D7 validity status, and required provenance/current-generation information.
+
+D6 SHALL NOT calculate static features, S_static, behavioral entropy/S_behavior, P_tamper, MRS, verdict thresholds, or a new statistical baseline. It SHALL NOT manufacture a layer-level P_tamper or S_behavior unless an authoritative upstream contract explicitly defines one. It SHALL NOT replace/duplicate D5 aggregation or use TreeSHAP for layer selection.
+
+The exact deterministic selection rule, final ownership wording, input contract, layer-identity semantics, and tie behavior remain DECISION REQUIRED. No choice among max/argmax, weighted scoring, thresholding, voting, or another mechanism may be assumed from implementation convenience.
+
+Quantized models SHALL NOT receive invented behavioral evidence. D6 applies only to valid authoritative evidence available through the finalized upstream path.
+
+**Current boundary:** D6 is P3 reporting/selection semantics from authoritative per-layer evidence; implementation is not authorized until the exact rule and input contract are explicitly resolved.
 
 ### Decision 1 — Trusted Architecture Registry
 
@@ -137,20 +114,11 @@ The trusted architecture registry is intentionally limited to:
 | `resnet18` | VISION | `torchvision.models` |
 | `distilbert` | NLP | `transformers` |
 
-Rules:
-
-- The uploader declares the architecture.
-- No automatic architecture detection.
-- No uploader-supplied `model.py` or custom executable architecture.
-- Unsupported architecture fails closed.
-- Malformed or incompatible tensor names/shapes/dtypes fail closed.
-- No best-effort graph construction, silent omission, shape correction, or fallback.
+Rules: uploader declares architecture; no automatic detection; no uploader-supplied `model.py` or custom executable architecture; unsupported architecture fails closed; malformed/incompatible tensor names/shapes/dtypes fail closed; no best-effort graph construction, silent omission, shape correction, or fallback.
 
 ### Decision 2 — Zero-Trust Intake Resource Limits
 
 **Status: RESOLVED / LOCKED.**
-
-Hard fail-closed production limits:
 
 | Resource | Hard limit |
 |---|---:|
@@ -161,14 +129,9 @@ Hard fail-closed production limits:
 | Maximum dimension | 1,000,000 |
 | Model file size | 2 GB |
 
-Operational targets (not hard security walls):
+Operational targets: intake memory `<50 MB`; processing time `<0.5 sec`.
 
-- Intake memory target: `<50 MB`
-- Intake processing-time target: `<0.5 sec`
-
-The SafeTensors header limit is **5 MB** and is the locked project boundary. This explicitly supersedes the previous 100 MB header value and resolves the identified conflict between the header boundary, the `<50 MB` operational memory target, and mandatory native `safetensors.safe_open()` parsing. The 5 MB value is a hard production security limit, not an illustrative value.
-
-When a hard limit is exceeded, intake fails closed and reports the exact exceeded limit. No per-tensor quota heuristics, no configuration-file override, and no limit-tuning CLI flag are part of this decision.
+The SafeTensors header limit is **5 MB** and supersedes the previous 100 MB value. Hard-limit exceedance fails closed with the exact exceeded limit. No per-tensor quota heuristics, configuration override, or limit-tuning CLI flag is authorized.
 
 ### D7 — MAD Degenerate Baseline Guard
 
@@ -180,7 +143,7 @@ When a hard limit is exceeded, intake fails closed and reports the exact exceede
 - 1–2 comparable layers: baseline evidence unavailable; block downstream scoring requiring it.
 - Missing/NaN/+/-inf numeric data: invalid; no imputation.
 - Very small nonzero MAD: use actual value.
-- Quantized behavior retains the finalized format-adaptive rules; no new semantics are invented here.
+- Quantized behavior retains finalized format-adaptive rules; no new semantics are invented.
 
 ### D8 — Artifact Staleness Protection
 
@@ -192,65 +155,9 @@ Downstream stages consume outputs from the current pipeline execution only. `gen
 
 **Status: REQUIRED — PARTIALLY RESOLVED.**
 
-D9 is being resolved as explicit sub-decisions. Only the sub-decisions listed as LOCKED below are settled. Remaining D9 sub-decisions remain REQUIRED and must not be inferred from this file.
+D9 sub-decisions D9.1–D9.20 are locked as policy. Full D9 resolution still requires the actual authoritative lock artifacts, hashes, installation procedure, and verification evidence.
 
-#### D9.1 — Python baseline
-**Status: LOCKED.** Python **3.11.x**.
-
-#### D9.2 — Execution hardware
-**Status: LOCKED.** **CPU-only** is the authoritative execution environment; GPU/CUDA is not required for the authoritative pipeline or PASS/REVIEW/FAIL result.
-
-#### D9.3 — PyTorch stack
-**Status: LOCKED.** `torch==2.3.1`, `torchvision==0.18.1`.
-
-#### D9.4 — Transformers
-**Status: LOCKED.** `transformers==4.41.2`.
-
-#### D9.5 — SafeTensors
-**Status: LOCKED.** `safetensors==0.4.3`.
-
-This is the pinned SafeTensors dependency for the security-critical P1 zero-trust intake boundary.
-
-#### D9.6 — NumPy
-**Status: LOCKED.** `numpy==1.26.4`.
-
-This is the pinned NumPy dependency for the Python 3.11 / PyTorch 2.3.1 compatibility baseline.
-
-#### D9.7 — SciPy
-**Status: LOCKED.** `scipy==1.13.1`.
-
-This is the pinned SciPy dependency for the Python 3.11 / NumPy 1.26.4 numerical baseline.
-
-#### D9.8 — LightGBM
-**Status: LOCKED.** `lightgbm==4.3.0`.
-
-This is the pinned LightGBM dependency for the P3 classifier.
-
-#### D9.9 — SHAP
-**Status: LOCKED.** `shap==0.45.1`.
-
-This is the pinned SHAP dependency for TreeSHAP attribution.
-
-#### D9.10 — jsonschema
-**Status: LOCKED.** `jsonschema==4.22.0`.
-
-This is the pinned JSON Schema validation dependency for the project contracts.
-
-#### D9.11 — Installation Source Policy
-**Status: LOCKED.**
-
-The authoritative installation sources are:
-
-- Standard Python runtime dependencies: **PyPI**.
-- `torch` / `torchvision` CPU wheels: **official PyTorch CPU wheel index** (`https://download.pytorch.org/whl/cpu`).
-- No Git/VCS URLs, arbitrary package repositories, local unpublished package sources, or unpinned `latest` installation choices are authoritative.
-
-The installation-source policy is a reproducibility/security requirement. It does not by itself pin transitive dependencies; those require the later lockfile/hash policy decision.
-
-#### D9.12 — Exact Direct Runtime Dependency Pins
-**Status: LOCKED.**
-
-Every **direct runtime dependency** selected for the authoritative environment must use an exact `==` version pin. The currently locked direct runtime set is:
+Locked direct runtime versions:
 
 ```text
 torch==2.3.1
@@ -264,137 +171,41 @@ shap==0.45.1
 jsonschema==4.22.0
 ```
 
-No `>=`, `~=`, caret/wildcard, or unpinned version specification is authoritative for these direct runtime dependencies.
+Authoritative environment: Python 3.11.x, CPU-only, Windows x86-64 and Linux x86-64. Standard dependencies use PyPI; torch/torchvision use the official PyTorch CPU wheel index. Direct and transitive dependencies must be fully pinned; package hashes must be present and enforced; clean installation must use the generated hashed requirements lock artifact; verification mismatches are BLOCKED; dependency changes require explicit decision/change control.
 
-D9.12 does **not** silently resolve transitive dependency versions. Transitive reproducibility remains a separate D9 decision and must be explicitly locked before claiming a fully reproducible environment.
+D9.16 requires verification of Python version, exact direct pins, all transitive lock entries, hash enforcement, and CPU-only execution. D9.17 defines Windows/Linux x86-64 scope. D9.18 defines clean hashed installation. D9.19 requires explicit dependency change control. D9.20 defines full-completion criteria: all sub-decisions locked, authoritative platform lock artifacts exist, direct/transitive versions and hashes are populated/enforced, installation is documented, and authoritative environment verification passes.
 
-#### D9.13 — Transitive Dependency Lockfile
-**Status: LOCKED.**
-
-The authoritative environment must capture **all direct and transitive runtime dependencies** in a fully pinned reproducibility artifact. The lock artifact must not rely on resolver-selected floating transitive versions at authoritative verification time.
-
-The lock artifact may be generated from a successfully resolved authoritative Python 3.11 CPU environment; it must record the exact versions required for that environment rather than manually inventing transitive versions. pip documents that a fully pinned requirements file can capture top-level and transitive dependencies for repeatable installs.
-
-The lock artifact is a reproducibility record, not permission to change any already locked direct dependency version.
-
-#### D9.14 — Package Hash Integrity
-**Status: LOCKED.**
-
-The authoritative reproducibility artifact must include cryptographic hashes for installable package artifacts and authoritative installation must enforce hash checking.
-
-The artifact must account for platform-specific package artifacts where applicable; one hash must not be falsely represented as universal when different wheels are authoritative for different supported environments.
-
-D9.14 does not permit unpinned requirements, arbitrary package sources, or silent package substitution.
-
-#### D9.15 — Authoritative Lock Artifact Format
-**Status: LOCKED.**
-
-The authoritative dependency reproducibility artifact shall be a **generated, fully pinned requirements lock artifact** (requirements-file format), rather than relying on experimental `pylock.toml` support.
-
-Rules:
-
-- Generate it from a successfully resolved authoritative Python 3.11 CPU environment.
-- Include exact versions for all direct and transitive runtime dependencies.
-- Include the required cryptographic hashes for installable artifacts.
-- Preserve the already locked direct dependency versions; generation must not silently alter them.
-- Do not manually invent transitive versions or hashes.
-- The artifact is authoritative for reproducible installation/verification; ordinary unpinned `requirements.txt` content is not sufficient by itself.
-- Because package artifacts can vary by platform, the lock artifact must represent each authoritative supported platform/artifact set explicitly rather than falsely treating a platform-specific hash as universal.
-
-#### D9.16 — Authoritative Environment Verification
-**Status: LOCKED.**
-
-Before CP2 and before any authoritative PASS/REVIEW/FAIL result, the environment must be verified against the dependency contract.
-
-Verification must confirm:
-
-- Python is **3.11.x**.
-- All D9.3–D9.10 direct dependency pins are installed exactly as locked.
-- Every transitive dependency required by the authoritative lock artifact is present at its locked version.
-- Required package hashes are enforced by the authoritative installation procedure.
-- Execution is CPU-only for the authoritative pipeline; GPU/CUDA availability must not be treated as a requirement or substituted into the authoritative result.
-
-Any mismatch, missing package, version drift, unresolved lock entry, hash-integrity failure, or unsupported environment condition results in **BLOCKED** verification. The verifier must not auto-upgrade, auto-downgrade, or silently repair the environment and then claim the original environment was verified.
-
-#### D9.17 — Authoritative Platform Scope
-**Status: LOCKED.**
-
-The authoritative reproducibility scope is:
-
-- **Windows x86-64**
-- **Linux x86-64**
-- **Python 3.11.x**
-- **CPU-only** execution
-
-Platform-specific wheels and hashes must be represented explicitly for each supported platform/artifact set. A platform-specific hash must not be treated as universal. Any unsupported platform, architecture, Python major/minor version, or non-CPU execution target is **BLOCKED** for authoritative verification.
-
-#### D9.18 — Authoritative Dependency Installation Procedure
-**Status: LOCKED.**
-
-The authoritative installation procedure is a clean-environment, verification-first process:
-
-1. Create a clean Python **3.11.x** environment.
-2. Install from the generated authoritative hashed requirements lock artifact.
-3. Use PyPI for standard runtime dependencies and the official PyTorch CPU wheel index for `torch` / `torchvision`, consistent with D9.11.
-4. Enforce pip hash checking with `--require-hashes`; installation must not proceed with missing or mismatched hashes.
-5. Do not silently resolve, upgrade, downgrade, or substitute dependencies outside the authoritative lock artifact.
-6. Complete D9.16 environment verification after installation.
-7. Any installation or verification mismatch results in **BLOCKED**; the environment must be corrected and re-verified rather than treating an altered environment as the originally verified environment.
-
-#### D9.19 — Dependency Change Control
-**Status: LOCKED.**
-
-Locked dependency policy is immutable by implementation convenience. Any change to a direct or transitive dependency version, installation source, hash, or authoritative supported-platform artifact set requires an explicit new dependency decision.
-
-A dependency-contract change invalidates the affected reproducibility artifact until the artifact is regenerated from a successfully resolved authoritative environment and the environment verification procedure passes again. No dependency change may be introduced silently through resolver drift, opportunistic upgrades/downgrades, or source substitution.
-
-#### D9.20 — Dependency Completion Criterion
-**Status: LOCKED.**
-
-D9 may be marked fully **RESOLVED** only after both policy and implementation evidence exist:
-
-1. all required D9 sub-decisions are explicitly locked;
-2. authoritative platform lock artifacts actually exist;
-3. direct and transitive versions are fully pinned;
-4. required artifact hashes are populated and enforced;
-5. the authoritative installation procedure is implemented/documented;
-6. D9.16 environment verification passes on the authoritative environment(s).
-
-Until these implementation and verification conditions are satisfied, D9 remains **REQUIRED / PARTIALLY RESOLVED** and must not be represented as fully complete merely because the policy decisions are locked.
-
-#### D9.21 and later — NOT YET RESOLVED
-
-Any remaining dependency-policy details remain **REQUIRED** until explicitly agreed. No implementation choice may silently resolve a remaining D9 sub-decision.
+D9.21 and later remain REQUIRED until explicitly resolved.
 
 ## Intentionally Unresolved Decisions
 
 | Decision | Status |
 |---|---|
 | D4 — Behavioral normalization | REQUIRED |
-| D5 — Risk aggregation | PARTIALLY RESOLVED — methodology boundary locked; exact aggregation rule pending |
-| D6 — Highest-risk-layer aggregation | REQUIRED |
+| D5 — Risk aggregation | Methodology boundary LOCKED; exact aggregation rule/evidence pending |
+| D6 — Highest-risk-layer selection/reporting | Boundary revised/locked; exact selection rule/input/tie semantics pending |
 
-D4 and D6 are not resolved by any implementation branch, placeholder, or prior agent choice. D2 is resolved as a persistent project decision above; its implementation and verification are COMPLETE with CP2 PASS. D3 is methodologically resolved as a persistent project decision above; its empirical calibration/evidence remains pending and must not be invented. D5 has a locked ownership/invariant boundary above, but its exact aggregation operator remains pending and MUST NOT be inferred.
+A locked methodology or boundary does not constitute implementation or checkpoint evidence.
 
 ## Phase Status
 
 | Phase | Status | Gate |
 |---|---|---|
-| Phase 1 — Mock Pipeline | COMPLETE | CP1 |
-| Phase 2 — Zero-Trust Intake | IN PROGRESS | CP2 |
-| Phase 3 — Static Steganalysis | NOT STARTED | CP3 |
-| Phase 4 — ML Classification | NOT STARTED | CP4 |
-| Phase 5 — Behavioral + Risk | NOT STARTED | CP5 |
-| Phase 6 — Integration + Demo | NOT STARTED | CP6 |
+| Phase 1 — Mock Pipeline | COMPLETE | CP1 PASS |
+| Phase 2 — Zero-Trust Intake | COMPLETE | CP2 PASS |
+| Phase 3 — Static Steganalysis | COMPLETE | CP3 PASS |
+| Phase 4 — ML Classification | ACTIVE | CP4 IN PROGRESS |
+| Phase 5 — Behavioral + Risk | PENDING | CP5 |
+| Phase 6 — Integration + Demo | PENDING | CP6 |
 
 ## Checkpoint Status
 
 | Checkpoint | Status |
 |---|---|
 | CP1 — Mock Gate | PASS |
-| CP2 — Intake Gate | NOT REACHED |
-| CP3 — Static Gate | NOT REACHED |
-| CP4 — ML Gate | NOT REACHED |
+| CP2 — Intake Gate | PASS |
+| CP3 — Static Gate | PASS |
+| CP4 — ML Gate | IN PROGRESS |
 | CP5 — Behavioral/Risk Gate | NOT REACHED |
 | CP6 — Demo Gate | NOT REACHED |
 
@@ -402,34 +213,26 @@ Only a `PASS` checkpoint permits advancement.
 
 ## Verified Implementation Status
 
-- Real P1 zero-trust intake: **not verified**
-- Real P1 static feature extractor: **not verified**
-- Real P3 classifier: **not verified**
-- Real P2 risk engine: **not verified**
-- Final integration: **not verified**
-
-Locked decisions are requirements for implementation; they are not evidence that implementation exists.
+- Real P1 zero-trust intake: **VERIFIED — CP2**
+- Real P1 static feature extractor: **VERIFIED-REAL — CP3**
+- Real P3 classifier: **IN PROGRESS — CP4 not yet passed**
+- Real P2 risk engine: **NOT VERIFIED — blocked on upstream CP4 and required decisions/evidence**
+- Final integration: **NOT VERIFIED**
 
 ## Current Dependency Chain
 
 ```text
-D1 RESOLVED
- ↓
 CP1 PASS
- ↓
-P1 Zero-Trust Intake
  ↓
 CP2 PASS
  ↓
-P1 Real Static Features
- ↓
 CP3 PASS
  ↓
-P3 Final ML Training
+Phase 4 P3 final ML training
  ↓
 CP4 PASS
  ↓
-P2 Behavioral + Risk
+Phase 5 P2 Behavioral + Risk
  ↓
 CP5 PASS
  ↓
@@ -440,41 +243,17 @@ CP6 PASS
 
 ## Hard-Stop Conditions
 
-The agent MUST stop dependent work when any of the following applies:
-
-1. A required decision remains unresolved.
-2. A required upstream checkpoint is not `PASS`.
-3. A required contract is undefined.
-4. Feature semantics required for downstream work are not verified.
-5. A dependency is unavailable or unverified.
-6. Verification criteria cannot legitimately be evaluated.
-7. Implementation would require inventing a schema, formula, threshold, normalization, baseline, aggregation, dependency, or feature meaning.
-8. A proposed change would redesign the frozen architecture without an explicit reopening decision.
-9. Ownership is unclear.
-10. Mock/scaffold behavior would be represented as real implementation.
+The agent MUST stop dependent work when a required decision remains unresolved, an upstream checkpoint is not PASS, a required contract is undefined, feature semantics are not verified, a dependency is unavailable/unverified, verification cannot legitimately be evaluated, implementation would require inventing a schema/formula/threshold/normalization/baseline/aggregation/dependency/feature meaning, the frozen architecture would be redesigned without an explicit reopening decision, ownership is unclear, or mock/scaffold behavior would be represented as real implementation.
 
 ## Execution Rules
 
-When not blocked, the agent SHALL:
-
-1. inspect current repository state;
-2. identify applicable phase;
-3. read that phase's `PLAN.md`;
-4. read that phase's `VERIFICATION.md`;
-5. confirm upstream gates;
-6. implement only within permitted scope;
-7. preserve subsystem ownership;
-8. run applicable verification;
-9. record resulting gate status;
-10. update this state only with verified facts.
+When not blocked, the agent SHALL inspect current repository state, identify the applicable phase, read that phase's PLAN and VERIFICATION, confirm upstream gates, implement only within permitted scope, preserve subsystem ownership, run applicable verification, record the resulting gate status, and update this state only with verified facts.
 
 ## State Update Rules
 
-This file SHALL describe actual verified state, not intended state.
+This file SHALL describe actual verified state, not intended state. Do not mark code implemented when scaffolded, outputs produced when mocks, phases complete before verification, decisions resolved because an agent selected an implementation, or dependencies verified merely because they appear in a file.
 
-Do not mark code implemented when scaffolded, outputs produced when mocks, phases complete before verification, decisions resolved because an agent selected an implementation, or dependencies verified merely because they appear in a file.
-
-When a decision is staged as methodologically resolved with empirical, implementation, or verification evidence pending, preserve that distinction explicitly and require the agent to return to the decision record when the pending evidence becomes available. Pending evidence must not be invented or implied by the locked methodology alone.
+When a decision is staged as methodologically resolved with empirical, implementation, or verification evidence pending, preserve that distinction explicitly. Pending evidence must not be invented or implied by the locked methodology alone.
 
 ## Architecture Integrity
 
@@ -490,9 +269,9 @@ Quantized models bypass behavioral probing under the finalized format-adaptive d
 
 ## Next Permitted Action
 
-Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2 is RESOLVED as a project decision, with implementation/verification COMPLETE — CP2 PASS. D3 is RESOLVED as a methodology decision, with empirical calibration/evidence pending. D4 remains REQUIRED. D5 is methodologically locked but its exact aggregation rule, implementation, and verification evidence remain pending. D6 remains REQUIRED. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED. Continue Phase 2 only within the approved D2 handoff boundary and existing Phase 2 plan/verification; do not implement D3–D6 or silently resolve remaining D9 details.
+**Phase 4 — ML Classification.** CP3 is PASS and the verified-real Phase 3 output is the required upstream baseline. Phase 4 MUST use the exact frozen P1 feature contract and MUST NOT invent D4, the D5 aggregation operator, or D6 selection semantics. CP4 requires independent verification/approval before Phase 5 proceeds.
 
-**Current D9 frontier: D9.21 — remaining dependency-policy details.**
+D9 remains partially resolved; D9.21+ remain REQUIRED.
 
 ## Final Rule
 
