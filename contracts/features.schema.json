@@ -33,7 +33,7 @@
           "entropy": {"type": ["number", "null"]},
           "pov_chi2": {"type": ["number", "null"]},
           "lsb_kl": {"type": ["number", "null"]},
-          "ks_stat": {"type": "number"},
+          "ks_stat": {"type": "number", "minimum": 0, "maximum": 1},
           "mean": {"type": ["number", "null"]},
           "std": {"type": ["number", "null"]},
           "skewness": {"type": ["number", "null"]},

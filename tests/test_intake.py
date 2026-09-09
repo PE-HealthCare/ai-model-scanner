@@ -174,6 +174,23 @@ class TestZeroTrustIntake(unittest.TestCase):
         self.assertEqual(ctx.model["conv1.weight"].dtype, torch.int8)
         self.assertEqual(ctx.model["conv1.weight"].flatten()[0].item(), sd["conv1.weight"].flatten()[0].item())
 
+    def test_quantized_fp8_is_accepted_and_preserved(self):
+        path = self.test_dir / "quant_fp8.safetensors"
+        from torchvision.models import resnet18
+        m = resnet18()
+        sd = m.state_dict()
+        for key, tensor in list(sd.items()):
+            if tensor.is_floating_point():
+                sd[key] = tensor.to(torch.float8_e4m3fn)
+        save_file(sd, path)
+
+        ctx = analyzer.intake_model(path, declared_architecture="resnet18")
+        self.assertIsInstance(ctx, TrustedModelContext)
+        self.assertTrue(ctx.is_quantized)
+        self.assertIsInstance(ctx.model, dict)
+        self.assertEqual(ctx.model["conv1.weight"].dtype, torch.float8_e4m3fn)
+        # float8 does not support .item() directly in some torch versions, so just check dtype
+
     def test_successful_resnet18(self):
         path = self.test_dir / "success_rn18.safetensors"
         from torchvision.models import resnet18
