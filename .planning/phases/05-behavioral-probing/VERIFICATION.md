@@ -2,15 +2,9 @@
 
 ## 1. Gate Semantics
 
-Exactly:
+Exactly: PASS / FAIL / BLOCKED.
 
-PASS / FAIL / BLOCKED
-
-Required unresolved decision or required pending evidence = BLOCKED for the affected authoritative completion criterion.
-
-A checkbox without evidence is not verification.
-
-A methodology that is locked while implementation/calibration evidence is pending SHALL NOT be treated as fully verified.
+Required unresolved decision or required pending evidence = BLOCKED for the affected authoritative completion criterion. A checkbox without evidence is not verification. A methodology/boundary that is locked while implementation/calibration/verification evidence is pending SHALL NOT be treated as fully verified.
 
 ## 2. Prerequisites
 
@@ -39,16 +33,10 @@ If production bound is unresolved: BLOCKED.
 
 ### D3 — STRIP baseline
 
-- [ ] D3 methodology matches the locked project decision:
-  - non-quantized models only;
-  - Shannon entropy over softmax output probabilities;
-  - existing 32 domain-appropriate probes;
-  - empirical, domain-specific baseline distributions;
-  - fixed scanner-controlled clean reference models;
-  - no baseline derived from the uploaded model.
+- [ ] locked D3 methodology matches the current project decision;
 - [ ] required empirical calibration run completed;
-- [ ] measured VISION/NLP baseline evidence recorded in `.planning/STATE.md`;
-- [ ] evidence-dependent parameters, if any, are explicitly recorded;
+- [ ] measured VISION/NLP baseline evidence recorded;
+- [ ] evidence-dependent parameters, if any, explicitly recorded;
 - [ ] no invented baseline values, thresholds, or fallback behavior exists.
 
 D3 methodology being locked is not sufficient for full authoritative behavioral verification while required calibration evidence is pending.
@@ -60,16 +48,20 @@ D3 methodology being locked is not sufficient for full authoritative behavioral 
 
 Unresolved D4 or incomplete required D3 calibration/evidence = BLOCKED.
 
-## 6. Risk Aggregation
+## 6. Risk Aggregation and Highest-Risk-Layer Boundary
 
-- [ ] per-layer→model aggregation follows approved D5;
-- [ ] highest-risk-layer aggregation follows approved D6;
-- [ ] D7 MAD handling follows approved locked decision;
+- [ ] per-layer→model aggregation follows the approved D5 methodology boundary and the explicitly authorized exact operator;
+- [ ] D5 preserves authoritative per-layer evidence and layer identity for D6;
+- [ ] highest-risk-layer selection/reporting follows the approved D6 selection rule;
+- [ ] D6 does not perform a second model-level aggregation;
+- [ ] D6 does not manufacture layer-level P_tamper/S_behavior;
+- [ ] TreeSHAP is not used for D6 layer selection;
+- [ ] D7 MAD handling follows the approved locked decision;
 - [ ] final non-quantized formula exact;
 - [ ] final quantized formula exact;
 - [ ] verdict ranges exact.
 
-Unresolved D5 or D6 = BLOCKED for the affected authoritative risk/reporting completion.
+Unresolved D5 exact aggregation or D6 exact selection rule = BLOCKED for the affected authoritative risk/reporting completion.
 
 ## 7. Mandatory Adversarial Tests
 
@@ -86,6 +78,7 @@ Unresolved D5 or D6 = BLOCKED for the affected authoritative risk/reporting comp
 - [ ] upstream failure.
 
 Expected upstream-failure behavior:
+
 ```text
 STOP
 NON-ZERO STATUS
@@ -123,8 +116,8 @@ Bound evidence:
 D3 methodology:
 D3 empirical calibration/evidence:
 D4:
-D5:
-D6:
+D5 methodology boundary / exact operator:
+D6 boundary / exact selection rule:
 D7:
 MRS:
 Verdict:
