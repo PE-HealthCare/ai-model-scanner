@@ -2,7 +2,7 @@
 
 **Status:** Documentation synchronization registry — 2026-09-09  
 **Canonical branch:** `main`  
-**Current execution baseline:** Phase 3 Static Steganalysis completed and merged; Phase 4 may proceed from `main`.  
+**Current execution baseline:** Phase 3 Static Steganalysis completed and merged; Phase 4 is the active downstream workstream from `main`.  
 **Purpose:** Record the current approved decision state without changing the frozen architecture or silently resolving unresolved decisions.
 
 ## Decision Register
@@ -13,7 +13,7 @@
 | D2 | **RESOLVED / LOCKED** | Trusted graph handoff is an in-process Python object reference during the same execution. No serialization, persistence, reload, or alternative downstream model construction. Implementation/verification COMPLETE — CP2 PASS; integrated into main. |
 | D3 | **RESOLVED / LOCKED (methodology)** | STRIP methodology is locked. Empirical calibration/evidence is still pending. No numerical calibration value may be invented. |
 | D4 | **REQUIRED** | STRIP entropy baseline / exact `H_STRIP → S_behavior` normalization remains unresolved. |
-| D5 | **REQUIRED** | Exact per-layer → model-level risk aggregation remains unresolved. D5 owns the model-level aggregation boundary and must preserve authoritative per-layer evidence needed downstream; no exact operator is implied here. |
+| D5 | **RESOLVED / LOCKED — METHODOLOGY BOUNDARY; EXACT OPERATOR PENDING** | D5 owns reduction of valid per-layer static/tampering evidence to model-level evidence consumed by the frozen MRS formulas. D5 SHALL preserve authoritative per-layer evidence and layer identity needed by D6. The exact aggregation operator and evidence-backed parameters remain pending explicit authorization; no `max`, mean, median, top-k, weighted operator, or other operator may be inferred from implementation convenience. |
 | D6 | **REQUIRED — BOUNDARY REVISED** | D6 is scoped as highest-risk-layer **selection and reporting from authoritative per-layer evidence**, not a second model-level risk aggregation stage. Exact selection rule, final ownership wording, input contract, layer-identity semantics, and tie behavior remain unresolved. TreeSHAP is not a layer-selection mechanism. See `docs/D6_HIGHEST_RISK_LAYER_DECISION.md`. |
 | D7 | **RESOLVED / LOCKED** | Finite nonzero MAD uses actual MAD; exact MAD=0 with target==median gives deterministic zero anomaly; exact MAD=0 with target!=median gives `DEGENERATE_DEVIATION`; 1–2 layers have unavailable baseline evidence and block downstream scoring; invalid numeric data is invalid; no epsilon or near-zero threshold. |
 | D8 | **RESOLVED / LOCKED** | Artifacts carry `generation_commit`; consumers reject generation mismatches. |
@@ -33,7 +33,8 @@ A populated file, passing test, or implementation artifact does not by itself re
 - Phase 1: complete.
 - Phase 2: complete; CP2 PASS and D2 handoff independently approved/integrated.
 - Phase 3: complete; CP3 evidence recorded, independently reviewed, and merged into `main` at `b19a26cef97c3980d80f3784679ec314e35a4492`.
-- Phase 4: active/downstream work may proceed from the verified Phase 3 baseline.
-- Phase 5 and Phase 6 remain dependent on their own gates and unresolved decision requirements.
+- Phase 4: **ACTIVE**; downstream P3 work proceeds from the verified Phase 3 baseline and current Phase 4 branch.
+- Phase 5: pending CP4 PASS and its own decision/evidence gates.
+- Phase 6: pending CP4/CP5 PASS and its own decision/evidence gates.
 
 This registry does not authorize silent implementation of D4–D6 or completion claims for unresolved D9 evidence. The frozen architecture remains authoritative.
