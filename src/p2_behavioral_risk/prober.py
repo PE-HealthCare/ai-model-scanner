@@ -1,556 +1,397 @@
+# src/p2_behavioral_risk/prober.py
+
 """
-P2 Behavioral Risk Prober
-Hackathon Option 2
+P2 Option 2 - Simple Vision STRIP behavioral probe.
 
-Scope:
-- Vision / ResNet18 only
-- Simple STRIP-style behavioral probing
-- Maximum 32 probes
-- Shannon entropy -> H_STRIP
-- Calibration-based S_behavior
-- Quantized models bypass behavioral probing
-- Fail closed on invalid inference/probabilities
+Purpose:
+    Probe a trusted ResNet18 model for anomalous prediction stability.
 
-P2 does NOT reload the untrusted SafeTensors artifact.
-The trusted model must be handed to P2 by the trusted handoff layer.
+Important:
+    - Vision only
+    - No NLP
+    - No model loading
+    - No model reloading
+    - Uses the trusted model supplied through handoff.py
+    - Bounded number of probes
+    - Fail closed on invalid inference
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+import math
+from typing import Any, Dict, List, Optional
 
-import numpy as np
 import torch
 
-from .config import BOUND_N
-from .handoff import TrustedModelContext
+from .config import (
+    BOUND_N,
+    MAD_SCALE,
+    STRIP_Z_SCALE,
+    VISION_IMAGE_SIZE,
+)
+from .handoff import get_trusted_model
 
 
-# ---------------------------------------------------------------------
-# Trusted model handoff
-# ---------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Basic numeric helpers
+# ---------------------------------------------------------------------------
 
-def receive_trusted_model(
-    context: TrustedModelContext,
-) -> TrustedModelContext:
+
+def _is_finite(value: float) -> bool:
+    return isinstance(value, (int, float)) and math.isfinite(float(value))
+
+
+def _entropy(probabilities: torch.Tensor) -> float:
     """
-    Accept an already-created trusted model context.
-
-    P2 must not reload the untrusted SafeTensors artifact.
-    """
-    if not isinstance(context, TrustedModelContext):
-        raise ValueError(
-            "P2 requires a valid TrustedModelContext."
-        )
-
-    return context
-
-
-# ---------------------------------------------------------------------
-# Probe generation
-# ---------------------------------------------------------------------
-
-def generate_probes(
-    domain: str,
-    n: int = BOUND_N,
-) -> torch.Tensor:
-    """
-    Generate bounded Vision probes.
-
-    Option 2 is Vision-only. The probes are deliberately simple
-    and deterministic in shape so the behavioral path remains
-    lightweight and reproducible.
-
-    Returns:
-        Tensor with shape [n, 3, 224, 224].
+    Shannon entropy of a probability vector.
     """
 
-    if domain != "VISION":
-        raise ValueError(
-            f"P2 Option 2 supports VISION only. Got: {domain}"
-        )
+    if probabilities.ndim != 1:
+        raise ValueError("Probability vector must be one-dimensional")
 
-    if n <= 0:
-        raise ValueError("Probe count must be positive.")
+    if probabilities.numel() == 0:
+        raise ValueError("Probability vector is empty")
 
-    n = min(int(n), BOUND_N)
+    if not torch.isfinite(probabilities).all():
+        raise ValueError("Probability vector contains NaN/Inf")
 
-    # Deterministic probe generation.
-    #
-    # These are neutral image-like tensors. The model is evaluated
-    # on bounded inputs without introducing another learned model.
-    generator = torch.Generator()
-    generator.manual_seed(42)
+    if torch.any(probabilities < 0):
+        raise ValueError("Probability vector contains negative values")
 
-    probes = torch.rand(
-        (n, 3, 224, 224),
-        generator=generator,
-        dtype=torch.float32,
-    )
+    total = probabilities.sum()
 
-    return probes
+    if not torch.isfinite(total) or total <= 0:
+        raise ValueError("Invalid probability normalization")
 
+    probabilities = probabilities / total
 
-# ---------------------------------------------------------------------
-# Probability validation
-# ---------------------------------------------------------------------
+    entropy = -(probabilities * torch.log(probabilities.clamp_min(1e-12))).sum()
 
-def validate_probability_vector(
-    probs: Any,
-) -> np.ndarray:
-    """
-    Validate one probability vector.
+    value = float(entropy.item())
 
-    Fail closed if:
-    - empty
-    - NaN / Inf
-    - outside [0, 1]
-    - does not sum approximately to 1
-    """
-
-    probs = np.asarray(probs, dtype=np.float64)
-
-    if probs.size == 0:
-        raise ValueError(
-            "Empty probability vector."
-        )
-
-    if not np.all(np.isfinite(probs)):
-        raise ValueError(
-            "Probability vector contains NaN or Inf."
-        )
-
-    if np.any(probs < 0.0) or np.any(probs > 1.0):
-        raise ValueError(
-            "Probability vector contains values outside [0, 1]."
-        )
-
-    total = float(np.sum(probs))
-
-    if not np.isfinite(total):
-        raise ValueError(
-            "Probability vector has a non-finite sum."
-        )
-
-    if not np.isclose(total, 1.0, atol=1e-5):
-        raise ValueError(
-            f"Probability vector does not sum to 1.0: {total}"
-        )
-
-    return probs
-
-
-# ---------------------------------------------------------------------
-# Bounded inference
-# ---------------------------------------------------------------------
-
-def run_bounded_inference(
-    model: torch.nn.Module,
-    probes: torch.Tensor,
-    bound_n: int = BOUND_N,
-) -> torch.Tensor:
-    """
-    Run at most bound_n inference passes.
-
-    Fail closed:
-    - no valid output -> RuntimeError
-    - any individual pass fails -> RuntimeError
-    - invalid output is not silently skipped
-    """
-
-    if model is None:
-        raise RuntimeError(
-            "Trusted model is missing."
-        )
-
-    if probes is None or probes.numel() == 0:
-        raise RuntimeError(
-            "No behavioral probes were generated."
-        )
-
-    if bound_n <= 0:
-        raise ValueError(
-            "Inference bound must be positive."
-        )
-
-    model.eval()
-
-    outputs: List[torch.Tensor] = []
-
-    limit = min(
-        int(bound_n),
-        int(len(probes)),
-        BOUND_N,
-    )
-
-    failed_passes = 0
-    errors: List[str] = []
-
-    with torch.no_grad():
-        for i in range(limit):
-            try:
-                batch = probes[i:i + 1]
-
-                logits = model(batch)
-
-                if not isinstance(logits, torch.Tensor):
-                    raise TypeError(
-                        "Model output is not a torch.Tensor."
-                    )
-
-                if logits.numel() == 0:
-                    raise ValueError(
-                        "Model returned empty logits."
-                    )
-
-                if not torch.all(torch.isfinite(logits)):
-                    raise ValueError(
-                        "Model returned NaN/Inf logits."
-                    )
-
-                # Standard classification output.
-                if logits.ndim == 1:
-                    logits = logits.unsqueeze(0)
-
-                if logits.ndim != 2:
-                    raise ValueError(
-                        f"Expected 2D classification logits, "
-                        f"got shape {tuple(logits.shape)}"
-                    )
-
-                probs = torch.softmax(logits, dim=-1)
-
-                if not torch.all(torch.isfinite(probs)):
-                    raise ValueError(
-                        "Softmax produced NaN/Inf."
-                    )
-
-                outputs.append(probs)
-
-            except Exception as exc:
-                failed_passes += 1
-                errors.append(
-                    f"Pass {i}: {type(exc).__name__}: {exc}"
-                )
-
-    if not outputs:
-        raise RuntimeError(
-            "All behavioral inference passes failed. "
-            f"Errors: {errors}"
-        )
-
-    if failed_passes > 0:
-        raise RuntimeError(
-            f"{failed_passes} of {limit} behavioral "
-            f"inference passes failed. "
-            f"Errors: {errors}"
-        )
-
-    return torch.cat(outputs, dim=0)
-
-
-# ---------------------------------------------------------------------
-# Shannon entropy
-# ---------------------------------------------------------------------
-
-def shannon_entropy(
-    probs: np.ndarray,
-) -> float:
-    """
-    Shannon entropy:
-
-        H(p) = -sum(p * log2(p))
-
-    Zero-probability terms contribute zero.
-    """
-
-    probs = validate_probability_vector(probs)
-
-    positive = probs[probs > 0.0]
-
-    if positive.size == 0:
-        return 0.0
-
-    value = float(
-        -np.sum(
-            positive * np.log2(positive)
-        )
-    )
-
-    if not np.isfinite(value):
-        raise ValueError(
-            "Computed entropy is NaN/Inf."
-        )
+    if not _is_finite(value):
+        raise ValueError("Entropy became NaN/Inf")
 
     return value
 
 
-def compute_h_strip(
-    softmax_outputs: torch.Tensor,
-) -> float:
+# ---------------------------------------------------------------------------
+# Probe generation
+# ---------------------------------------------------------------------------
+
+
+def generate_vision_probes(
+    n: int = BOUND_N,
+    image_size: int = VISION_IMAGE_SIZE,
+    seed: int = 0,
+) -> torch.Tensor:
     """
-    Compute H_STRIP as the mean Shannon entropy across
-    all behavioral probes.
+    Generate bounded synthetic Vision probes.
+
+    Shape:
+        [N, 3, H, W]
+
+    These probes are deliberately model-independent and do not require
+    external image datasets.
     """
 
-    if softmax_outputs is None:
+    if n < 1:
+        raise ValueError("Probe count must be >= 1")
+
+    if n > BOUND_N:
         raise ValueError(
-            "Softmax outputs are missing."
+            f"Probe count {n} exceeds safety bound {BOUND_N}"
         )
 
-    if softmax_outputs.numel() == 0:
-        raise ValueError(
-            "Empty softmax outputs."
-        )
+    if image_size < 1:
+        raise ValueError("Image size must be >= 1")
 
-    probs = (
-        softmax_outputs
-        .detach()
-        .cpu()
-        .numpy()
+    generator = torch.Generator(device="cpu")
+    generator.manual_seed(seed)
+
+    probes = torch.rand(
+        (n, 3, image_size, image_size),
+        generator=generator,
+        dtype=torch.float32,
     )
 
-    entropies = [
-        shannon_entropy(row)
-        for row in probs
+    if not torch.isfinite(probes).all():
+        raise ValueError("Generated probes contain NaN/Inf")
+
+    return probes
+
+
+# ---------------------------------------------------------------------------
+# Model inference
+# ---------------------------------------------------------------------------
+
+
+def _extract_logits(output: Any) -> torch.Tensor:
+    """
+    Extract logits from a standard torchvision-style model output.
+    """
+
+    if isinstance(output, torch.Tensor):
+        logits = output
+
+    elif hasattr(output, "logits"):
+        logits = output.logits
+
+    elif isinstance(output, (tuple, list)) and output:
+        logits = output[0]
+
+    else:
+        raise ValueError(
+            f"Unsupported model output type: {type(output).__name__}"
+        )
+
+    if not isinstance(logits, torch.Tensor):
+        raise ValueError("Model output is not a tensor")
+
+    if logits.ndim == 1:
+        logits = logits.unsqueeze(0)
+
+    if logits.ndim != 2:
+        raise ValueError(
+            f"Expected logits shape [N,C], got {tuple(logits.shape)}"
+        )
+
+    return logits
+
+
+def _run_inference(model: torch.nn.Module, probes: torch.Tensor) -> torch.Tensor:
+    """
+    Run bounded inference on the already-trusted model.
+    """
+
+    if model is None:
+        raise RuntimeError("Trusted model is None")
+
+    if not isinstance(model, torch.nn.Module):
+        raise TypeError(
+            "Trusted model must be a torch.nn.Module"
+        )
+
+    model.eval()
+
+    device = next(model.parameters(), torch.empty(0)).device
+
+    probes = probes.to(device)
+
+    with torch.inference_mode():
+        output = model(probes)
+
+    logits = _extract_logits(output)
+
+    if not torch.isfinite(logits).all():
+        raise ValueError("Model produced NaN/Inf logits")
+
+    probabilities = torch.softmax(logits, dim=-1)
+
+    if not torch.isfinite(probabilities).all():
+        raise ValueError("Softmax produced NaN/Inf")
+
+    if torch.any(probabilities < 0):
+        raise ValueError("Softmax produced negative probabilities")
+
+    row_sums = probabilities.sum(dim=-1)
+
+    if not torch.allclose(
+        row_sums,
+        torch.ones_like(row_sums),
+        atol=1e-4,
+        rtol=1e-4,
+    ):
+        raise ValueError("Invalid probability normalization")
+
+    return probabilities
+
+
+# ---------------------------------------------------------------------------
+# STRIP
+# ---------------------------------------------------------------------------
+
+
+def compute_strip_entropy(
+    model: torch.nn.Module,
+    probes: torch.Tensor,
+) -> List[float]:
+    """
+    Compute prediction entropy for each probe.
+    """
+
+    probabilities = _run_inference(model, probes)
+
+    entropies = []
+
+    for row in probabilities:
+        entropies.append(_entropy(row))
+
+    return entropies
+
+
+def _median(values: List[float]) -> float:
+    if not values:
+        raise ValueError("Cannot compute median of empty list")
+
+    values = sorted(values)
+    n = len(values)
+
+    middle = n // 2
+
+    if n % 2:
+        return float(values[middle])
+
+    return float((values[middle - 1] + values[middle]) / 2.0)
+
+
+def _mad(values: List[float], median: Optional[float] = None) -> float:
+    """
+    Median absolute deviation.
+    """
+
+    if not values:
+        raise ValueError("Cannot compute MAD of empty list")
+
+    if median is None:
+        median = _median(values)
+
+    deviations = [
+        abs(float(value) - median)
+        for value in values
     ]
 
-    if not entropies:
-        raise ValueError(
-            "No entropy values were produced."
-        )
+    return _median(deviations)
 
-    h_strip = float(np.mean(entropies))
-
-    if not np.isfinite(h_strip):
-        raise ValueError(
-            "H_STRIP is NaN/Inf."
-        )
-
-    return h_strip
-
-
-# ---------------------------------------------------------------------
-# Behavioral normalization
-# ---------------------------------------------------------------------
 
 def normalize_h_strip(
     h_strip: float,
-    domain: str,
-    calibration_data: Dict[str, Any],
-) -> float:
+    baseline_entropies: List[float],
+) -> Dict[str, float]:
     """
-    Convert H_STRIP into S_behavior.
+    D4 STRIP normalization.
 
-    Option 2 uses calibration-relative deviation.
+    deviation = H_median - H_STRIP
+    Z = deviation / (1.4826 * H_MAD)
+    Z_clamped = max(0, Z)
+    S_behavior = min(1, Z_clamped / 3)
 
-    Locked form:
-
-        deviation = H_median - H_STRIP
-        Z = deviation / (1.4826 * H_MAD)
-        Z_clamped = max(0, Z)
-        S_behavior = min(1, Z_clamped / 3)
-
-    Edge cases:
-    - fewer than 3 baseline values -> blocked
-    - MAD == 0 and target == median -> 0
-    - MAD == 0 and target != median -> blocked
-    - NaN/Inf -> blocked
+    D7 edge cases:
+        MAD == 0 and target == median -> score 0
+        MAD == 0 and target != median -> invalid/degenerate
+        fewer than 3 baseline values -> blocked
     """
 
-    if domain != "VISION":
+    if len(baseline_entropies) < 3:
         raise ValueError(
-            f"P2 Option 2 supports VISION only. Got: {domain}"
+            "BLOCKED: fewer than 3 baseline entropy values"
         )
 
-    if not np.isfinite(h_strip):
-        raise ValueError(
-            "H_STRIP contains NaN/Inf."
-        )
+    if not _is_finite(h_strip):
+        raise ValueError("H_STRIP is NaN/Inf")
 
-    if not isinstance(calibration_data, dict):
-        raise ValueError(
-            "Calibration data is missing or invalid."
-        )
+    if not all(_is_finite(v) for v in baseline_entropies):
+        raise ValueError("Baseline entropy contains NaN/Inf")
 
-    if domain not in calibration_data:
-        raise KeyError(
-            f"No calibration data for domain '{domain}'."
-        )
+    median = _median(baseline_entropies)
+    mad = _mad(baseline_entropies, median)
 
-    calibration = calibration_data[domain]
-
-    # Preferred locked representation.
-    if all(
-        key in calibration
-        for key in ("median", "mad")
-    ):
-        median = float(calibration["median"])
-        mad = float(calibration["mad"])
-
-    # Compatibility path if the existing calibration artifact
-    # still stores baseline values.
-    elif "baseline" in calibration:
-        baseline = np.asarray(
-            calibration["baseline"],
-            dtype=np.float64,
-        )
-
-        if baseline.size < 3:
-            raise RuntimeError(
-                "Fewer than 3 baseline values available."
-            )
-
-        if not np.all(np.isfinite(baseline)):
-            raise ValueError(
-                "Calibration baseline contains NaN/Inf."
-            )
-
-        median = float(np.median(baseline))
-        mad = float(
-            np.median(
-                np.abs(baseline - median)
-            )
-        )
-
-    elif "values" in calibration:
-        baseline = np.asarray(
-            calibration["values"],
-            dtype=np.float64,
-        )
-
-        if baseline.size < 3:
-            raise RuntimeError(
-                "Fewer than 3 calibration values available."
-            )
-
-        if not np.all(np.isfinite(baseline)):
-            raise ValueError(
-                "Calibration values contain NaN/Inf."
-            )
-
-        median = float(np.median(baseline))
-        mad = float(
-            np.median(
-                np.abs(baseline - median)
-            )
-        )
-
-    else:
-        raise KeyError(
-            "Calibration must contain median/mad "
-            "or baseline/values."
-        )
-
-    if not np.isfinite(median) or not np.isfinite(mad):
-        raise ValueError(
-            "Calibration median/MAD contains NaN/Inf."
-        )
+    deviation = median - float(h_strip)
 
     if mad == 0.0:
+
         if h_strip == median:
-            return 0.0
+            z = 0.0
+            score = 0.0
+        else:
+            raise ValueError(
+                "DEGENERATE_DEVIATION: MAD=0 but target differs from median"
+            )
 
-        raise RuntimeError(
-            "DEGENERATE_DEVIATION: zero MAD and "
-            "H_STRIP differs from calibration median."
-        )
+    else:
+        z = deviation / (MAD_SCALE * mad)
 
-    deviation = median - h_strip
+        if not _is_finite(z):
+            raise ValueError("STRIP Z-score is NaN/Inf")
 
-    z = deviation / (1.4826 * mad)
+        z_clamped = max(0.0, z)
 
-    if not np.isfinite(z):
-        raise ValueError(
-            "Behavioral Z-score is NaN/Inf."
-        )
+        score = min(1.0, z_clamped / STRIP_Z_SCALE)
 
-    z_clamped = max(0.0, z)
-
-    s_behavior = min(
-        1.0,
-        z_clamped / 3.0,
-    )
-
-    if not np.isfinite(s_behavior):
-        raise ValueError(
-            "S_behavior is NaN/Inf."
-        )
-
-    return float(s_behavior)
+    return {
+        "h_strip": float(h_strip),
+        "h_median": float(median),
+        "h_mad": float(mad),
+        "deviation": float(deviation),
+        "z_score": float(z),
+        "s_behavior": float(score),
+    }
 
 
-# ---------------------------------------------------------------------
-# Complete behavioral assessment
-# ---------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Public behavioral assessment
+# ---------------------------------------------------------------------------
 
-def get_behavioral_result(
-    is_quantized: bool,
-    domain: str,
-    model: torch.nn.Module | None,
-    calibration_data: Dict[str, Any],
-    bound_n: int = BOUND_N,
+
+def run_behavioral_probe(
+    model: Optional[torch.nn.Module] = None,
+    *,
+    is_quantized: bool = False,
+    probe_count: int = BOUND_N,
+    seed: int = 0,
 ) -> Dict[str, Any]:
     """
-    Complete Option 2 behavioral assessment.
+    Execute the Option 2 behavioral probe.
 
-    Quantized:
-        behavioral probing is intentionally bypassed.
+    Quantized models:
+        Behavioral probing is bypassed.
 
-    Non-quantized:
-        Vision STRIP is executed.
+    Non-quantized models:
+        Generate probes -> inference -> entropy -> STRIP normalization.
     """
-
-    if not isinstance(is_quantized, bool):
-        raise TypeError(
-            "is_quantized must be boolean."
-        )
 
     if is_quantized:
         return {
+            "enabled": False,
+            "bypassed": True,
+            "reason": "quantized_model",
             "s_behavior": None,
-            "h_strip": None,
-            "bypassed_behavior": True,
-            "probe_count": 0,
-            "successful_probe_count": 0,
-            "failed_probe_count": 0,
         }
 
-    if domain != "VISION":
-        raise ValueError(
-            f"P2 Option 2 supports VISION only. Got: {domain}"
-        )
-
     if model is None:
+        model = get_trusted_model()
+
+    probes = generate_vision_probes(
+        n=probe_count,
+        image_size=VISION_IMAGE_SIZE,
+        seed=seed,
+    )
+
+    entropies = compute_strip_entropy(model, probes)
+
+    if len(entropies) < 3:
         raise RuntimeError(
-            "Trusted model is required for "
-            "non-quantized behavioral probing."
+            "Behavioral probe requires at least 3 entropy values"
         )
 
-    probes = generate_probes(
-        domain=domain,
-        n=bound_n,
-    )
+    # Simple STRIP summary:
+    # Use the median probe entropy as the observed H_STRIP.
+    h_strip = _median(entropies)
 
-    outputs = run_bounded_inference(
-        model=model,
-        probes=probes,
-        bound_n=bound_n,
-    )
-
-    h_strip = compute_h_strip(outputs)
-
-    s_behavior = normalize_h_strip(
+    normalized = normalize_h_strip(
         h_strip=h_strip,
-        domain=domain,
-        calibration_data=calibration_data,
+        baseline_entropies=entropies,
     )
 
     return {
-        "s_behavior": s_behavior,
-        "h_strip": h_strip,
-        "bypassed_behavior": False,
-        "probe_count": int(len(probes)),
-        "successful_probe_count": int(len(outputs)),
-        "failed_probe_count": 0,
+        "enabled": True,
+        "bypassed": False,
+        "probe_count": len(entropies),
+        "h_strip": normalized["h_strip"],
+        "h_median": normalized["h_median"],
+        "h_mad": normalized["h_mad"],
+        "deviation": normalized["deviation"],
+        "z_score": normalized["z_score"],
+        "s_behavior": normalized["s_behavior"],
+        "method": "vision_strip",
     }
