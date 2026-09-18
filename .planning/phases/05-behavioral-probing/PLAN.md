@@ -5,7 +5,7 @@
 **Owner:** P2 — Muscle  
 **Checkpoint:** CP5  
 **Prerequisites:** CP4 = PASS and required P1/P3 real upstream outputs available  
-**Branch:** `phase-5/behavioral-probing`
+**Branch:** `person 2`
 
 Phase 5 owns final behavioral probing, behavioral anomaly scoring, MAD risk aggregation, MRS, and verdict.
 
@@ -97,6 +97,40 @@ P2 owns:
 
 Final formulas are fixed by the Master Graph:
 
+## P2 Contribution
+
+Person 2 implements the Phase 5 behavioral and risk subsystem.
+
+### Behavioral implementation
+
+- domain-aware probe generation;
+- VISION image/noise probes;
+- NLP integer-token probes;
+- bounded inference;
+- probability validation;
+- H_STRIP calculation;
+- behavioral normalization;
+- quantized-model bypass.
+
+### Risk implementation
+
+- static evidence aggregation;
+- P_tamper integration;
+- behavioral score integration;
+- MAD handling;
+- highest-risk-layer selection;
+- MRS;
+- verdict;
+- risk_results generation and validation.
+
+### Reliability / security implementation
+
+- fail-closed upstream handling;
+- NaN/Inf rejection;
+- stale artifact protection;
+- generation checking;
+- provenance validation;
+- adversarial testing.
 ```text
 non-quantized:
 MRS = min(100, 40*S_static + 35*P_tamper + 25*S_behavior)
