@@ -74,6 +74,15 @@ def compute_mrs(s_static, p_tamper, s_behavior=None, is_quantized=False):
     Compute MRS and verdict. FROZEN formulas.
     Fail-closed: non-quantized without S_behavior raises error.
     """
+    s_static = float(s_static)
+    p_tamper = float(p_tamper)
+
+    if not 0.0 <= s_static <= 1.0:
+        raise ValueError("s_static must be in [0,1].")
+
+    if not 0.0 <= p_tamper <= 1.0:
+        raise ValueError("p_tamper must be in [0,1].")
+
     if is_quantized:
         # Quantized: S_behavior is intentionally absent
         mrs = min(100, 55 * s_static + 45 * p_tamper)
@@ -84,6 +93,12 @@ def compute_mrs(s_static, p_tamper, s_behavior=None, is_quantized=False):
                 "Non-quantized model is missing S_behavior. "
                 "Behavioral probing failed – refusing to fabricate a score."
             )
+
+        s_behavior = float(s_behavior)
+
+        if not 0.0 <= s_behavior <= 1.0:
+            raise ValueError("s_behavior must be in [0,1].")
+
         mrs = min(100, 40 * s_static + 35 * p_tamper + 25 * s_behavior)
 
     if mrs <= 34:
@@ -93,7 +108,7 @@ def compute_mrs(s_static, p_tamper, s_behavior=None, is_quantized=False):
     else:
         verdict = "FAIL"
 
-    return {"mrs": round(mrs, 2), "verdict": verdict}
+    return {"mrs_score": round(mrs, 2), "verdict": verdict}
 # import numpy as np
 
 

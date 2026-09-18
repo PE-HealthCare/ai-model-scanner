@@ -62,7 +62,7 @@ def load_features_json(path):
         "source_producer": data["producer"],
         "source_mock_status": data["mock_status"],
         "source_contract_version": data["contract_version"],
-        "source_generation_commit": data["generation_commit"],
+        "generation_commit": data["generation_commit"],
     }
 
 
@@ -94,3 +94,31 @@ def load_ml_results_json(path):
         raise ValueError("p_tamper must be in [0,1]")
 
     return data, data["shap_attributions"]
+
+
+def load_calibration_data(path):
+    """
+    Load the P2 calibration artifact used by D4 normalization.
+
+    The artifact is scanner-controlled and MUST NOT be derived from the
+    uploaded model. Only the domain calibration block is returned; the
+    per-domain median/MAD validation stays in ``normalize_h_strip`` so a
+    missing D4 field fails closed at scoring time instead of being
+    silently substituted.
+    """
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    if "calibration_data" not in data:
+        raise KeyError(
+            "Missing required key 'calibration_data' in calibration artifact"
+        )
+
+    calibration_data = data["calibration_data"]
+
+    if not isinstance(calibration_data, dict) or not calibration_data:
+        raise ValueError(
+            "Calibration artifact contains no domain calibration data"
+        )
+
+    return calibration_data

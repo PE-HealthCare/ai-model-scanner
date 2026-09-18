@@ -41,6 +41,7 @@
       ],
       "mean": 5.0812887640019015,
       "median": 5.085757341909422,
+      "mad": 0.026241989955190892,
       "std": 0.04490418123212166,
       "min": 4.9761550983448215,
       "max": 5.1702854676973615,
@@ -93,6 +94,7 @@
       ],
       "mean": 6.881047963874677,
       "median": 6.881156798617935,
+      "mad": 0.0007370728479614286,
       "std": 0.0009277218667262491,
       "min": 6.879064755707632,
       "max": 6.8828066777411845,
@@ -112,6 +114,14 @@
     "probe_count": 32,
     "repetitions": 30,
     "random_seed": 42,
-    "note": "This is newly measured experimental data, not a pre-existing project decision."
+    "note": "This is newly measured experimental data, not a pre-existing project decision.",
+    "mad_derivation": "median(|H_STRIP - median(H_STRIP)|) computed by scripts/generate_calibration_data.compute_statistics",
+    "observations_replayed": {
+      "VISION": 30,
+      "NLP": 30
+    },
+    "new_measurement_performed": false,
+    "artifact_finalized_at": "2026-09-18T14:50:04.645387+00:00",
+    "artifact_finalized_commit": "89e5f4fdc1ea810984cb8b192cc072b21d099518"
   }
 }
