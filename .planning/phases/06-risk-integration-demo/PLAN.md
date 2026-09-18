@@ -5,9 +5,50 @@
 **Owner:** Integration surface + P3 reporting  
 **Checkpoint:** CP6  
 **Prerequisites:** CP4 = PASS and CP5 = PASS  
-**Branch:** `phase-6/risk-integration-demo`
+**Branch:** `person 2`
 
 Phase 6 integrates already-verified outputs into the final end-to-end runner and security report.
+
+                    Person 2
+                       │
+                       ▼
+             ┌──────────────────┐
+             │ Phase 5          │
+             │ Behavioral/Risk  │
+             └────────┬─────────┘
+                      │
+                      ▼
+              risk_results.json
+                      │
+                      ▼
+             ┌──────────────────┐
+             │ Phase 6          │
+             │ Integration      │
+             └────────┬─────────┘
+                      │
+             ┌────────┴────────┐
+             ▼                 ▼
+          P2 risk             P3 report
+          authority           dashboard
+
+
+## P2 Responsibility in Phase 6
+
+P2 provides the authoritative risk output consumed by final integration.
+
+P2 owns:
+- risk aggregation;
+- MRS;
+- verdict;
+- highest-risk-layer result;
+- risk provenance.
+
+Phase 6 integration must consume these outputs and must not
+reimplement P2 algorithms.
+
+P3 owns the final security report/dashboard.
+scan_model.py owns orchestration only.
+
 
 ## 1. Architectural Boundary
 
