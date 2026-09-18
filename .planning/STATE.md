@@ -2,43 +2,14 @@
 
 **Project Status:** FROZEN FOR EXECUTION
 **Architecture Status:** FROZEN  
-**Current Phase:** Phase 5 — Behavioral + Risk   
-**Current Checkpoint:** CP5 — VERIFICATION IN PROGRESS   
-**Current Gate Status:** CP4 PASS; CP5 NOT YET VERIFIED   
-**Last Verified Phase:** Phase 4 — ML Classification   
-**Next Permitted Phase:** Phase 5 — Behavioral + Risk  
+**Current Phase:** Phase 6 — Integration + Demo   
+**Current Checkpoint:** CP6 — VERIFICATION IN PROGRESS   
+**Current Gate Status:** CP5 PASS; CP6 NOT YET VERIFIED   
+**Last Verified Phase:** Phase 5 — Behavioral + Risk   
+**Next Permitted Phase:** Phase 6 — Integration + Demo  
 
 
 ---  
-
-## Current P2 Execution State   
-**Owner:** P2 / Person 2   
-**Branch:** `person2`  
-
-Person 2 owns the Phase 5 behavioral-risk implementation and the P2 risk-output responsibility carried into Phase 6. 
-
-The P2 implementation currently present on `person2` includes:
-- domain-aware behavioral probing;
-- VISION float/image-noise probing;
-- NLP integer-token probing; - bounded inference;
-- H_STRIP calculation; - S_behavior normalization;
-- quantized-model behavioral bypass;
-- D5 static-risk aggregation;
-- D6 highest-risk-layer selection;
-- D7 MAD-based anomaly handling;
-- P_tamper integration;
-- MRS calculation;
-- PASS/REVIEW/FAIL verdict calculation;
-- risk-results generation;
-- upstream artifact validation;
-- generation/staleness protection;
-- provenance handling;
-- adversarial and regression test coverage.
--
-The implementation is complete for the currently locked Phase 5 decisions.  
-CP4 is PASS.    
-CP5 is not automatically PASS because implementation presence is not itself checkpoint verification. CP5 requires the complete execution evidence defined by the Phase 5 verification gate.
-
 
 ## Authority
 
@@ -371,10 +342,10 @@ D4–D6 are not resolved by any implementation branch, placeholder, or prior age
 | Phase | Status | Gate |
 |---|---|---|
 | Phase 1 — Mock Pipeline | COMPLETE | CP1 |
-| Phase 2 — Zero-Trust Intake | IN PROGRESS | CP2 |
-| Phase 3 — Static Steganalysis | NOT STARTED | CP3 |
-| Phase 4 — ML Classification | NOT STARTED | CP4 |
-| Phase 5 — Behavioral + Risk | NOT STARTED | CP5 |
+| Phase 2 — Zero-Trust Intake | COMPLETE | CP2 |
+| Phase 3 — Static Steganalysis | COMPLETE | CP3 |
+| Phase 4 — ML Classification | COMPLETE | CP4 |
+| Phase 5 — Behavioral + Risk | COMPLETE | CP5 |
 | Phase 6 — Integration + Demo | NOT STARTED | CP6 |
 
 ## Checkpoint Status
@@ -382,10 +353,10 @@ D4–D6 are not resolved by any implementation branch, placeholder, or prior age
 | Checkpoint | Status |
 |---|---|
 | CP1 — Mock Gate | PASS |
-| CP2 — Intake Gate | NOT REACHED |
-| CP3 — Static Gate | NOT REACHED |
-| CP4 — ML Gate | NOT REACHED |
-| CP5 — Behavioral/Risk Gate | NOT REACHED |
+| CP2 — Intake Gate | PASS |
+| CP3 — Static Gate | PASS |
+| CP4 — ML Gate | PASS |
+| CP5 — Behavioral/Risk Gate | PASS |
 | CP6 — Demo Gate | NOT REACHED |
 
 Only a `PASS` checkpoint permits advancement.
