@@ -5,7 +5,7 @@
 **Owner:** P2 — Muscle  
 **Checkpoint:** CP5  
 **Prerequisites:** CP4 = PASS and required P1/P3 real upstream outputs available  
-**Branch:** `phase-5/behavioral-probing`
+**Branch:** `person2`
 
 Phase 5 owns final behavioral probing, behavioral anomaly scoring, MAD risk aggregation, MRS, and verdict.
 
