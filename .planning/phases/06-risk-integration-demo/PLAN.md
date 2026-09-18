@@ -5,7 +5,7 @@
 **Owner:** Integration surface + P3 reporting  
 **Checkpoint:** CP6  
 **Prerequisites:** CP4 = PASS and CP5 = PASS  
-**Branch:** `phase-6/risk-integration-demo`
+**Branch:** `person2`
 
 Phase 6 integrates already-verified outputs into the final end-to-end runner and security report.
 
