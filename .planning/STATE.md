@@ -1,14 +1,44 @@
 # AI Model Scanner — Execution State
 
-**Project Status:** FROZEN FOR EXECUTION  
+**Project Status:** FROZEN FOR EXECUTION
 **Architecture Status:** FROZEN  
-**Current Phase:** Phase 2 — Zero-Trust Intake  
-**Current Checkpoint:** CP1 — COMPLETE  
-**Current Gate Status:** PASS — CP1 VERIFIED  
-**Last Verified Phase:** Phase 1 — Mock Pipeline  
-**Next Permitted Phase:** Phase 2 — Zero-Trust Intake
+**Current Phase:** Phase 5 — Behavioral + Risk   
+**Current Checkpoint:** CP5 — VERIFICATION IN PROGRESS   
+**Current Gate Status:** CP4 PASS; CP5 NOT YET VERIFIED   
+**Last Verified Phase:** Phase 4 — ML Classification   
+**Next Permitted Phase:** Phase 5 — Behavioral + Risk  
 
----
+
+---  
+
+## Current P2 Execution State   
+**Owner:** P2 / Person 2   
+**Branch:** `person2`  
+
+Person 2 owns the Phase 5 behavioral-risk implementation and the P2 risk-output responsibility carried into Phase 6. 
+
+The P2 implementation currently present on `person2` includes:
+- domain-aware behavioral probing;
+- VISION float/image-noise probing;
+- NLP integer-token probing; - bounded inference;
+- H_STRIP calculation; - S_behavior normalization;
+- quantized-model behavioral bypass;
+- D5 static-risk aggregation;
+- D6 highest-risk-layer selection;
+- D7 MAD-based anomaly handling;
+- P_tamper integration;
+- MRS calculation;
+- PASS/REVIEW/FAIL verdict calculation;
+- risk-results generation;
+- upstream artifact validation;
+- generation/staleness protection;
+- provenance handling;
+- adversarial and regression test coverage.
+-
+The implementation is complete for the currently locked Phase 5 decisions.  
+CP4 is PASS.    
+CP5 is not automatically PASS because implementation presence is not itself checkpoint verification. CP5 requires the complete execution evidence defined by the Phase 5 verification gate.
+
 
 ## Authority
 
