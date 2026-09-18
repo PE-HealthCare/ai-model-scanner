@@ -356,10 +356,20 @@ D4–D6 are not resolved by any implementation branch, placeholder, or prior age
 | CP2 — Intake Gate | PASS |
 | CP3 — Static Gate | PASS |
 | CP4 — ML Gate | PASS |
-| CP5 — Behavioral/Risk Gate | PASS |
+| CP5 — Behavioral/Risk Gate | PASS — CODE + RUNTIME EVIDENCE VERIFIED (person2 @ 89e5f4fdc1ea810984cb8b192cc072b21d099518; see `.planning/phases/05-behavioral-probing/VERIFICATION.md` §10) |
 | CP6 — Demo Gate | NOT REACHED |
 
 Only a `PASS` checkpoint permits advancement.
+
+CP5 evidence summary (documentation sync only; no new measurement):
+- VISION: ResNet18, 30 obs, median `5.085757341909422`, MAD `0.026241989955190892`; replayed via `compute_statistics`, `new_measurement_performed=false`.
+- NLP: DistilBERT, 30 obs, median `6.881156798617935`, MAD `0.0007370728479614286`; replayed via `compute_statistics`, `new_measurement_performed=false`.
+- VISION non-quant E2E (`mock_mode=True`): `s_behavior=0.0`, `mrs_score=47.18`, `REVIEW` — PASS, schema-valid.
+- NLP non-quant E2E (`mock_mode=True`): `s_behavior=1.0`, `mrs_score=72.18`, `FAIL` — PASS, schema-valid.
+- Quantized E2E: `s_behavior=null`, `mrs_score=63.63`, `REVIEW`, probing bypassed — PASS, schema-valid.
+- `python -m pytest tests -q` → `75 passed`; D4/D5/D6/D7/MRS/verdict/D8/adversarial/schema all PASS.
+- Tracked `data/outputs/risk_results.json` is schema-valid but was NOT freshly regenerated in this documentation session.
+- Risk-result provenance remains excluded by the current contract (`additionalProperties:false`); E2E used stub models, so no VERIFIED-REAL production gate is claimed.
 
 ## Verified Implementation Status
 
