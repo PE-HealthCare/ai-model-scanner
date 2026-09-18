@@ -132,5 +132,20 @@ Adversarial tests:
 Provenance:
 Final state: PASS / FAIL / BLOCKED
 ```
+## Person 2 Verification Evidence
+
+Implementation:
+- src/p2_behavioral_risk/prober.py
+- src/p2_behavioral_risk/risk_aggregator.py
+- src/p2_behavioral_risk/handoff.py
+- src/p2_behavioral_risk/output_writer.py
+
+Tests:
+- tests/test_p2_adversarial.py
+- tests/test_d4_behavioral.py
+- tests/test_d7.py
+- tests/test_d8_generation.py
+- tests/test_integration.py
+
 
 CP5 may be marked PASS only after every required criterion is PASS, all required evidence is present, and independent approval is recorded.
