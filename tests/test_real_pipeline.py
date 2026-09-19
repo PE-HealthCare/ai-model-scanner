@@ -162,7 +162,7 @@ class TestRealPipelineTerminalState(unittest.TestCase):
             with (CONTRACT_DIR / "ml_results.schema.json").open(encoding="utf-8") as fh:
                 Draft202012Validator(json.load(fh)).validate(ml_results)
             self.assertEqual(ml_results["mock_status"], "VERIFIED-REAL")
-            self.assertEqual(ml_results["model_version"], "sigtensor-logreg-synthetic-v1")
+            self.assertEqual(ml_results["model_version"], "lightgbm-phase4-final")
             self.assertTrue(0.0 <= ml_results["p_tamper"] <= 1.0)
 
             # E7: approved terminal state — NO risk artifact for this run.
