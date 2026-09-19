@@ -1,5 +1,14 @@
 # Phase 5 — Behavioral Probing + Risk Verification
 
+> Chronology note (read first): §1–§9 below are the HISTORICAL pre-evidence
+> verification checklist (pre-CP5-PASS planning state; checkboxes intentionally
+> left as originally written). They are SUPERSEDED by the authoritative
+> current status in §10 (CP5 PASS — CODE + RUNTIME EVIDENCE VERIFIED). Do not
+> read unchecked historical boxes as contradicting the §10 PASS; they record
+> the gate as originally specified before the evidence pass. §10 is the
+> authoritative current CP5 verification. This PASS is code-runtime evidence
+> only and is NOT VERIFIED-REAL production authorization.
+
 ## 1. Gate Semantics
 
 Exactly:
@@ -111,9 +120,11 @@ NO FABRICATED OUTPUT
 - [ ] no unauthorized integration changes;
 - [ ] governance/documentation synchronization is separately authorized and recorded when required.
 
-## 10. CP5 Evidence
+## 10. CP5 Evidence — AUTHORITATIVE CURRENT STATUS
 
 **CP5 STATUS: PASS — CODE + RUNTIME EVIDENCE VERIFIED**
+
+**This is NOT VERIFIED-REAL production authorization.**
 
 This documentation update is the final synchronization step. It records
 already-verified code + runtime evidence. It performs no new measurement,
@@ -121,7 +132,8 @@ changes no implementation, formula, contract, calibration value, or test.
 
 ```text
 Branch: person2
-Verified commit: 89e5f4fdc1ea810984cb8b192cc072b21d099518
+Verified commit: 4849706f5eaad16cca5d54933fff75e6431ee41a
+Calibration check: python scripts/finalize_calibration_artifact.py --check → exit code 0
 CP4: PASS (prerequisite, per .planning/STATE.md)
 Probe evidence: domain-routed probes verified
   - non-quantized VISION uses float/image-noise probe path
@@ -169,7 +181,9 @@ D8 generation binding: PASS — P1 features.json and P3 ml_results.json must
 Provenance: calibration provenance recorded in the calibration artifact
   (generated_by, purpose, methodology, probe_count, repetitions, random_seed,
   mad_derivation, observations_replayed, new_measurement_performed=false,
-  artifact_finalized_at, artifact_finalized_commit).
+  artifact_finalized_at, artifact_finalized_commit — the finalized-commit
+  pointer is historical; the current verified CP5 commit is
+  4849706f5eaad16cca5d54933fff75e6431ee41a).
   Risk-result provenance is intentionally NOT emitted: the current
   contracts/risk_results.schema.json requires exactly 9 fields with
   additionalProperties:false and contains no provenance field. This is an
@@ -189,17 +203,21 @@ Full suite: python -m pytest tests -q -> 75 passed
 Tracked data/outputs/risk_results.json: structurally schema-valid, but NOT
   freshly regenerated in this documentation session (values not re-generated
   in place; fresh E2E outputs were written to temp files and validated).
-Final state: PASS
+  The tracked file contains mock_status: "MOCK" and the current placeholder
+  generation-commit value; do not represent it as a fresh production artifact.
+Final state: PASS — CODE + RUNTIME EVIDENCE ONLY (NOT VERIFIED-REAL production authorization)
 ```
 
-Limitations explicitly recorded (not to be misrepresented):
+Limitations explicitly recorded (not to be misrepresented; CP5 PASS does NOT equal production approval):
 - Calibration statistics were replayed from existing recorded observations;
   no new STRIP measurement was performed (`new_measurement_performed=false`).
 - E2E validation used `mock_mode=True` / stub models. A real-model
   VERIFIED-REAL production gate was NOT exercised; do not claim real
   production models were verified.
 - Tracked `data/outputs/risk_results.json` is schema-valid but was not
-  freshly overwritten in this session.
+  freshly overwritten in this session. It contains `mock_status: "MOCK"` and
+  the current placeholder generation-commit value; do not represent it as a
+  fresh production artifact.
 - Risk-result provenance is excluded by the current output contract
   (`additionalProperties:false`, no provenance field).
 - This documentation update is the final synchronization step; it adds
@@ -220,4 +238,11 @@ Tests:
 - tests/test_integration.py
 
 
-CP5 may be marked PASS only after every required criterion is PASS, all required evidence is present, and independent approval is recorded.
+CP5 may be marked PASS only after every required criterion is PASS, all required evidence is present, and independent approval is recorded. (Governance requirement preserved — no independent approval is fabricated by this documentation cleanup.)
+
+> Historical 89e5f4f pointer (superseded): earlier CP5 evidence drafts cited
+> `89e5f4fdc1ea810984cb8b192cc072b21d099518` as the verified commit. That
+> pointer is superseded by the current verified CP5 commit
+> `4849706f5eaad16cca5d54933fff75e6431ee41a` recorded in §10 above. The
+> underlying code-runtime evidence is unchanged; only the commit pointer was
+> advanced by subsequent documentation-sync commits.

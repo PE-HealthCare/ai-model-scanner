@@ -66,12 +66,18 @@ The exact Python class, function names, type annotations, and module location us
 
 D2 does not change the artifact contracts (`features.json`, `ml_results.json`, or `risk_results.json`) because the trusted-model handoff is an in-process runtime mechanism rather than a JSON artifact.
 
-D2 does not resolve D3, D4, D5, or D6.
+D2 defines the handoff scope; it does not by itself determine D3, D4, D5, or D6 status (for current D3–D6 status see `## Checkpoint Status` and VERIFICATION.md §10).
 
 **Implementation / verification status:** D2 implementation and verification evidence are COMPLETE.
 D2 was implemented, tested, independently reviewed, accepted at CP2, and integrated into main.
 
-**Status: RESOLVED / LOCKED — METHODOLOGY ONLY; EMPIRICAL CALIBRATION PENDING.**
+**Status: RESOLVED / LOCKED — METHODOLOGY LOCKED; CP5 CODE-RUNTIME EVIDENCE COMPLETE (replayed calibration, verified). VERIFIED-REAL production validation remains out of scope.**
+
+> Historical note (superseded): this decision was previously recorded as
+> "METHODOLOGY ONLY; EMPIRICAL CALIBRATION PENDING" before the CP5 code-runtime
+> evidence pass. That pending status is retained below for history and is
+> superseded by the CP5 evidence status recorded in `## Checkpoint Status` and
+> `.planning/phases/05-behavioral-probing/VERIFICATION.md` §10.
 
 For non-quantized models, behavioral probing SHALL compute Shannon entropy over the model's softmax output probability distribution for the existing 32 domain-appropriate probes.
 
@@ -81,11 +87,13 @@ The reference models and resulting calibration evidence SHALL be explicitly reco
 
 The baseline SHALL NOT be derived from the uploaded model itself, and no arbitrary universal numeric entropy threshold may be introduced without corresponding calibration evidence.
 
-D3 defines the entropy measurement and baseline methodology only. The conversion of baseline deviation into `S_behavior ∈ [0,1]` remains D4. Final behavioral anomaly thresholds and risk aggregation remain governed by their respective decisions.
+D3 defines the entropy measurement and baseline methodology only (scope definition, not a status claim). The conversion of baseline deviation into `S_behavior ∈ [0,1]` is governed by D4 (for current D4 status see `## Checkpoint Status` and VERIFICATION.md §10).
 
 Quantized models do not use the behavioral baseline because behavioral probing is skipped under the finalized quantized path.
 
-**Implementation / empirical-evidence status:** The D3 methodology is locked, but calibration execution, measured baseline distributions, and supporting evidence remain pending. Agents MUST NOT invent baseline values. After the approved calibration run completes, the agent MUST return to this D3 section, record the measured evidence and any evidence-dependent parameters, and re-verify downstream consistency before treating D3 as fully evidenced.
+**Implementation / empirical-evidence status (historical planning text, superseded for CP5 code-runtime scope):** The D3 methodology was locked, but calibration execution, measured baseline distributions, and supporting evidence were recorded as pending. Agents were told they MUST NOT invent baseline values. After the approved calibration run completes, the agent was told it MUST return to this D3 section, record the measured evidence and any evidence-dependent parameters, and re-verify downstream consistency before treating D3 as fully evidenced.
+
+**CP5 code-runtime evidence status (current, authoritative):** For the CP5 code-runtime PASS scope, D3 is represented by the committed calibration artifact `data/calibration/calibration_data.json` and verified replay: VISION ResNet18 30 recorded observations (median `5.085757341909422`, MAD `0.026241989955190892`); NLP DistilBERT 30 recorded observations (median `6.881156798617935`, MAD `0.0007370728479614286`); replayed via `compute_statistics` with `new_measurement_performed=false`; `python scripts/finalize_calibration_artifact.py --check` → exit code 0. No values were invented. No fresh STRIP measurement was performed, no VERIFIED-REAL production validation was exercised, and no production authorization is claimed; see `## Checkpoint Status` and `.planning/phases/05-behavioral-probing/VERIFICATION.md` §10.
 
 ### Decision 1 — Trusted Architecture Registry
 
@@ -327,15 +335,21 @@ Until these implementation and verification conditions are satisfied, D9 remains
 
 Any remaining dependency-policy details remain **REQUIRED** until explicitly agreed. No implementation choice may silently resolve a remaining D9 sub-decision.
 
-## Intentionally Unresolved Decisions
+## Historical Planning State — Intentionally Unresolved Decisions (SUPERSEDED for CP5 code-runtime scope)
 
-| Decision | Status |
-|---|---|
-| D4 — Behavioral normalization | REQUIRED |
-| D5 — Risk aggregation | REQUIRED |
-| D6 — Highest-risk-layer aggregation | REQUIRED |
+> Historical record: before the CP5 code-runtime evidence pass, the project
+> recorded the following decision states. This table is preserved for history.
+> It is SUPERSEDED by the current CP5 status in `## Checkpoint Status` and
+> `.planning/phases/05-behavioral-probing/VERIFICATION.md` §10. Do not read
+> this historical table as the current status.
 
-D4–D6 are not resolved by any implementation branch, placeholder, or prior agent choice. D2 is resolved as a persistent project decision above; its implementation and verification are COMPLETE with CP2 PASS. D3 is methodologically resolved as a persistent project decision above; its empirical calibration/evidence remains pending and must not be invented.
+| Decision | Historical status (superseded) | Current CP5 code-runtime status |
+|---|---|---|
+| D4 — Behavioral normalization | REQUIRED (historical) | Implemented and tested — CP5 code-runtime PASS |
+| D5 — Risk aggregation | REQUIRED (historical) | Implemented — CP5 code-runtime PASS |
+| D6 — Highest-risk-layer aggregation | REQUIRED (historical) | Implemented — CP5 code-runtime PASS |
+
+D4–D6 were recorded as not resolved by any implementation branch, placeholder, or prior agent choice. D2 is resolved as a persistent project decision above; its implementation and verification are COMPLETE with CP2 PASS. D3 was recorded as methodologically resolved with empirical calibration/evidence pending and subject to a must-not-invent rule; for the CP5 code-runtime PASS scope, D3 is now represented by the committed calibration artifact plus verified replay (`new_measurement_performed=false`, check exit code 0), with no values invented and no VERIFIED-REAL production validation claimed.
 
 ## Phase Status
 
@@ -356,22 +370,30 @@ D4–D6 are not resolved by any implementation branch, placeholder, or prior age
 | CP2 — Intake Gate | PASS |
 | CP3 — Static Gate | PASS |
 | CP4 — ML Gate | PASS |
-| CP5 — Behavioral/Risk Gate | PASS — CODE + RUNTIME EVIDENCE VERIFIED (person2 @ 89e5f4fdc1ea810984cb8b192cc072b21d099518; see `.planning/phases/05-behavioral-probing/VERIFICATION.md` §10) |
+| CP5 — Behavioral/Risk Gate | PASS — CODE + RUNTIME EVIDENCE VERIFIED (person2 @ 4849706f5eaad16cca5d54933fff75e6431ee41a; see `.planning/phases/05-behavioral-probing/VERIFICATION.md` §10). This is NOT VERIFIED-REAL production authorization. |
 | CP6 — Demo Gate | NOT REACHED |
 
 Only a `PASS` checkpoint permits advancement.
 
-CP5 evidence summary (documentation sync only; no new measurement):
+CP5 evidence summary (documentation sync only; no new measurement; NOT VERIFIED-REAL production authorization):
+- D3 calibration evidence/methodology: committed calibration artifact `data/calibration/calibration_data.json` + verified replay (`python scripts/finalize_calibration_artifact.py --check` → exit code 0).
+- D4 normalization / behavioral score: implemented and tested.
+- D5 static risk aggregation: implemented.
+- D6 highest-risk-layer selection: implemented.
+- D7 MAD Z-score logic: implemented and tested.
+- MRS/verdict logic: implemented and tested.
+- D8 generation-commit enforcement: implemented and tested.
+- Still OUTSIDE CP5 code-runtime PASS scope: VERIFIED-REAL production validation; fresh real-model STRIP measurement; authoritative production artifact generation using real upstream P1/P3 inputs.
 - VISION: ResNet18, 30 obs, median `5.085757341909422`, MAD `0.026241989955190892`; replayed via `compute_statistics`, `new_measurement_performed=false`.
 - NLP: DistilBERT, 30 obs, median `6.881156798617935`, MAD `0.0007370728479614286`; replayed via `compute_statistics`, `new_measurement_performed=false`.
 - VISION non-quant E2E (`mock_mode=True`): `s_behavior=0.0`, `mrs_score=47.18`, `REVIEW` — PASS, schema-valid.
 - NLP non-quant E2E (`mock_mode=True`): `s_behavior=1.0`, `mrs_score=72.18`, `FAIL` — PASS, schema-valid.
 - Quantized E2E: `s_behavior=null`, `mrs_score=63.63`, `REVIEW`, probing bypassed — PASS, schema-valid.
-- `python -m pytest tests -q` → `75 passed`; D4/D5/D6/D7/MRS/verdict/D8/adversarial/schema all PASS.
-- Tracked `data/outputs/risk_results.json` is schema-valid but was NOT freshly regenerated in this documentation session.
+- `python -m pytest tests -q` → `75 passed`; D4/D5/D6/D7/MRS/verdict/D8/adversarial/schema all PASS for the CP5 code-runtime evidence scope.
+- Tracked `data/outputs/risk_results.json` is schema-valid but was NOT freshly regenerated in this documentation session. It contains `mock_status: "MOCK"` and the current placeholder generation-commit value; do not represent it as a fresh production artifact.
 - Risk-result provenance remains excluded by the current contract (`additionalProperties:false`); E2E used stub models, so no VERIFIED-REAL production gate is claimed.
 
-## Verified Implementation Status
+## Verified Implementation Status (authoritative-production scope — distinct from CP5 code-runtime PASS)
 
 - Real P1 zero-trust intake: **not verified**
 - Real P1 static feature extractor: **not verified**
@@ -379,7 +401,9 @@ CP5 evidence summary (documentation sync only; no new measurement):
 - Real P2 risk engine: **not verified**
 - Final integration: **not verified**
 
-Locked decisions are requirements for implementation; they are not evidence that implementation exists.
+CP5 code-runtime PASS (see `## Checkpoint Status`) covers repository implementation verification, replayed calibration statistics, calibration-artifact verification, automated tests (`75 passed`), and mock/stub E2E runtime checks. It does NOT claim the authoritative-production validations listed above.
+
+Locked decisions state requirements for implementation; checkpoint evidence is recorded separately in `## Checkpoint Status` (for CP5 code-runtime evidence see VERIFICATION.md §10).
 
 ## Current Dependency Chain
 
@@ -461,7 +485,9 @@ Quantized models bypass behavioral probing under the finalized format-adaptive d
 
 ## Next Permitted Action
 
-Phase 1 is complete with CP1 PASS. Phase 2 is the current permitted implementation phase. D2 is RESOLVED as a project decision, with implementation/verification COMPLETE — CP2 PASS. D3 is RESOLVED as a methodology decision, with empirical calibration/evidence pending. D4–D6 remain REQUIRED. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED. Continue Phase 2 only within the approved D2 handoff boundary and existing Phase 2 plan/verification; do not implement D3–D6 or silently resolve remaining D9 details.
+> Historical Phase-2 planning text (superseded for Phase 5 status; preserved for history): Phase 1 was recorded as complete with CP1 PASS while Phase 2 was the then-current permitted implementation phase. D2 was RESOLVED as a project decision, with implementation/verification COMPLETE — CP2 PASS. D3 was RESOLVED as a methodology decision, with empirical calibration/evidence then pending. D4–D6 were then REQUIRED. The instruction at that time was to continue Phase 2 only within the approved D2 handoff boundary and existing Phase 2 plan/verification, and not to implement D3–D6 or silently resolve remaining D9 details.
+
+Current status: CP5 is PASS for code-runtime evidence (see `## Checkpoint Status`); CP6 is NOT YET VERIFIED. The next permitted phase is Phase 6 — Integration + Demo. D9 remains partially resolved; D9.1–D9.20 are LOCKED, while D9.21+ remain REQUIRED.
 
 **Current D9 frontier: D9.21 — remaining dependency-policy details.**
 

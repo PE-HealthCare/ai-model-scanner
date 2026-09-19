@@ -230,14 +230,31 @@ If P1 feature semantics change after training:
 
 ### Dependency
 
-Verified upstream outputs, including P3's real `P_tamper`.
+> Historical dependency statement (superseded for the CP5 code-runtime PASS
+> scope; preserved for history): verified upstream outputs, including P3's
+> real `P_tamper`, were specified as the dependency for an authoritative
+> production risk artifact. The CP5 code-runtime PASS scope used mock/stub E2E
+> runtime checks and claims no VERIFIED-REAL production gate (see VERIFICATION.md §10).
+
+Verified upstream outputs, including P3's real `P_tamper` (historical authoritative-production dependency; see scope note above).
 
 ### Decision dependencies
 
-* **D3:** methodology RESOLVED / LOCKED; empirical calibration/evidence pending. Baseline values SHALL NOT be invented and must be populated from the approved calibration process before authoritative behavioral scoring is considered fully evidenced.
-* **D4:** REQUIRED — exact `S_behavior` normalization remains unresolved.
-* **D5:** REQUIRED — exact per-layer → model-level risk aggregation remains unresolved.
-* **D6:** REQUIRED — exact highest-risk-layer aggregation remains unresolved.
+> Historical planning state (superseded for CP5 code-runtime scope; preserved
+> for history): before the CP5 evidence pass, D3 empirical calibration was
+> recorded as pending and D4/D5/D6 were recorded as REQUIRED. Current status:
+> for the CP5 code-runtime PASS scope, D3 is represented by the committed
+> calibration artifact plus verified replay (`new_measurement_performed=false`,
+> `python scripts/finalize_calibration_artifact.py --check` → exit code 0),
+> and D4/D5/D6 are implemented (see
+> `.planning/phases/05-behavioral-probing/VERIFICATION.md` §10 and
+> `.planning/STATE.md` `## Checkpoint Status`). This PASS is code-runtime
+> evidence only and is NOT VERIFIED-REAL production authorization.
+
+* **D3 (historical):** methodology RESOLVED / LOCKED; empirical calibration/evidence then pending. Baseline values were not to be invented and were to be populated from the approved calibration process before authoritative behavioral scoring was considered fully evidenced.
+* **D4 (historical):** REQUIRED — exact `S_behavior` normalization then unresolved.
+* **D5 (historical):** REQUIRED — exact per-layer → model-level risk aggregation then unresolved.
+* **D6 (historical):** REQUIRED — exact highest-risk-layer aggregation then unresolved.
 * **D7:** RESOLVED / LOCKED.
 
 ### Verification Gate
@@ -256,7 +273,7 @@ CP5 requires:
 * risk contract satisfaction;
 * all evidence-dependent decisions completed and verified.
 
-If D4, D5, or D6 remains required, or D3's required empirical calibration/evidence remains incomplete, CP5 is `BLOCKED`. D3's locked methodology alone does not constitute full D3 evidence.
+If D4, D5, or D6 remained required, or D3's required empirical calibration/evidence remained incomplete, CP5 was specified as `BLOCKED` in the historical plan. D3's locked methodology alone was not to constitute full D3 evidence. (Historical gate language; superseded for the CP5 code-runtime PASS scope defined in `.planning/phases/05-behavioral-probing/VERIFICATION.md` §10 and `.planning/STATE.md` `## Checkpoint Status`. That PASS is code-runtime evidence only — repository implementation verification, replayed calibration statistics, calibration-artifact verification, automated tests [`75 passed`], and mock/stub E2E runtime checks — and is NOT VERIFIED-REAL production authorization.)
 
 No silent substitute behavior is permitted.
 
@@ -398,17 +415,25 @@ CP6 PASS
 
 # Decision Status Register
 
+> Note: decision-state records below preserve historical planning language.
+> For current CP5 code-runtime status, see
+> `.planning/phases/05-behavioral-probing/VERIFICATION.md` §10 and
+> `.planning/STATE.md` `## Checkpoint Status` (CP5 PASS — CODE + RUNTIME
+> EVIDENCE VERIFIED; NOT VERIFIED-REAL production authorization). D4/D5/D6
+> entries marked REQUIRED below are historical planning states superseded for
+> the CP5 code-runtime scope, where D4/D5/D6 are implemented.
+
 * **D1:** RESOLVED / LOCKED — exact contract schemas and fields/types/layout.
 * **D2:** RESOLVED / LOCKED — exact in-process trusted-graph handoff mechanism; implementation/verification COMPLETE — CP2 PASS.
-* **D3:** RESOLVED / LOCKED — STRIP entropy baseline methodology; empirical calibration/evidence pending; values MUST NOT be invented.
-* **D4:** REQUIRED — exact `S_behavior` normalization.
-* **D5:** REQUIRED — per-layer → model-level risk aggregation.
-* **D6:** REQUIRED — highest-risk-layer aggregation.
+* **D3:** RESOLVED / LOCKED — STRIP entropy baseline methodology; empirical calibration represented for the CP5 code-runtime scope by the committed calibration artifact plus verified replay (`new_measurement_performed=false`, check exit code 0); values MUST NOT have been invented (none were); VERIFIED-REAL production validation remains out of scope.
+* **D4:** REQUIRED (historical planning state; superseded for CP5 code-runtime scope — D4 normalization/behavior score implemented and tested) — exact `S_behavior` normalization.
+* **D5:** REQUIRED (historical planning state; superseded for CP5 code-runtime scope — D5 static risk aggregation implemented) — per-layer → model-level risk aggregation.
+* **D6:** REQUIRED (historical planning state; superseded for CP5 code-runtime scope — D6 highest-risk-layer selection implemented) — highest-risk-layer aggregation.
 * **D7:** RESOLVED / LOCKED — MAD zero/near-zero and low-layer-count guard.
 * **D8:** RESOLVED / LOCKED — model staleness protection.
 * **D9:** REQUIRED / PARTIALLY RESOLVED — D9.1–D9.20 locked; D9.21+ remains required.
 
-These statuses are decision-state records, not implementation or checkpoint evidence.
+These statuses preserve historical decision-state language, not implementation or checkpoint evidence (for current checkpoint evidence see `.planning/STATE.md` `## Checkpoint Status` and Phase 5 VERIFICATION.md §10).
 
 ---
 
