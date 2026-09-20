@@ -3,10 +3,16 @@
 Two pipelines share one output contract (data/outputs/*.json):
 
 Real pipeline (backend/ML, zero-trust):
-    run_pipeline(model_path)
+    run_pipeline(model_path, declared_architecture="resnet18")
         SafeTensors artifact -> P1 zero-trust intake + static steganalysis
-        features -> P3 tampering classification -> P2 risk aggregation
+        features -> P3 tampering classification -> D2 declared-resnet18 trusted
+        construction + in-process handoff -> P2 behavioral probing and risk
+        aggregation (P2 persists risk_results.json itself)
         -> validated JSON artifacts (mock_status="VERIFIED-REAL").
+
+    The architecture is always DECLARED by the caller and never detected: the
+    only construction path is the approved resnet18 one, and D2 validates the
+    state_dict against it. P2 never reloads the model (D2 handoff).
 
     CLI: python scan_model.py <model.safetensors>
 
@@ -25,8 +31,13 @@ from pathlib import Path
 
 from src.common.utils import ROOT, get_generation_commit, validate_artifact
 from src.p1_static_engine.analyzer import build_features, build_mock_features
-from src.p2_behavioral_risk.prober import build_mock_risk_results, build_risk_results
 from src.p3_ml_dashboard.classifier import build_ml_results, build_mock_ml_results
+
+# P2 and the D2 bridge are imported lazily inside each pipeline: the recovered
+# live P2 modules pull in the behavioral probing stack (torch/scipy) and the D2
+# bridge pulls in safetensors. Local imports keep this orchestrator importable
+# without the ML stack and keep every other stage's failure isolated.
+SUPPORTED_ARCHITECTURES = ("resnet18",)
 
 OUTPUT_DIR = ROOT / "data" / "outputs"
 CONTRACT_DIR = ROOT / "contracts"
@@ -54,8 +65,40 @@ def _validated_step(produce, out_name: str, schema_name: str, *args):
     return artifact_path
 
 
-def run_pipeline(model_path: str | Path) -> dict[str, Path]:
-    """End-to-end zero-trust scan of a SafeTensors artifact."""
+def _validated_p2_step(produce, out_name: str, schema_name: str) -> Path:
+    """Run a stage that persists its own artifact, then validate it.
+
+    P2 writes risk_results.json itself (via its own analyzer), so there is no
+    payload for the orchestrator to persist. The fail-closed cleanup of
+    _validated_step is preserved: on failure the artifact is removed, so a
+    failed stage can never leave a stale/partial downstream artifact behind.
+    """
+    artifact_path = OUTPUT_DIR / out_name
+    try:
+        produce()
+        validate_artifact(artifact_path, CONTRACT_DIR / schema_name)
+    except Exception:
+        artifact_path.unlink(missing_ok=True)
+        raise
+    return artifact_path
+
+
+def run_pipeline(
+    model_path: str | Path,
+    declared_architecture: str = "resnet18",
+) -> dict[str, Path]:
+    """End-to-end zero-trust scan of a SafeTensors artifact.
+
+    ``declared_architecture`` is an explicit declaration, never a detected
+    guess: the caller states what the artifact is and D2 validates the loaded
+    state_dict against the canonical construction for that declaration.
+    """
+    if declared_architecture not in SUPPORTED_ARCHITECTURES:
+        raise ValueError(
+            f"Unsupported declared architecture '{declared_architecture}': "
+            f"supported: {list(SUPPORTED_ARCHITECTURES)}"
+        )
+
     generation_commit = get_generation_commit()
     features_path = _validated_step(
         build_features, "features.json", "features.schema.json", model_path, generation_commit
@@ -68,14 +111,25 @@ def run_pipeline(model_path: str | Path) -> dict[str, Path]:
         features,
         generation_commit,
     )
-    ml_results = json.loads(ml_path.read_text(encoding="utf-8"))
-    risk_path = _validated_step(
-        lambda f, m, c: build_risk_results(f, m, c),
+
+    # D2: construct the trusted canonical model and hand it to P2 in-process.
+    # P2 must never reload the model itself.
+    from src.p1_static_engine.trusted_model import load_resnet18_and_handoff
+
+    load_resnet18_and_handoff(model_path)
+
+    # P2 persists risk_results.json itself; the orchestrator only validates it.
+    from src.p2_behavioral_risk.analyzer import run_assessment
+
+    risk_path = _validated_p2_step(
+        lambda: run_assessment(
+            features_path=features_path,
+            ml_results_path=ml_path,
+            output_path=OUTPUT_DIR / "risk_results.json",
+            mock_mode=False,
+        ),
         "risk_results.json",
         "risk_results.schema.json",
-        features,
-        ml_results,
-        generation_commit,
     )
     return {"features": features_path, "ml_results": ml_path, "risk_results": risk_path}
 
@@ -90,10 +144,21 @@ def run_mock_pipeline() -> dict[str, Path]:
     ml_path = OUTPUT_DIR / "ml_results.json"
     _write_json(ml_path, ml_results)
     validate_artifact(ml_path, CONTRACT_DIR / "ml_results.schema.json")
-    risk_results = build_mock_risk_results(ml_results, generation_commit)
-    risk_path = OUTPUT_DIR / "risk_results.json"
-    _write_json(risk_path, risk_results)
-    validate_artifact(risk_path, CONTRACT_DIR / "risk_results.schema.json")
+    # P2 mock stage: mock mode is owned by the recovered live P2 analyzer. It
+    # requires P2's domain stub models, which are outside this recovery's scope,
+    # so this stage fails closed rather than fabricating a risk artifact.
+    from src.p2_behavioral_risk.analyzer import run_assessment
+
+    risk_path = _validated_p2_step(
+        lambda: run_assessment(
+            features_path=features_path,
+            ml_results_path=ml_path,
+            output_path=OUTPUT_DIR / "risk_results.json",
+            mock_mode=True,
+        ),
+        "risk_results.json",
+        "risk_results.schema.json",
+    )
     return {"features": features_path, "ml_results": ml_path, "risk_results": risk_path}
 
 

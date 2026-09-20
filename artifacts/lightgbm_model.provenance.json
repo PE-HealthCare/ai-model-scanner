@@ -1,0 +1,258 @@
+{
+  "artifact": "artifacts\\lightgbm_model.txt",
+  "dataset_id": "synthetic-clean-vs-approved-tamper-cp4-v1",
+  "dataset_source_sha256": "ac3df2eaa53819f7017ae0b01b9fba3fd2464e7154fede1ac2f4fce5405c93f7",
+  "p1_extractor_sha256": "22365ce28ea969884711206f67a6082754e4ff7c6818bf5ffdb66902d25774b1",
+  "generation_commit": "ddd122a760591f91e209371a18bcd96832e3ea27",
+  "contract_version": "1.0",
+  "feature_names": [
+    "entropy",
+    "pov_chi2",
+    "lsb_kl",
+    "ks_stat",
+    "mean",
+    "std",
+    "skewness",
+    "kurtosis",
+    "sparsity",
+    "outlier_pct"
+  ],
+  "model_version": "lightgbm-phase4-final",
+  "model_sha256": "faf6fd8b555d95cf52b6ff1be2014cb017a5922588c434dc2c9b5d53dcfe083d",
+  "training_rows": 96,
+  "clean_rows": 48,
+  "tampered_rows": 48,
+  "mock_status": "VERIFIED-REAL",
+  "corpus": {
+    "seed": 20260909,
+    "layers_per_model": 8,
+    "clean_models": 6,
+    "tampered_models_per_method": 2,
+    "tamper_methods": [
+      "controlled_perturbation",
+      "lsb_manipulation",
+      "mantissa_bit_modification"
+    ],
+    "clean_generator": "train_classifier._clean_example (approved methodology, reused verbatim)",
+    "tamper_generator": "src/p3_ml_dashboard/synthetic_tamper.py (approved methods)",
+    "note": "Training data is SYNTHETIC; model-level clean/tampered labels are applied to layer-level feature rows (D10 decision doc #4).",
+    "files": [
+      {
+        "file": "clean_model_00.safetensors",
+        "label": "clean",
+        "layers": 8
+      },
+      {
+        "file": "clean_model_01.safetensors",
+        "label": "clean",
+        "layers": 8
+      },
+      {
+        "file": "clean_model_02.safetensors",
+        "label": "clean",
+        "layers": 8
+      },
+      {
+        "file": "clean_model_03.safetensors",
+        "label": "clean",
+        "layers": 8
+      },
+      {
+        "file": "clean_model_04.safetensors",
+        "label": "clean",
+        "layers": 8
+      },
+      {
+        "file": "clean_model_05.safetensors",
+        "label": "clean",
+        "layers": 8
+      },
+      {
+        "file": "tampered_controlled_perturbation_00.safetensors",
+        "label": "tampered",
+        "method": "controlled_perturbation",
+        "parameters": [
+          {
+            "epsilon": 0.05
+          },
+          {
+            "epsilon": 0.005
+          },
+          {
+            "epsilon": 0.05
+          },
+          {
+            "epsilon": 0.01
+          },
+          {
+            "epsilon": 0.01
+          },
+          {
+            "epsilon": 0.005
+          },
+          {
+            "epsilon": 0.05
+          },
+          {
+            "epsilon": 0.02
+          }
+        ]
+      },
+      {
+        "file": "tampered_controlled_perturbation_01.safetensors",
+        "label": "tampered",
+        "method": "controlled_perturbation",
+        "parameters": [
+          {
+            "epsilon": 0.005
+          },
+          {
+            "epsilon": 0.01
+          },
+          {
+            "epsilon": 0.005
+          },
+          {
+            "epsilon": 0.01
+          },
+          {
+            "epsilon": 0.05
+          },
+          {
+            "epsilon": 0.05
+          },
+          {
+            "epsilon": 0.005
+          },
+          {
+            "epsilon": 0.005
+          }
+        ]
+      },
+      {
+        "file": "tampered_lsb_manipulation_00.safetensors",
+        "label": "tampered",
+        "method": "lsb_manipulation",
+        "parameters": [
+          {
+            "bits": 1
+          },
+          {
+            "bits": 2
+          },
+          {
+            "bits": 1
+          },
+          {
+            "bits": 3
+          },
+          {
+            "bits": 2
+          },
+          {
+            "bits": 3
+          },
+          {
+            "bits": 2
+          },
+          {
+            "bits": 2
+          }
+        ]
+      },
+      {
+        "file": "tampered_lsb_manipulation_01.safetensors",
+        "label": "tampered",
+        "method": "lsb_manipulation",
+        "parameters": [
+          {
+            "bits": 2
+          },
+          {
+            "bits": 1
+          },
+          {
+            "bits": 3
+          },
+          {
+            "bits": 1
+          },
+          {
+            "bits": 1
+          },
+          {
+            "bits": 3
+          },
+          {
+            "bits": 1
+          },
+          {
+            "bits": 1
+          }
+        ]
+      },
+      {
+        "file": "tampered_mantissa_bit_modification_00.safetensors",
+        "label": "tampered",
+        "method": "mantissa_bit_modification",
+        "parameters": [
+          {
+            "bits": 4
+          },
+          {
+            "bits": 2
+          },
+          {
+            "bits": 1
+          },
+          {
+            "bits": 2
+          },
+          {
+            "bits": 8
+          },
+          {
+            "bits": 8
+          },
+          {
+            "bits": 4
+          },
+          {
+            "bits": 2
+          }
+        ]
+      },
+      {
+        "file": "tampered_mantissa_bit_modification_01.safetensors",
+        "label": "tampered",
+        "method": "mantissa_bit_modification",
+        "parameters": [
+          {
+            "bits": 8
+          },
+          {
+            "bits": 2
+          },
+          {
+            "bits": 8
+          },
+          {
+            "bits": 1
+          },
+          {
+            "bits": 2
+          },
+          {
+            "bits": 8
+          },
+          {
+            "bits": 1
+          },
+          {
+            "bits": 1
+          }
+        ]
+      }
+    ]
+  }
+}
