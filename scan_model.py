@@ -30,7 +30,7 @@ import sys
 from pathlib import Path
 
 from src.common.utils import ROOT, get_generation_commit, validate_artifact
-from src.p1_static_engine.analyzer import build_features, build_mock_features
+from src.p1_static_engine.analyzer import extract_features, intake_model
 from src.p3_ml_dashboard.classifier import build_ml_results, build_mock_ml_results
 
 # P2 and the D2 bridge are imported lazily inside each pipeline: the recovered
@@ -100,8 +100,16 @@ def run_pipeline(
         )
 
     generation_commit = get_generation_commit()
+    context = intake_model(Path(model_path), declared_architecture)
+
+    # D2: deliver the exact P1 trusted context to P2's locked in-process
+    # handoff. This is the only model transfer; P2 never reloads the artifact.
+    from src.p2_behavioral_risk.handoff import receive_trusted_model
+
+    receive_trusted_model(context)
+    features = extract_features(context, generation_commit)
     features_path = _validated_step(
-        build_features, "features.json", "features.schema.json", model_path, generation_commit
+        lambda: features, "features.json", "features.schema.json"
     )
     features = json.loads(features_path.read_text(encoding="utf-8"))
     ml_path = _validated_step(
@@ -112,12 +120,10 @@ def run_pipeline(
         generation_commit,
     )
 
-    # D2: construct the trusted canonical model and hand it to P2 in-process.
-    # P2 must never reload the model itself.
-    from src.p1_static_engine.trusted_model import load_resnet18_and_handoff
-
-    load_resnet18_and_handoff(model_path)
-
+    # D2: the trusted context handed off above is the single trusted
+    # representation of the artifact (nn.Module for FP, scanner-controlled
+    # raw state-dict for D11 quantized). P2 retrieves it via the handoff
+    # module and never reloads the model itself.
     # P2 persists risk_results.json itself; the orchestrator only validates it.
     from src.p2_behavioral_risk.analyzer import run_assessment
 
