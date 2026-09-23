@@ -48,8 +48,14 @@ def write_risk_results(data, filepath):
 
     if missing:
         raise ValueError(
-            f"risk_results missing required fields: "
-            f"{sorted(missing)}"
+            f"risk_results missing required fields: {sorted(missing)}"
+        )
+
+    # Enforce no extra fields per schema (additionalProperties: false)
+    extra = set(data.keys()) - REQUIRED_FIELDS
+    if extra:
+        raise ValueError(
+            f"risk_results contains unexpected fields: {sorted(extra)}"
         )
 
     _reject_non_finite(data)
