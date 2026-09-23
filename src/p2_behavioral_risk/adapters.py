@@ -2,6 +2,7 @@ import json
 
 
 def load_features_json(path):
+    import math
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
@@ -10,17 +11,29 @@ def load_features_json(path):
         "is_quantized",
         "layer_count",
         "static_features",
+        "producer",
+        "mock_status",
+        "contract_version",
+        "generation_commit",
     ]
 
     for key in required:
         if key not in data:
             raise KeyError(f"Missing required key '{key}' in features.json")
 
+    if data["producer"] != "P1":
+        raise ValueError(f"features.json producer must be P1, got {data['producer']}")
+
+    if data["mock_status"] == "STALE":
+        raise RuntimeError("P1 features.json is STALE")
+
     if data["input_domain"] not in {"VISION", "NLP"}:
         raise ValueError(f"Unsupported domain: {data['input_domain']}")
 
     if not isinstance(data["is_quantized"], bool):
         raise TypeError("'is_quantized' must be boolean")
+    # Store quantized flag for later validation
+    is_quantized = data["is_quantized"]
 
     if not isinstance(data["static_features"], list):
         raise TypeError("'static_features' must be a list")
@@ -39,6 +52,12 @@ def load_features_json(path):
             "pov_chi2",
             "lsb_kl",
             "ks_stat",
+            "mean",
+            "std",
+            "skewness",
+            "kurtosis",
+            "sparsity",
+            "outlier_pct"
         ]
 
         for key in required_layer:
@@ -47,13 +66,19 @@ def load_features_json(path):
                     f"Missing required layer field '{key}'"
                 )
 
-        layer_features.append({
-            "layer_name": layer["layer_name"],
-            "entropy": layer["entropy"],
-            "chi_square": layer["pov_chi2"],
-            "kl_div": layer["lsb_kl"],
-            "ks_stat": layer["ks_stat"],
-        })
+        parsed_layer = {"layer_name": layer["layer_name"]}
+        for stat in required_layer[1:]:
+            val = layer[stat]
+            if is_quantized and stat != "ks_stat":
+                # In quantized mode, FP‑only features may be null.
+                if val is None:
+                    parsed_layer[stat] = None
+                    continue
+            if not isinstance(val, (int, float)) or math.isnan(val) or math.isinf(val):
+                raise ValueError("Non‑finite or invalid value")
+            parsed_layer[stat] = float(val)
+
+        layer_features.append(parsed_layer)
 
     return {
         "domain": data["input_domain"],
