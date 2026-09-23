@@ -42,26 +42,84 @@ def compute_s_static_and_layer(layer_features):
          where E_l = max_f ( |Z_lf| / (1 + |Z_lf|) )
     D6: highest_risk_layer = argmax_l (E_l)
     """
-    stat_keys = ["entropy", "chi_square", "kl_div", "ks_stat"]
+    stat_keys = [
+        "entropy",
+        "pov_chi2",
+        "lsb_kl",
+        "ks_stat",
+        "mean",
+        "std",
+        "skewness",
+        "kurtosis",
+        "sparsity",
+        "outlier_pct"
+    ]
     layer_E = []
-
-    for layer in layer_features:
-        max_e = 0.0
+    
+    # NOTE: the P1 contract supplies `layer_name` only. There is no
+    # authoritative upstream layer identity or guaranteed canonical layer
+    # ordering; list position is NOT layer identity (see the D6 selection
+    # note below).
+    # Validate sufficient comparable layers for D7 when full stats are present
+    full_stats = set(stat_keys)
+    provides_full = any(full_stats.issubset(set(layer.keys())) for layer in layer_features)
+    if provides_full and len(layer_features) <= 2:
+        raise RuntimeError("Insufficient baseline for MAD computation")
+    for index, layer in enumerate(layer_features):
+        # D5 eligibility: None = no eligible feature evidence computed yet.
+        # Zero must NEVER substitute for unavailable/invalid/blocked/degenerate evidence.
+        max_e = None
         for stat in stat_keys:
+            # Skip stats not present in the layer (e.g., minimal test fixtures)
+            if stat not in layer:
+                continue
+            # Skip stats with null (None) values – treat as unavailable evidence
+            if layer[stat] is None:
+                continue
             x = layer[stat]
-            # Build intra-model baseline for this stat
-            x_base = [lf[stat] for lf in layer_features if not np.isnan(lf[stat])]
-            if len(x_base) == 0:
-                raise ValueError(f"No valid baseline for stat '{stat}'")
-            z = mad_zscore(x, x_base)   # D7
+            # Build intra-model baseline for this stat, using only layers that
+            # have the stat with a finite numeric value. None/NaN/+/‑Inf are
+            # unavailable evidence and are excluded, never zero-imputed.
+            if not isinstance(x, (int, float)) or not np.isfinite(x):
+                continue
+            x_base = [lf[stat] for lf in layer_features if stat in lf and isinstance(lf[stat], (int, float)) and np.isfinite(lf[stat])]
+            if len(x_base) <= 2:
+                # Not enough baseline values – skip this feature
+                continue
+            try:
+                z = mad_zscore(x, x_base)   # D7
+            except RuntimeError as exc:
+                if "DEGENERATE_DEVIATION" in str(exc):
+                    continue
+                raise
             e = abs(z) / (1 + abs(z))
-            if e > max_e:
+            if max_e is None or e > max_e:
                 max_e = e
-        layer_E.append(max_e)
+        # D5: a layer enters layer_E only with at least one eligible feature
+        # evidence value. A layer with zero eligible features stays
+        # NON-ELIGIBLE and is NOT appended.
+        if max_e is None:
+            continue
+        layer_E.append((index, layer["layer_name"], max_e))
 
-    S_static = 1.0 - np.prod([1.0 - e for e in layer_E])
-    highest_idx = int(np.argmax(layer_E))
-    highest_risk_layer = layer_features[highest_idx]["layer_name"]
+    if not layer_E:
+        # D5 fail-closed: no eligible layer evidence — explicit unavailable
+        # representation; never fabricate S_static from zero evidence.
+        raise RuntimeError("No D7-valid layer evidence available for D5.")
+
+    S_static = 1.0 - np.prod([1.0 - item[2] for item in layer_E])
+    
+    # D6: highest_risk_layer = argmax_l (E_l)
+    # UNRESOLVED upstream interface issue: exact ties cannot be resolved
+    # canonically because the contract provides no authoritative layer
+    # identity and no canonical layer order. For run-to-run determinism only,
+    # an exact tie currently returns the first maximum in contract-supplied
+    # order. This is NOT a canonical tie-break decision and must not be
+    # presented as one; resolving it requires an upstream contract change.
+    max_e_val = max([item[2] for item in layer_E])
+    tied = [item for item in layer_E if item[2] == max_e_val]
+    tied.sort(key=lambda x: x[0])
+    highest_risk_layer = tied[0][1]
 
     return S_static, highest_risk_layer
 
@@ -109,6 +167,7 @@ def compute_mrs(s_static, p_tamper, s_behavior=None, is_quantized=False):
         verdict = "FAIL"
 
     return {"mrs_score": round(mrs, 2), "verdict": verdict}
+
 # import numpy as np
 
 
