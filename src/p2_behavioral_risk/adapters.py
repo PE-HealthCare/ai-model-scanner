@@ -70,12 +70,24 @@ def load_features_json(path):
         for stat in required_layer[1:]:
             val = layer[stat]
             if is_quantized and stat != "ks_stat":
-                # In quantized mode, FP‑only features may be null.
+                # D11 quantized contract: the nine FP-only features are
+                # unavailable. JSON null is the only accepted representation —
+                # never zero, NaN, or a fabricated/FP-derived substitute.
                 if val is None:
                     parsed_layer[stat] = None
                     continue
+                raise ValueError(
+                    "Non‑finite or invalid value: FP-only feature "
+                    f"'{stat}' must be null for quantized input"
+                )
             if not isinstance(val, (int, float)) or math.isnan(val) or math.isinf(val):
                 raise ValueError("Non‑finite or invalid value")
+            if stat == "ks_stat":
+                # Authoritative P1/schema/D11 contract: ks_stat is a finite
+                # numeric KS statistic in [0,1]. Fail closed on out-of-range
+                # values; never clamp, zero-fill, or substitute.
+                if not math.isfinite(float(val)) or not 0.0 <= float(val) <= 1.0:
+                    raise ValueError("Non‑finite or invalid value: 'ks_stat' must be in [0,1]")
             parsed_layer[stat] = float(val)
 
         layer_features.append(parsed_layer)
