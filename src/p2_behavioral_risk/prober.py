@@ -6,7 +6,6 @@ from scipy.stats import entropy
 
 from .config import BOUND_N, NLP_VOCAB_SIZE, NLP_SEQ_LEN
 
-
 def generate_probes(domain: str, n: int = BOUND_N):
     """Generate exactly n domain-appropriate STRIP probes."""
     domain = domain.upper()
@@ -163,6 +162,9 @@ def compute_h_strip(softmax_outputs):
 def normalize_h_strip(h_strip, domain, calibration_data, mock_mode=False):
     """
     D4 LOCKED behavioral normalization.
+
+    Locked by the explicit project decision recorded in
+    .planning/STATE.md ("D4 — Behavioral Normalization — RESOLVED").
 
     deviation = H_median - H_STRIP
     Z = deviation / (1.4826 * H_MAD)
