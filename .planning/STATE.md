@@ -57,6 +57,54 @@ The Master Graph remains the source of truth. Any implementation, downstream con
 
 Downstream stages must consume outputs generated for the current pipeline execution and must not silently reuse artifacts from a previous execution. Artifact provenance/generation identity (`generation_commit`) is used to distinguish current pipeline outputs from stale outputs. If an artifact does not match the current pipeline execution, the consuming stage must reject/block it rather than reuse it.
 
+### D8 — Artifact Staleness
+
+**Status: RESOLVED.**
+
+Downstream stages must consume outputs generated for the current pipeline execution and must not silently reuse artifacts from a previous execution. Artifact provenance/generation identity (`generation_commit`) is used to distinguish current pipeline outputs from stale outputs. If an artifact does not match the current pipeline execution, the consuming stage must reject/block it rather than reuse it.
+
+### D4 — Behavioral Normalization
+
+**Status: RESOLVED.**
+
+Decision:
+The non-quantized behavioral normalization is locked as:
+
+```
+deviation = H_median - H_STRIP
+Z = deviation / (1.4826 * H_MAD)
+Z_clamped = max(0.0, Z)
+S_behavior = min(1.0, Z_clamped / 3.0)
+```
+
+Semantics:
+
+* `H_STRIP` is the live behavioral entropy measurement.
+* `H_median` and `H_MAD` come from the calibration artifact for the relevant domain.
+* Negative normalized deviation is clamped to zero.
+* The normalized behavioral score is bounded to [0,1].
+* If `H_MAD == 0` and `H_STRIP == H_median`, return `S_behavior = 0`.
+* If `H_MAD == 0` and `H_STRIP != H_median`, fail closed rather than inventing a score.
+* Non-finite/invalid calibration inputs remain rejected.
+* Quantized models bypass D4 according to the existing quantized contract.
+
+Evidence basis:
+
+* existing D4 implementation in `src/p2_behavioral_risk/prober.py` (`normalize_h_strip`, `compute_h_strip`);
+* existing D4 tests (`tests/test_d4_behavioral.py`, and the calibration-artifact replay tests in `tests/test_p2_calibration_artifact.py`);
+* existing calibration artifact `data/calibration/calibration_data.json` (median/MAD per domain, produced by replaying recorded `h_strip_values` through `scripts/generate_calibration_data.compute_statistics` — no values invented);
+* existing calibration-artifact test/replay evidence;
+* D7's locked MAD scaling (`1.4826 × MAD`) is supporting methodological context only; it is NOT the authority for D4. D4 is authorized solely by this explicit decision record.
+
+Scope of this resolution:
+
+* D4 is changed from REQUIRED to RESOLVED only because this explicit project decision is now being recorded.
+* This decision does not claim production authorization.
+* This decision does not claim real-world validation.
+* This decision does not claim that D4 was previously approved.
+* This decision only resolves the project specification/governance question for the `H_STRIP → S_behavior` conversion.
+
+---
 ---
 
 ## Phase Status
@@ -94,7 +142,7 @@ Only a `PASS` checkpoint permits advancement.
 | D1 — Exact contracts                | RESOLVED |
 | D2 — Trusted graph handoff          | REQUIRED |
 | D3 — STRIP baseline                 | REQUIRED |
-| D4 — Behavioral normalization       | REQUIRED |
+| D4 — Behavioral normalization       | RESOLVED |
 | D5 — Risk aggregation               | REQUIRED |
 | D6 — Highest-risk-layer aggregation | REQUIRED |
 | D7 — MAD guard                      | REQUIRED |
