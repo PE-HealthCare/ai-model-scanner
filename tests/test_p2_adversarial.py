@@ -56,9 +56,9 @@ def test_mad_zscore_nan_target():
 def test_s_static_range():
     # Use 3 layers to satisfy D7's >2 layers requirement
     layers = [
-        {"layer_name": "a", "entropy": 1.0, "chi_square": 0.5, "kl_div": 0.1, "ks_stat": 0.2},
-        {"layer_name": "b", "entropy": 2.0, "chi_square": 0.8, "kl_div": 0.3, "ks_stat": 0.4},
-        {"layer_name": "c", "entropy": 1.5, "chi_square": 0.6, "kl_div": 0.2, "ks_stat": 0.3},
+        {"layer_name": "a", "entropy": 1.0, "pov_chi2": 0.5, "lsb_kl": 0.1, "ks_stat": 0.2, "mean": 0, "std": 1, "skewness": 0, "kurtosis": 3, "sparsity": 0, "outlier_pct": 0},
+        {"layer_name": "b", "entropy": 2.0, "pov_chi2": 0.8, "lsb_kl": 0.3, "ks_stat": 0.4, "mean": 0, "std": 1, "skewness": 0, "kurtosis": 3, "sparsity": 0, "outlier_pct": 0},
+        {"layer_name": "c", "entropy": 1.5, "pov_chi2": 0.6, "lsb_kl": 0.2, "ks_stat": 0.3, "mean": 0, "std": 1, "skewness": 0, "kurtosis": 3, "sparsity": 0, "outlier_pct": 0},
     ]
     s, layer = compute_s_static_and_layer(layers)
     assert 0.0 <= s <= 1.0
