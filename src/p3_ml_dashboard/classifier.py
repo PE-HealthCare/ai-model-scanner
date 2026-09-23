@@ -173,19 +173,74 @@ def _feature_matrix(features: dict) -> np.ndarray:
     return matrix
 
 
-def extract_training_example(model_path: str | Path, generation_commit: str) -> tuple[dict, str]:
+def _reject_placeholder_source(matrix: np.ndarray, model_path: str | Path) -> None:
+    """CP4 §4 placeholder-feature-source guard.
+
+    P1's documented fallback behavior (work-distribution.txt: "if statistical
+    tests fail, output s_static = 0.5 (neutral score) so the demo doesn't
+    crash") can produce a payload that is schema-valid and correctly labeled
+    VERIFIED-REAL, but whose values are a neutral placeholder rather than
+    genuinely extracted signal. The current P1 contract has no field that
+    flags this, so P3 cannot ask "was this a fallback?" directly.
+
+    Heuristic (P3-owned, does not modify P1's contract): a real model's
+    layers vary in their statistical fingerprint. A model whose layers all
+    produce an *identical* feature vector is a strong signal of placeholder/
+    degenerate data and must not silently enter the training corpus. Models
+    with only one layer cannot be checked this way and are not rejected by
+    this guard alone.
+    """
+    if matrix.shape[0] < 2:
+        return
+    if len(np.unique(matrix, axis=0)) == 1:
+        raise ValueError(
+            f"Placeholder/degenerate feature source rejected for {model_path}: "
+            "all layers produced an identical feature vector"
+        )
+
+
+def extract_training_example(
+    model_path: str | Path,
+    generation_commit: str,
+    *,
+    declared_architecture: str = "resnet18",
+    allowed_layer_names: set[str] | None = None,
+) -> tuple[dict, str]:
     """Extract one training model's features through the REAL P1 path.
 
-    Adapted from origin/phase-4/ml-classification-final to the CURRENT P1
-    interface (zero-trust intake + build_features); this branch's P1 API has
-    no declared-architecture parameter.
+    Current P1 flow (zero-trust intake + extract_features): the adapter calls
+    intake_model() with an explicit declared architecture, fails closed if intake
+    returns None, then calls extract_features() to obtain the canonical 10-feature
+    contract payload. When allowed_layer_names is given it is passed through as
+    P1's layer_names filter so only the selected corpus layers pay feature cost;
+    the post-extraction allow-list check below is retained as defense in depth.
     """
-    from src.p1_static_engine.analyzer import build_features
+    from src.p1_static_engine.analyzer import intake_model, extract_features
 
     path = Path(model_path)
-    features = build_features(path, generation_commit)
+    context = intake_model(path, declared_architecture=declared_architecture)
+    if context is None:
+        raise ValueError(
+            f"Phase 4 P3 training adapter: P1 intake failed for {path}"
+        )
+    features = extract_features(
+        context,
+        generation_commit,
+        layer_names=(sorted(allowed_layer_names) if allowed_layer_names is not None else None),
+    )
     if features.get("mock_status") != "VERIFIED-REAL":
         raise ValueError("P1 training extraction did not produce VERIFIED-REAL features")
+    if allowed_layer_names is not None:
+        static = features.get("static_features")
+        if not isinstance(static, list):
+            raise ValueError("P1 training extraction produced malformed static_features")
+        filtered = [lf for lf in static if lf.get("layer_name") in allowed_layer_names]
+        if not filtered:
+            raise ValueError(
+                "P1 training extraction produced no rows for the allowed layer names"
+            )
+        features = dict(features)
+        features["static_features"] = filtered
     return features, _sha256_file(path)
 
 
@@ -196,6 +251,8 @@ def train_final_classifier(
     generation_commit: str,
     dataset_id: str,
     output_path: str | Path = DEFAULT_MODEL_PATH,
+    clean_allowed_layer_names: Sequence[set[str] | None] | None = None,
+    tampered_allowed_layer_names: Sequence[set[str] | None] | None = None,
 ) -> dict:
     """Train the authoritative LightGBM artifact from real P1-extracted features.
 
@@ -217,15 +274,37 @@ def train_final_classifier(
     labels: list[np.ndarray] = []
     source_hashes: list[str] = []
 
-    for path in clean_models:
-        features, source_hash = extract_training_example(path, generation_commit)
-        matrices.append(_feature_matrix(features))
+    clean_allowed = (
+        list(clean_allowed_layer_names)
+        if clean_allowed_layer_names is not None
+        else [None] * len(clean_models)
+    )
+    tampered_allowed = (
+        list(tampered_allowed_layer_names)
+        if tampered_allowed_layer_names is not None
+        else [None] * len(tampered_models)
+    )
+    if len(clean_allowed) != len(clean_models) or len(tampered_allowed) != len(
+        tampered_models
+    ):
+        raise ValueError("allowed layer-name filters must align with model lists")
+    for i, path in enumerate(clean_models):
+        features, source_hash = extract_training_example(
+            path, generation_commit, allowed_layer_names=clean_allowed[i]
+        )
+        row = _feature_matrix(features)
+        _reject_placeholder_source(row, path)
+        matrices.append(row)
         labels.append(np.zeros(len(features["static_features"]), dtype=np.int32))
         source_hashes.append(source_hash)
 
-    for path in tampered_models:
-        features, source_hash = extract_training_example(path, generation_commit)
-        matrices.append(_feature_matrix(features))
+    for i, path in enumerate(tampered_models):
+        features, source_hash = extract_training_example(
+            path, generation_commit, allowed_layer_names=tampered_allowed[i]
+        )
+        row = _feature_matrix(features)
+        _reject_placeholder_source(row, path)
+        matrices.append(row)
         labels.append(np.ones(len(features["static_features"]), dtype=np.int32))
         source_hashes.append(source_hash)
 

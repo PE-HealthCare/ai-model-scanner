@@ -6,7 +6,7 @@ import json
 import struct
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 import numpy as np
 import torch
@@ -204,8 +204,21 @@ def _quantized_feature_array(tensor: torch.Tensor) -> np.ndarray:
     return arr
 
 
-def extract_features(context: TrustedModelContext, generation_commit: str) -> dict:
-    """Extract the authoritative format-adaptive P1 static feature contract."""
+def extract_features(
+    context: TrustedModelContext,
+    generation_commit: str,
+    *,
+    layer_names: Sequence[str] | None = None,
+) -> dict:
+    """Extract the authoritative format-adaptive P1 static feature contract.
+
+    Optional CP4-scoped performance filter: when ``layer_names`` is given,
+    only those layers get rows in ``static_features`` (and ``layer_count``
+    reflects the selection). All zero-trust integrity checks still run over
+    the full submitted model, all 10 feature definitions/formulas are
+    unchanged, and each selected layer's KS reference pool still spans the
+    full model. Existing callers omitting the filter see identical output.
+    """
     if context is None or context.model is None:
         raise ValueError("Integrity violated: Valid TrustedModelContext required")
 
@@ -221,12 +234,12 @@ def extract_features(context: TrustedModelContext, generation_commit: str) -> di
             if tensor.is_floating_point()
         }
 
-    layer_names = list(feature_tensors.keys())
-    if len(layer_names) < 3:
+    all_layer_names = list(feature_tensors.keys())
+    if len(all_layer_names) < 3:
         raise ValueError("Integrity violated: insufficient-baseline condition (fewer than 3 layers)")
 
     tensors = {}
-    for name in layer_names:
+    for name in all_layer_names:
         tensor = feature_tensors[name]
         if tensor.numel() == 0:
             raise ValueError(f"Integrity violated: empty tensor {name}")
@@ -238,10 +251,21 @@ def extract_features(context: TrustedModelContext, generation_commit: str) -> di
                 raise ValueError(f"Integrity violated: NaN or Inf found in layer {name}")
             tensors[name] = arr.reshape(-1)
 
+    if layer_names is not None:
+        requested = list(layer_names)
+        if not requested:
+            raise ValueError("Integrity violated: layer_names filter must be non-empty")
+        unknown = [name for name in requested if name not in tensors]
+        if unknown:
+            raise ValueError(f"Integrity violated: unknown layer requested: {unknown[0]!r}")
+        selected_layer_names = requested
+    else:
+        selected_layer_names = list(all_layer_names)
+
     static_features = []
-    for layer_name in layer_names:
+    for layer_name in selected_layer_names:
         arr = tensors[layer_name]
-        pooled_other = np.concatenate([tensors[k] for k in layer_names if k != layer_name])
+        pooled_other = np.concatenate([tensors[k] for k in all_layer_names if k != layer_name])
         ks_stat = float(stats.ks_2samp(arr, pooled_other).statistic)
 
         if context.is_quantized:
@@ -317,6 +341,6 @@ def extract_features(context: TrustedModelContext, generation_commit: str) -> di
         "generation_commit": generation_commit,
         "input_domain": context.input_domain,
         "is_quantized": context.is_quantized,
-        "layer_count": len(layer_names),
+        "layer_count": len(selected_layer_names),
         "static_features": static_features,
     }

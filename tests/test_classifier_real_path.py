@@ -31,6 +31,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 from jsonschema import Draft202012Validator
@@ -40,7 +41,12 @@ from src.common.feature_names import (
     FEATURE_NAMES,
     feature_vector,
 )
-from src.p1_static_engine.analyzer import build_mock_features, extract_layer_features
+from src.p1_static_engine.analyzer import (
+    build_mock_features,
+    intake_model,
+    extract_features,
+)
+from torchvision.models import resnet18
 from src.p3_ml_dashboard.classifier import (
     DEFAULT_MODEL_PATH,
     MODEL_VERSION,
@@ -49,6 +55,8 @@ from src.p3_ml_dashboard.classifier import (
     aggregate_p_tamper,
     build_ml_results,
     build_mock_ml_results,
+    extract_training_example,
+    train_final_classifier,
 )
 
 CONTRACT_DIR = ROOT / "contracts"
@@ -61,20 +69,43 @@ def _tensor(seed: int) -> np.ndarray:
 def _real_features_payload(
     tensors: list[np.ndarray], generation_commit: str = "TEST-GEN"
 ) -> dict:
-    """Contract-valid VERIFIED-REAL P1 payload built by the production extractor."""
-    return {
-        "producer": "P1",
-        "mock_status": "VERIFIED-REAL",
-        "contract_version": "1.0",
-        "generation_commit": generation_commit,
-        "input_domain": "VISION",
-        "is_quantized": False,
-        "layer_count": len(tensors),
-        "static_features": [
-            {"layer_name": f"synthetic.layer{i}", **extract_layer_features(t)}
-            for i, t in enumerate(tensors)
-        ],
-    }
+    """Contract-valid VERIFIED-REAL P1 payload built by the current P1 extractor.
+
+    Uses the *current* real P1 ResNet18 intake boundary for the test fixture, then
+    overwrites exactly one real layer tensor with a synthetic tensor so the payload
+    exercises the canonical 10-feature contract extraction path.
+    """
+    from safetensors.torch import save_file
+
+    import torch
+
+    with tempfile.TemporaryDirectory() as td:
+        model_path = Path(td) / "model.safetensors"
+        trusted = resnet18()
+        sd = trusted.state_dict()
+        # Overwrite real, varying (non-constant) float layers with the synthetic
+        # tensors, tiled to each target shape, keeping all other
+        # architecture-valid keys intact so P1 intake still validates.
+        selected_keys = ["conv1.weight", "layer1.0.conv1.weight", "layer1.0.conv2.weight"][
+            : max(1, len(tensors))
+        ]
+        ordered_tensors = list(sd.values())
+        for key, t in zip(selected_keys, tensors):
+            idx = list(sd.keys()).index(key)
+            flat = np.ascontiguousarray(t).reshape(-1)
+            need = int(sd[key].numel())
+            tiled = np.tile(flat, (need + flat.size - 1) // flat.size)[:need]
+            tiled = tiled.reshape(tuple(sd[key].shape)).astype(np.float32)
+            ordered_tensors[idx] = torch.from_numpy(np.ascontiguousarray(tiled))
+        save_file(dict(zip(sd.keys(), ordered_tensors)), model_path)
+        context = intake_model(model_path, declared_architecture="resnet18")
+        if context is None:
+            raise ValueError("current P1 intake returned None for test fixture")
+        return extract_features(
+            context,
+            generation_commit,
+            layer_names=selected_keys,
+        )
 
 
 class TestRealClassifierPath(unittest.TestCase):
@@ -119,8 +150,10 @@ class TestRealClassifierPath(unittest.TestCase):
         )
         self.assertEqual(_load_final_model().feature_name(), list(FEATURE_NAMES))
 
-        feats = extract_layer_features(_tensor(3))
-        self.assertEqual(list(feats.keys()), list(FEATURE_NAMES))
+        feats = _real_features_payload([_tensor(3)])["static_features"][0]
+        self.assertEqual(
+            [k for k in feats.keys() if k != "layer_name"], list(FEATURE_NAMES)
+        )
         self.assertEqual(feature_vector(feats), [float(feats[name]) for name in FEATURE_NAMES])
         # --- real path: LightGBM inference on real P1 features ------------------
 
@@ -247,6 +280,224 @@ class TestRealClassifierPath(unittest.TestCase):
         with (CONTRACT_DIR / "ml_results.schema.json").open(encoding="utf-8") as fh:
             schema = json.load(fh)
         Draft202012Validator(schema).validate(result)
+
+    # --- CP4 §4: mock leakage MUST NOT reach final training -----------------
+    # extract_training_example/train_final_classifier are given a real
+    # on-disk model_path but the P1 extractor they call is mocked to return
+    # non-VERIFIED-REAL (MOCK) output. This must fail closed with NO model
+    # artifact written, proving mock data cannot leak into the training
+    # corpus even when the caller supplies a real-looking file path.
+
+    def test_training_extraction_rejects_mock_upstream_features(self):
+        mock_payload = build_mock_features("TRAIN-GEN")  # producer=P1, mock_status=MOCK
+        with tempfile.TemporaryDirectory() as td:
+            fake_model = Path(td) / "clean_looking.safetensors"
+            fake_model.write_bytes(b"not a real safetensors payload")
+            with patch(
+                "src.p1_static_engine.analyzer.intake_model",
+                return_value=object(),
+            ), patch(
+                "src.p1_static_engine.analyzer.extract_features",
+                return_value=mock_payload,
+            ):
+                with self.assertRaisesRegex(ValueError, "VERIFIED-REAL"):
+                    extract_training_example(fake_model, "TRAIN-GEN")
+
+    def test_train_final_classifier_rejects_mock_leakage_and_writes_no_artifact(self):
+        mock_payload = build_mock_features("TRAIN-GEN")
+        with tempfile.TemporaryDirectory() as td:
+            clean = Path(td) / "clean.safetensors"
+            tampered = Path(td) / "tampered.safetensors"
+            clean.write_bytes(b"x")
+            tampered.write_bytes(b"x")
+            output_path = Path(td) / "would_be_model.txt"
+            with patch(
+                "src.p1_static_engine.analyzer.intake_model",
+                return_value=object(),
+            ), patch(
+                "src.p1_static_engine.analyzer.extract_features",
+                return_value=mock_payload,
+            ):
+                with self.assertRaisesRegex(ValueError, "VERIFIED-REAL"):
+                    train_final_classifier(
+                        [clean],
+                        [tampered],
+                        generation_commit="TRAIN-GEN",
+                        dataset_id="mock-leakage-regression",
+                        output_path=output_path,
+                    )
+            self.assertFalse(
+                output_path.exists(),
+                "No final model artifact may be written when upstream is MOCK",
+            )
+
+    # --- CP4 §4: placeholder feature source (P3-owned heuristic guard) -------
+    # P1's documented fallback path (work-distribution.txt: neutral s_static
+    # when statistical tests fail) can produce a schema-valid, correctly
+    # labeled VERIFIED-REAL payload whose values are placeholder, not real
+    # signal. The contract has no flag for this, so classifier.py rejects
+    # any multi-layer model whose layers all produce an identical feature
+    # vector as a placeholder/degenerate-data fingerprint.
+
+    def test_train_final_classifier_rejects_placeholder_identical_layer_vectors(self):
+        placeholder_layer = {
+            "layer_name": "placeholder.layer0",
+            "entropy": 0.5, "pov_chi2": 0.5, "lsb_kl": 0.5, "ks_stat": 0.5,
+            "mean": 0.5, "std": 0.5, "skewness": 0.5, "kurtosis": 0.5,
+            "sparsity": 0.5, "outlier_pct": 0.5,
+        }
+        placeholder_payload = {
+            "producer": "P1",
+            "mock_status": "VERIFIED-REAL",
+            "contract_version": "1.0",
+            "generation_commit": "TRAIN-GEN",
+            "input_domain": "VISION",
+            "is_quantized": False,
+            "layer_count": 3,
+            "static_features": [
+                {**placeholder_layer, "layer_name": f"placeholder.layer{i}"}
+                for i in range(3)
+            ],
+        }
+        with tempfile.TemporaryDirectory() as td:
+            clean = Path(td) / "clean.safetensors"
+            tampered = Path(td) / "tampered.safetensors"
+            clean.write_bytes(b"x")
+            tampered.write_bytes(b"x")
+            output_path = Path(td) / "would_be_model.txt"
+            with patch(
+                "src.p1_static_engine.analyzer.intake_model",
+                return_value=object(),
+            ), patch(
+                "src.p1_static_engine.analyzer.extract_features",
+                return_value=placeholder_payload,
+            ):
+                with self.assertRaisesRegex(ValueError, "Placeholder/degenerate"):
+                    train_final_classifier(
+                        [clean],
+                        [tampered],
+                        generation_commit="TRAIN-GEN",
+                        dataset_id="placeholder-regression",
+                        output_path=output_path,
+                    )
+            self.assertFalse(output_path.exists())
+
+    def test_train_final_classifier_accepts_real_varying_layers(self):
+        """Sanity check: the placeholder guard must not reject genuine
+        multi-layer models whose layers naturally vary (regression guard
+        against over-triggering on real data)."""
+        real_payload = _real_features_payload(
+            [_tensor(20), _tensor(21), _tensor(22)], generation_commit="TRAIN-GEN"
+        )
+        with tempfile.TemporaryDirectory() as td:
+            clean = Path(td) / "clean.safetensors"
+            tampered = Path(td) / "tampered.safetensors"
+            clean.write_bytes(b"x")
+            tampered.write_bytes(b"x")
+            output_path = Path(td) / "model.txt"
+            with patch(
+                "src.p1_static_engine.analyzer.intake_model",
+                return_value=object(),
+            ), patch(
+                "src.p1_static_engine.analyzer.extract_features",
+                return_value=real_payload,
+            ):
+                result = train_final_classifier(
+                    [clean],
+                    [tampered],
+                    generation_commit="TRAIN-GEN",
+                    dataset_id="placeholder-regression-sanity",
+                    output_path=output_path,
+                )
+                self.assertTrue(output_path.exists())
+        self.assertEqual(result["mock_status"], "VERIFIED-REAL")
+
+    # --- CP4 §7: malformed-layer adversarial matrix --------------------------
+
+    def test_feature_matrix_rejects_missing_feature_in_layer(self):
+        features = _real_features_payload([_tensor(4)])
+        del features["static_features"][0]["entropy"]
+        with self.assertRaisesRegex(ValueError, "missing feature"):
+            build_ml_results(features, "TEST-GEN")
+
+    def test_feature_matrix_rejects_layer_count_mismatch(self):
+        features = _real_features_payload([_tensor(4), _tensor(5)])
+        features["layer_count"] = 1
+        with self.assertRaisesRegex(ValueError, "layer_count"):
+            build_ml_results(features, "TEST-GEN")
+
+    def test_feature_matrix_rejects_missing_layer_name(self):
+        features = _real_features_payload([_tensor(4)])
+        del features["static_features"][0]["layer_name"]
+        with self.assertRaisesRegex(ValueError, "layer_name"):
+            build_ml_results(features, "TEST-GEN")
+
+    def test_feature_matrix_rejects_empty_static_features(self):
+        features = _real_features_payload([_tensor(4)])
+        features["static_features"] = []
+        features["layer_count"] = 0
+        with self.assertRaisesRegex(ValueError, "non-empty list"):
+            build_ml_results(features, "TEST-GEN")
+
+    def test_feature_matrix_tolerates_extra_unknown_layer_fields(self):
+        """Extra/unrecognized fields on a layer are informational only; the
+        classifier reads exactly the canonical D1 fields by name. This is
+        documented behavior, not a gap: unknown keys must not break or
+        silently alter contract-valid scoring."""
+        features = _real_features_payload([_tensor(4)])
+        features["static_features"][0]["debug_note"] = "unexpected extra field"
+        result = build_ml_results(features, "TEST-GEN")
+        self.assertEqual(result["mock_status"], "VERIFIED-REAL")
+
+    # --- CP4 §6: staleness on feature name/order change ----------------------
+
+    def test_load_final_model_rejects_reordered_features(self):
+        import lightgbm as lgb
+
+        permuted = list(FEATURE_NAMES)
+        permuted[0], permuted[1] = permuted[1], permuted[0]
+        rng = np.random.default_rng(0)
+        X = rng.normal(size=(10, len(permuted)))
+        y = np.array([0, 1] * 5)
+        booster = lgb.train(
+            {"objective": "binary", "verbosity": -1},
+            lgb.Dataset(X, label=y, feature_name=permuted),
+            num_boost_round=2,
+        )
+        with tempfile.TemporaryDirectory() as td:
+            bad = Path(td) / "reordered_model.txt"
+            bad.write_text(booster.model_to_string(), encoding="utf-8", newline="\n")
+            with self.assertRaisesRegex(ValueError, "do not match D1"):
+                _load_final_model(bad)
+
+    def test_load_final_model_rejects_renamed_feature(self):
+        import lightgbm as lgb
+
+        renamed = list(FEATURE_NAMES)
+        renamed[0] = "renamed_feature_not_in_d1"
+        rng = np.random.default_rng(1)
+        X = rng.normal(size=(10, len(renamed)))
+        y = np.array([0, 1] * 5)
+        booster = lgb.train(
+            {"objective": "binary", "verbosity": -1},
+            lgb.Dataset(X, label=y, feature_name=renamed),
+            num_boost_round=2,
+        )
+        with tempfile.TemporaryDirectory() as td:
+            bad = Path(td) / "renamed_model.txt"
+            bad.write_text(booster.model_to_string(), encoding="utf-8", newline="\n")
+            with self.assertRaisesRegex(ValueError, "do not match D1"):
+                _load_final_model(bad)
+
+    # --- CP4 §7: malformed ml_results.json ------------------------------------
+
+    def test_malformed_ml_results_payload_fails_contract_schema(self):
+        with (CONTRACT_DIR / "ml_results.schema.json").open(encoding="utf-8") as fh:
+            schema = json.load(fh)
+        malformed = build_ml_results(_real_features_payload([_tensor(5)]), "TEST-GEN")
+        del malformed["p_tamper"]  # required field per contract
+        with self.assertRaises(Exception):
+            Draft202012Validator(schema).validate(malformed)
 
 
 if __name__ == "__main__":
