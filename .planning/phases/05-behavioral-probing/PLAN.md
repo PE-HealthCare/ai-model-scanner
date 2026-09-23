@@ -68,6 +68,23 @@ Do not invent a baseline.
 
 ## 5. D4 — Behavioral Normalization
 
+> **CURRENT STATUS (superseding note):** D4 has now been explicitly resolved by the
+> project decision recorded in `.planning/STATE.md` ("D4 — Behavioral Normalization
+> — RESOLVED"). The locked formula is:
+>
+> ```
+> deviation = H_median - H_STRIP
+> Z = deviation / (1.4826 * H_MAD)
+> Z_clamped = max(0.0, Z)
+> S_behavior = min(1.0, Z_clamped / 3.0)
+> ```
+>
+> Zero-MAD handling is fail-closed: `MAD == 0` with `H_STRIP == H_median` returns
+> `S_behavior = 0`; `MAD == 0` with `H_STRIP != H_median` raises
+> `DEGENERATE_DEVIATION` instead of inventing a score. Quantized models bypass D4
+> under the existing quantized contract. The historical DECISION REQUIRED text
+> below is preserved for planning history.
+
 The exact conversion from H_STRIP evidence to `S_behavior ∈ [0,1]` remains DECISION REQUIRED until resolved.
 
 Do not invent thresholds, clipping, normalization, or fallback behavior.

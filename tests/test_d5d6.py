@@ -7,17 +7,8 @@ def test_d5d6():
     with open("data/inputs/features.json") as f:
         data = json.load(f)
     features = data["static_features"]  # raw list
-    # Convert to P2 format (your adapter already does this)
-    layer_features = [
-        {
-            "layer_name": layer["layer_name"],
-            "entropy": layer["entropy"],
-            "chi_square": layer["pov_chi2"],
-            "kl_div": layer["lsb_kl"],
-            "ks_stat": layer["ks_stat"]
-        }
-        for layer in features
-    ]
+    # Pass the full features list directly as it should contain all 10 features now
+    layer_features = features
     s_static, highest_layer = compute_s_static_and_layer(layer_features)
     print(f"S_static = {s_static}")
     print(f"Highest risk layer = {highest_layer}")

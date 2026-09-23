@@ -36,7 +36,22 @@ If production bound is unresolved: BLOCKED.
 ## 5. D3 / D4
 
 - [ ] STRIP baseline explicitly resolved.
-- [ ] H_STRIP→S_behavior normalization explicitly resolved.
+- [x] H_STRIP→S_behavior normalization explicitly resolved.
+  Resolved by the explicit project decision recorded in `.planning/STATE.md`
+  ("D4 — Behavioral Normalization — RESOLVED"). Locked formula:
+
+  ```text
+  deviation = H_median - H_STRIP
+  Z = deviation / (1.4826 * H_MAD)
+  Z_clamped = max(0.0, Z)
+  S_behavior = min(1.0, Z_clamped / 3.0)
+  ```
+
+  Implemented in `src/p2_behavioral_risk/prober.py::normalize_h_strip`.
+  Evidence: `tests/test_d4_behavioral.py` (formula, bounding, zero-MAD both
+  branches, non-finite/missing/invalid MAD rejection) and
+  `tests/test_p2_calibration_artifact.py` (calibration artifact replay,
+  including `test_non_quantized_s_behavior_matches_locked_d4_formula`).
 - [ ] no invented baseline/threshold/fallback exists.
 
 Unresolved D3 or D4 = BLOCKED.
@@ -99,7 +114,17 @@ CP4:
 Probe evidence:
 Bound evidence:
 D3:
-D4:
+D4: Resolved — explicit project decision recorded in `.planning/STATE.md`
+    ("D4 — Behavioral Normalization — RESOLVED"). Locked formula:
+    deviation = H_median - H_STRIP; Z = deviation / (1.4826 * H_MAD);
+    Z_clamped = max(0.0, Z); S_behavior = min(1.0, Z_clamped / 3.0).
+    Implementation: src/p2_behavioral_risk/prober.py::normalize_h_strip
+    (fail-closed zero-MAD handling; invalid/non-finite inputs rejected).
+    Evidence: tests/test_d4_behavioral.py;
+    tests/test_p2_calibration_artifact.py (artifact replay incl.
+    test_non_quantized_s_behavior_matches_locked_d4_formula);
+    calibration artifact data/calibration/calibration_data.json.
+    Independent review: PENDING.
 D5:
 D7:
 MRS:
