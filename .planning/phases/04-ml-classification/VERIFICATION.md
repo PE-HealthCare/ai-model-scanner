@@ -90,16 +90,16 @@ TreeSHAP remap/reverification required
 ## 10. CP4 Evidence
 
 ```text
-Branch: phase-4/ml-classification
-Commit:
-Reviewer:
-CP3:
-Training command:
-Training feature provenance:
-Model artifact:
-P_tamper:
-TreeSHAP:
-Staleness tests:
-Adversarial tests:
-Final state: PASS / FAIL / BLOCKED
+Branch: recovery-mainline
+Commit: e5d1ab5
+Reviewer: Human verification in hackathon working session
+CP3: PASS - verified-real P1 feature extraction; current generation commit 594c9a91df08a211ee1270de566c70d61205af26
+Training command: python -c "import train_lightgbm_classifier as t; r=t.train(); print("TRAINING_COMPLETE"); print("ARTIFACT",r["artifact"]); print("ROWS",r["training_rows"]); print("CLEAN",r["clean_rows"]); print("TAMPERED",r["tampered_rows"]); print("MOCK_STATUS",r["mock_status"])"
+Training feature provenance: VERIFIED-REAL P1 extraction; 96 rows total (48 clean, 48 tampered)
+Model artifact: artifacts/lightgbm_model.txt; provenance: artifacts/lightgbm_model.provenance.json
+P_tamper: 0.9900758624030114; valid [0,1]
+TreeSHAP: 10 canonical feature attributions; 27/27 classifier regression tests passed
+Staleness evidence: current ml_results.json generation_commit matches verified P1 generation; stale-artifact handling covered by classifier regression tests
+Adversarial tests: 27/27 tests passed, including malformed payload, extra/unknown fields, invalid classifier, placeholder-source rejection, and prediction/SHAP validation
+Final state: PASS
 ```
