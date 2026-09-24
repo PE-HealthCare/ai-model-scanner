@@ -76,6 +76,26 @@ DEFAULT_MODEL_PATH = ROOT / "artifacts" / "lightgbm_model.txt"
 DEFAULT_PROVENANCE_PATH = ROOT / "artifacts" / "lightgbm_model.provenance.json"
 MODEL_VERSION = "lightgbm-phase4-final"
 
+# P3 quantized classifier artifact (D11 Stage 1). Separate from the FP
+# artifact; sole authoritative input feature is ks_stat.
+QUANTIZED_FEATURE_NAMES: tuple[str, ...] = ("ks_stat",)
+FP_ONLY_FEATURES: tuple[str, ...] = (
+    "entropy",
+    "pov_chi2",
+    "lsb_kl",
+    "mean",
+    "std",
+    "skewness",
+    "kurtosis",
+    "sparsity",
+    "outlier_pct",
+)
+DEFAULT_QUANTIZED_MODEL_PATH = ROOT / "artifacts" / "lightgbm_model_quantized.txt"
+DEFAULT_QUANTIZED_PROVENANCE_PATH = (
+    ROOT / "artifacts" / "lightgbm_model_quantized.provenance.json"
+)
+QUANTIZED_MODEL_VERSION = "lightgbm-phase4-quantized-ks-only"
+
 # Authoritative LightGBM training parameters (ported from
 # origin/phase-4/ml-classification-final) plus explicit CPU determinism
 # flags required by the Phase 4 reproducibility rule (no semantic change).
@@ -342,6 +362,139 @@ def train_final_classifier(
         "tampered_rows": int((y == 1).sum()),
         "mock_status": "VERIFIED-REAL",
     }
+
+
+def _require_quantized_contract(features: dict) -> list[dict]:
+    """Validate the locked D11 quantized P1 feature contract (Stage 1)."""
+    if features.get("producer") != "P1":
+        raise ValueError("Quantized classifier requires a P1 producer")
+    if features.get("mock_status") != "VERIFIED-REAL":
+        raise ValueError("Quantized classifier requires VERIFIED-REAL P1 feature data")
+    if features.get("is_quantized") is not True:
+        raise ValueError("Quantized classifier requires is_quantized == true")
+    layers = features.get("static_features")
+    if not isinstance(layers, list) or not layers:
+        raise ValueError("Malformed features: static_features must be a non-empty list")
+    if features.get("layer_count") != len(layers):
+        raise ValueError("Malformed features: layer_count does not match static_features")
+    return layers
+
+
+def _quantized_feature_matrix(features: dict) -> np.ndarray:
+    """Build the (n_layers, 1) ks_stat-only matrix; fail closed, never impute."""
+    rows: list[list[float]] = []
+    for layer in _require_quantized_contract(features):
+        if not isinstance(layer, dict) or not isinstance(layer.get("layer_name"), str):
+            raise ValueError("Malformed layer: layer_name is required")
+        if "ks_stat" not in layer:
+            raise ValueError("Malformed quantized layer missing ks_stat")
+        ks_stat = layer["ks_stat"]
+        if isinstance(ks_stat, bool) or not isinstance(ks_stat, (int, float)):
+            raise ValueError("Invalid quantized ks_stat value")
+        ks_stat = float(ks_stat)
+        if not math.isfinite(ks_stat):
+            raise ValueError("Invalid non-finite quantized ks_stat value")
+        if not 0.0 <= ks_stat <= 1.0:
+            raise ValueError("Invalid quantized ks_stat outside [0, 1]")
+        for name in FP_ONLY_FEATURES:
+            if name not in layer or layer[name] is not None:
+                raise ValueError(
+                    f"Invalid quantized layer: FP-only feature {name} must be None"
+                )
+        rows.append([ks_stat])
+    matrix = np.asarray(rows, dtype=np.float64)
+    if matrix.ndim != 2 or matrix.shape[1] != len(QUANTIZED_FEATURE_NAMES):
+        raise ValueError("Quantized feature matrix does not match D11 contract")
+    return matrix
+
+
+def train_quantized_classifier(
+    clean_models: Sequence[str | Path],
+    tampered_models: Sequence[str | Path],
+    *,
+    generation_commit: str,
+    dataset_id: str,
+    output_path: str | Path = DEFAULT_QUANTIZED_MODEL_PATH,
+    provenance_path: str | Path = DEFAULT_QUANTIZED_PROVENANCE_PATH,
+    clean_allowed_layer_names: Sequence[set[str] | None] | None = None,
+    tampered_allowed_layer_names: Sequence[set[str] | None] | None = None,
+) -> dict:
+    """Train the D11 quantized ks_stat-only LightGBM artifact (Stage 1)."""
+    import json
+
+    lgb = _import_lightgbm()
+    if not clean_models or not tampered_models:
+        raise ValueError("Quantized training requires both clean and tampered sets")
+    if not dataset_id or not dataset_id.strip():
+        raise ValueError("dataset_id is required for training provenance")
+    if not generation_commit:
+        raise ValueError("generation_commit is required for training provenance")
+    matrices: list[np.ndarray] = []
+    labels: list[np.ndarray] = []
+    source_hashes: list[str] = []
+    clean_allowed = (
+        list(clean_allowed_layer_names)
+        if clean_allowed_layer_names is not None
+        else [None] * len(clean_models)
+    )
+    tampered_allowed = (
+        list(tampered_allowed_layer_names)
+        if tampered_allowed_layer_names is not None
+        else [None] * len(tampered_models)
+    )
+    if len(clean_allowed) != len(clean_models) or len(tampered_allowed) != len(
+        tampered_models
+    ):
+        raise ValueError("allowed layer-name filters must align with model lists")
+    for i, path in enumerate(clean_models):
+        features, source_hash = extract_training_example(
+            path, generation_commit, allowed_layer_names=clean_allowed[i]
+        )
+        row = _quantized_feature_matrix(features)
+        _reject_placeholder_source(row, path)
+        matrices.append(row)
+        labels.append(np.zeros(len(features["static_features"]), dtype=np.int32))
+        source_hashes.append(source_hash)
+    for i, path in enumerate(tampered_models):
+        features, source_hash = extract_training_example(
+            path, generation_commit, allowed_layer_names=tampered_allowed[i]
+        )
+        row = _quantized_feature_matrix(features)
+        _reject_placeholder_source(row, path)
+        matrices.append(row)
+        labels.append(np.ones(len(features["static_features"]), dtype=np.int32))
+        source_hashes.append(source_hash)
+    X = np.vstack(matrices)
+    y = np.concatenate(labels)
+    if len(np.unique(y)) != 2:
+        raise ValueError("Training corpus must contain both clean and tampered labels")
+    booster = lgb.train(
+        LGBM_TRAIN_PARAMS,
+        lgb.Dataset(X, label=y, feature_name=list(QUANTIZED_FEATURE_NAMES)),
+        num_boost_round=NUM_BOOST_ROUND,
+    )
+    model_text = booster.model_to_string()
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(model_text, encoding="utf-8", newline="\n")
+    provenance = {
+        "dataset_id": dataset_id,
+        "dataset_source_sha256": _sha256_text("\n".join(sorted(source_hashes))),
+        "p1_extractor_sha256": _p1_source_hash(),
+        "generation_commit": generation_commit,
+        "contract_version": "1.0",
+        "feature_names": list(QUANTIZED_FEATURE_NAMES),
+        "model_version": QUANTIZED_MODEL_VERSION,
+        "model_sha256": _sha256_text(model_text),
+        "training_rows": int(X.shape[0]),
+        "clean_rows": int((y == 0).sum()),
+        "tampered_rows": int((y == 1).sum()),
+        "mock_status": "VERIFIED-REAL",
+    }
+    prov_path = Path(provenance_path)
+    prov_path.parent.mkdir(parents=True, exist_ok=True)
+    prov_path.write_text(json.dumps(provenance, indent=2) + "\n", encoding="utf-8")
+    return provenance
 
 
 def _load_final_model(model_path: str | Path = DEFAULT_MODEL_PATH):

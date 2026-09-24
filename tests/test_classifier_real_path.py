@@ -49,14 +49,21 @@ from src.p1_static_engine.analyzer import (
 from torchvision.models import resnet18
 from src.p3_ml_dashboard.classifier import (
     DEFAULT_MODEL_PATH,
+    DEFAULT_QUANTIZED_MODEL_PATH,
+    DEFAULT_QUANTIZED_PROVENANCE_PATH,
+    FP_ONLY_FEATURES,
     MODEL_VERSION,
+    QUANTIZED_FEATURE_NAMES,
+    QUANTIZED_MODEL_VERSION,
     _feature_matrix,
     _load_final_model,
+    _quantized_feature_matrix,
     aggregate_p_tamper,
     build_ml_results,
     build_mock_ml_results,
     extract_training_example,
     train_final_classifier,
+    train_quantized_classifier,
 )
 
 CONTRACT_DIR = ROOT / "contracts"
@@ -498,6 +505,119 @@ class TestRealClassifierPath(unittest.TestCase):
         del malformed["p_tamper"]  # required field per contract
         with self.assertRaises(Exception):
             Draft202012Validator(schema).validate(malformed)
+
+
+def _quantized_payload(ks_values=(0.2, 0.7)) -> dict:
+    layers = []
+    for i, ks in enumerate(ks_values):
+        layer = {"layer_name": f"q.layer{i}", "ks_stat": ks}
+        for name in FP_ONLY_FEATURES:
+            layer[name] = None
+        layers.append(layer)
+    return {
+        "producer": "P1",
+        "mock_status": "VERIFIED-REAL",
+        "contract_version": "1.0",
+        "generation_commit": "TEST-GEN",
+        "input_domain": "VISION",
+        "is_quantized": True,
+        "layer_count": len(layers),
+        "static_features": layers,
+    }
+
+
+class TestQuantizedClassifierStage1(unittest.TestCase):
+    """D11 Stage 1: quantized validator + train_quantized_classifier only."""
+
+    def test_valid_quantized_input(self):
+        matrix = _quantized_feature_matrix(_quantized_payload())
+        self.assertEqual(matrix.shape, (2, 1))
+        self.assertTrue(((matrix >= 0.0) & (matrix <= 1.0)).all())
+
+    def test_fp_input_rejected(self):
+        payload = _quantized_payload()
+        payload["is_quantized"] = False
+        with self.assertRaisesRegex(ValueError, "is_quantized"):
+            _quantized_feature_matrix(payload)
+
+    def test_missing_ks_stat_rejected(self):
+        payload = _quantized_payload()
+        del payload["static_features"][0]["ks_stat"]
+        with self.assertRaisesRegex(ValueError, "ks_stat"):
+            _quantized_feature_matrix(payload)
+
+    def test_nan_inf_ks_stat_rejected(self):
+        for bad in (float("nan"), float("inf"), float("-inf")):
+            payload = _quantized_payload(ks_values=(bad,))
+            with self.assertRaisesRegex(ValueError, "non-finite"):
+                _quantized_feature_matrix(payload)
+
+    def test_ks_stat_outside_range_rejected(self):
+        for bad in (-0.01, 1.01):
+            payload = _quantized_payload(ks_values=(bad,))
+            with self.assertRaisesRegex(ValueError, "outside"):
+                _quantized_feature_matrix(payload)
+
+    def test_fp_only_feature_non_null_rejected(self):
+        for name in FP_ONLY_FEATURES:
+            payload = _quantized_payload()
+            payload["static_features"][0][name] = 0.0
+            with self.assertRaisesRegex(ValueError, name):
+                _quantized_feature_matrix(payload)
+
+    def test_feature_names_exactly_ks_stat(self):
+        self.assertEqual(list(QUANTIZED_FEATURE_NAMES), ["ks_stat"])
+
+    def test_separate_quantized_artifact_paths(self):
+        self.assertEqual(
+            DEFAULT_QUANTIZED_MODEL_PATH.name, "lightgbm_model_quantized.txt"
+        )
+        self.assertEqual(
+            DEFAULT_QUANTIZED_PROVENANCE_PATH.name,
+            "lightgbm_model_quantized.provenance.json",
+        )
+        self.assertNotEqual(str(DEFAULT_QUANTIZED_MODEL_PATH), str(DEFAULT_MODEL_PATH))
+
+    def test_train_quantized_writes_separate_artifact_and_provenance(self):
+        clean_payload = _quantized_payload(ks_values=(0.1, 0.2, 0.3))
+        tampered_payload = _quantized_payload(ks_values=(0.8, 0.9, 0.95))
+        with tempfile.TemporaryDirectory() as td:
+            clean = Path(td) / "clean.safetensors"
+            tampered = Path(td) / "tampered.safetensors"
+            clean.write_bytes(b"x")
+            tampered.write_bytes(b"x")
+            model_out = Path(td) / "lightgbm_model_quantized.txt"
+            prov_out = Path(td) / "lightgbm_model_quantized.provenance.json"
+            with patch(
+                "src.p3_ml_dashboard.classifier.extract_training_example",
+                side_effect=[(clean_payload, "a" * 64), (tampered_payload, "b" * 64)],
+            ):
+                provenance = train_quantized_classifier(
+                    [clean],
+                    [tampered],
+                    generation_commit="TEST-GEN",
+                    dataset_id="quantized-stage1-test",
+                    output_path=model_out,
+                    provenance_path=prov_out,
+                )
+            self.assertTrue(model_out.is_file())
+            self.assertGreater(model_out.stat().st_size, 0)
+            self.assertTrue(prov_out.is_file())
+            on_disk = json.loads(prov_out.read_text(encoding="utf-8"))
+            self.assertEqual(on_disk, provenance)
+            self.assertEqual(provenance["feature_names"], ["ks_stat"])
+            self.assertEqual(provenance["mock_status"], "VERIFIED-REAL")
+            self.assertEqual(provenance["generation_commit"], "TEST-GEN")
+            self.assertEqual(provenance["dataset_id"], "quantized-stage1-test")
+            self.assertIn("p1_extractor_sha256", provenance)
+            self.assertIn("model_sha256", provenance)
+            self.assertEqual(provenance["clean_rows"], 3)
+            self.assertEqual(provenance["tampered_rows"], 3)
+            self.assertEqual(provenance["training_rows"], 6)
+            import lightgbm as lgb
+
+            booster = lgb.Booster(model_file=str(model_out))
+            self.assertEqual(booster.feature_name(), ["ks_stat"])
 
 
 if __name__ == "__main__":
