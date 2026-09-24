@@ -57,10 +57,12 @@ from src.p3_ml_dashboard.classifier import (
     QUANTIZED_MODEL_VERSION,
     _feature_matrix,
     _load_final_model,
+    _load_quantized_model,
     _quantized_feature_matrix,
     aggregate_p_tamper,
     build_ml_results,
     build_mock_ml_results,
+    build_quantized_ml_results,
     extract_training_example,
     train_final_classifier,
     train_quantized_classifier,
@@ -618,6 +620,105 @@ class TestQuantizedClassifierStage1(unittest.TestCase):
 
             booster = lgb.Booster(model_file=str(model_out))
             self.assertEqual(booster.feature_name(), ["ks_stat"])
+
+
+def _tiny_quantized_model(path: Path) -> None:
+    """Train a minimal deterministic ks_stat-only booster (test fixture only)."""
+    import lightgbm as lgb
+
+    rng = np.random.default_rng(7)
+    ks = rng.uniform(0.0, 1.0, size=(40, 1))
+    y = (ks[:, 0] > 0.5).astype(np.int32)
+    booster = lgb.train(
+        {"objective": "binary", "verbosity": -1, "seed": 7, "deterministic": True,
+         "force_col_wise": True, "min_data_in_leaf": 5},
+        lgb.Dataset(ks, label=y, feature_name=["ks_stat"]),
+        num_boost_round=10,
+    )
+    path.write_text(booster.model_to_string(), encoding="utf-8", newline="\n")
+
+
+class TestQuantizedClassifierStage2(unittest.TestCase):
+    """D11 Stage 2: quantized inference (p_l^Q -> max -> ks_stat TreeSHAP)."""
+
+    def test_quantized_model_loading(self):
+        import lightgbm as lgb
+
+        with tempfile.TemporaryDirectory() as td:
+            good = Path(td) / "q.txt"
+            _tiny_quantized_model(good)
+            model = _load_quantized_model(good)
+            self.assertEqual(model.feature_name(), ["ks_stat"])
+            with self.assertRaises(FileNotFoundError):
+                _load_quantized_model(Path(td) / "missing.txt")
+            bad = Path(td) / "fp.txt"
+            rng = np.random.default_rng(0)
+            X = rng.normal(size=(10, 10))
+            y = np.array([0, 1] * 5)
+            booster = lgb.train(
+                {"objective": "binary", "verbosity": -1},
+                lgb.Dataset(X, label=y, feature_name=list(FEATURE_NAMES)),
+                num_boost_round=2,
+            )
+            bad.write_text(booster.model_to_string(), encoding="utf-8", newline="\n")
+            with self.assertRaisesRegex(ValueError, "D11"):
+                _load_quantized_model(bad)
+
+    def test_per_layer_max_argmax_shap_additivity(self):
+        import lightgbm as lgb
+        import shap
+
+        payload = _quantized_payload(ks_values=(0.05, 0.5, 0.95))
+        with tempfile.TemporaryDirectory() as td:
+            model_file = Path(td) / "q.txt"
+            _tiny_quantized_model(model_file)
+            result = build_quantized_ml_results(payload, "TEST-GEN",
+                                                model_path=model_file)
+            booster = lgb.Booster(model_file=str(model_file))
+            X = _quantized_feature_matrix(payload)
+            expected_p = np.asarray(booster.predict(X), dtype=np.float64)
+            self.assertAlmostEqual(result["p_tamper"], float(expected_p.max()))
+            argmax = int(np.argmax(expected_p))
+            self.assertEqual(list(result["shap_attributions"].keys()), ["ks_stat"])
+            self.assertTrue(np.isfinite(list(result["shap_attributions"].values())).all())
+            self.assertEqual(result["mock_status"], "VERIFIED-REAL")
+            self.assertEqual(result["model_version"], QUANTIZED_MODEL_VERSION)
+            explainer = shap.TreeExplainer(booster)
+            raw = explainer.shap_values(X[argmax : argmax + 1])
+            arr = np.asarray(raw[-1] if isinstance(raw, list) else raw)
+            if arr.ndim == 3:
+                arr = arr[..., -1]
+            if arr.ndim == 2:
+                arr = arr[0]
+            base = float(np.asarray(explainer.expected_value).reshape(-1)[-1])
+            margin = float(
+                np.asarray(booster.predict(X[argmax : argmax + 1], raw_score=True))[0]
+            )
+            self.assertAlmostEqual(base + float(arr.sum()), margin, places=5)
+            self.assertAlmostEqual(
+                result["shap_attributions"]["ks_stat"], float(arr[0]), places=9
+            )
+
+    def test_invalid_quantized_input_rejected_no_fp_fallback(self):
+        payload = _quantized_payload()
+        with tempfile.TemporaryDirectory() as td:
+            model_file = Path(td) / "q.txt"
+            _tiny_quantized_model(model_file)
+            bad = _quantized_payload()
+            bad["static_features"][0]["entropy"] = 0.5
+            with self.assertRaises(ValueError):
+                build_quantized_ml_results(bad, "TEST-GEN", model_path=model_file)
+            with self.assertRaisesRegex(ValueError, "stale"):
+                build_quantized_ml_results(payload, "WRONG-GEN", model_path=model_file)
+            fp_payload = _quantized_payload()
+            fp_payload["is_quantized"] = False
+            with self.assertRaisesRegex(ValueError, "is_quantized"):
+                build_quantized_ml_results(fp_payload, "TEST-GEN",
+                                           model_path=model_file)
+            with self.assertRaises(FileNotFoundError):
+                build_quantized_ml_results(
+                    payload, "TEST-GEN", model_path=Path(td) / "missing.txt"
+                )
 
 
 if __name__ == "__main__":

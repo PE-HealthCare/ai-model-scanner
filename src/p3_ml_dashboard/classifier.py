@@ -512,6 +512,21 @@ def _load_final_model(model_path: str | Path = DEFAULT_MODEL_PATH):
     return model
 
 
+def _load_quantized_model(model_path: str | Path = DEFAULT_QUANTIZED_MODEL_PATH):
+    """Fail-closed load of the D11 quantized ks_stat-only LightGBM artifact."""
+    lgb = _import_lightgbm()
+    path = Path(model_path)
+    if not path.is_file():
+        raise FileNotFoundError(f"Quantized classifier artifact not found: {path}")
+    try:
+        model = lgb.Booster(model_file=str(path))
+    except Exception as exc:
+        raise ValueError("Invalid quantized LightGBM classifier artifact") from exc
+    if model.feature_name() != list(QUANTIZED_FEATURE_NAMES):
+        raise ValueError("Quantized classifier feature names/order do not match D11")
+    return model
+
+
 def aggregate_p_tamper(probabilities) -> tuple[float, int]:
     """Locked D10 aggregation: P_tamper = max(p_l) over per-layer probabilities.
 
@@ -595,6 +610,81 @@ def build_ml_results(
             name: float(value) for name, value in zip(FEATURE_NAMES, shap_values)
         },
         "model_version": MODEL_VERSION,
+    }
+
+
+def build_quantized_ml_results(
+    features: dict,
+    generation_commit: str,
+    *,
+    model_path: str | Path = DEFAULT_QUANTIZED_MODEL_PATH,
+) -> dict:
+    """D11 quantized payload: ks_stat-only p_l^Q -> D10 max -> TreeSHAP(argmax).
+
+    Fail-closed: stale generation rejection, Stage-1 quantized contract
+    validation (never impute), quantized artifact validation, finite [0,1]
+    per-layer probabilities, and TreeSHAP/additivity check against the
+    quantized model margin of the explained layer. Never falls back to FP.
+    """
+    shap = _import_shap()
+    if features.get("generation_commit") != generation_commit:
+        raise ValueError("Phase 4 P3 rejects stale P1 artifact generation")
+    X = _quantized_feature_matrix(features)
+    model = _load_quantized_model(model_path)
+
+    probabilities = np.asarray(model.predict(X), dtype=np.float64)
+    if probabilities.shape[0] != X.shape[0]:
+        raise ValueError(
+            "Quantized classifier produced an unexpected number of predictions"
+        )
+    if not np.isfinite(probabilities).all() or np.any(
+        (probabilities < 0.0) | (probabilities > 1.0)
+    ):
+        raise ValueError("Quantized classifier produced invalid P_tamper values")
+
+    # Locked D10 rule: P_tamper = max(p_l^Q); explain l_ML = argmax(p_l^Q).
+    p_tamper, evidence_layer = aggregate_p_tamper(probabilities)
+
+    explainer = shap.TreeExplainer(model)
+    raw = explainer.shap_values(X[evidence_layer : evidence_layer + 1])
+    shap_values = np.asarray(raw[-1] if isinstance(raw, list) else raw)
+    if shap_values.ndim == 3:
+        shap_values = shap_values[..., -1]
+    if shap_values.ndim == 2:
+        shap_values = shap_values[0]
+    if shap_values.shape != (len(QUANTIZED_FEATURE_NAMES),) or not np.isfinite(
+        shap_values
+    ).all():
+        raise ValueError("Quantized TreeSHAP output does not match D11")
+
+    expected_value = np.asarray(explainer.expected_value).reshape(-1)
+    base = float(expected_value[-1]) if expected_value.size > 1 else float(
+        expected_value[0]
+    )
+    raw_margin = float(
+        np.asarray(
+            model.predict(X[evidence_layer : evidence_layer + 1], raw_score=True),
+            dtype=np.float64,
+        )[0]
+    )
+    if not math.isclose(
+        base + float(shap_values.sum()), raw_margin, rel_tol=1e-6, abs_tol=1e-6
+    ):
+        raise ValueError(
+            "Quantized TreeSHAP explanation does not correspond to the prediction"
+        )
+
+    return {
+        "producer": "P3",
+        "mock_status": "VERIFIED-REAL",
+        "contract_version": "1.0",
+        "generation_commit": generation_commit,
+        "p_tamper": p_tamper,
+        "shap_attributions": {
+            name: float(value)
+            for name, value in zip(QUANTIZED_FEATURE_NAMES, shap_values)
+        },
+        "model_version": QUANTIZED_MODEL_VERSION,
     }
 
 
