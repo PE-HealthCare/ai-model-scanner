@@ -1,0 +1,16 @@
+{
+  "dataset_id": "d11-resnet18-int8-seed42-v1",
+  "dataset_source_sha256": "9941a6bb7a1d526a666ab98181c0770c53ad035ea55caa22bffdac23a2e6d815",
+  "p1_extractor_sha256": "a96b59bdc9faf2d2572bf625419fb610dc6405c7e544d2ea6cf139244aad2605",
+  "generation_commit": "quantized-corpus-seed42-v1",
+  "contract_version": "1.0",
+  "feature_names": [
+    "ks_stat"
+  ],
+  "model_version": "lightgbm-phase4-quantized-ks-only",
+  "model_sha256": "01c7c7b8a01eb7c37979cc0adb05d0fda094dfe5b66945c0f7d6909f662dd274",
+  "training_rows": 204,
+  "clean_rows": 102,
+  "tampered_rows": 102,
+  "mock_status": "VERIFIED-REAL"
+}
