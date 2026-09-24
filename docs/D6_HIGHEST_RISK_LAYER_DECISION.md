@@ -64,6 +64,8 @@ The exact serialization/schema remains an implementation contract and is not inv
 The following semantics are locked:
 
 - `layer_id` is the authoritative upstream layer identifier.
+
+   **Identity clarification (binding):** in this decision, the conceptual term "`layer_id`" denotes the authoritative upstream P1 per-layer identity, which in the actual production contract is `layer_name` (`contracts/features.schema.json`, required string per `static_features` item). There is no separate production `layer_id` field, no `layer_name → layer_id` mapping, and positional/index-based identity is not permitted. Exact D6 ties are resolved using canonical lexical ordering of `layer_name`.
 - `per_layer_evidence` is evidence already produced through the authoritative P1 → baseline/D7 → D5 path; D6 does not manufacture a new evidence quantity.
 - `validity_state` preserves applicable D7 validity/degeneracy semantics.
 - `provenance` is retained sufficiently to establish that the evidence belongs to the current upstream production path; exact fields are an implementation/schema matter.
@@ -124,7 +126,7 @@ If exactly one layer is eligible, that layer SHALL be selected.
 
 ### 5.7 Ties
 
-If multiple eligible layers have exactly the same maximum `E(l)`, D6 SHALL resolve the tie deterministically using the **canonical ordering of the authoritative `layer_id`** and select the first identifier in that ordering.
+If multiple eligible layers have exactly the same maximum `E(l)`, D6 SHALL resolve the tie deterministically using the **canonical lexical ordering of the authoritative `layer_name` (the production form of the authoritative `layer_id` defined in §3)** and select the first identifier in that ordering.
 
 D6 SHALL NOT use dashboard order, dictionary insertion order, tensor position, or another implementation-dependent ordering as a tie-breaker.
 
@@ -207,7 +209,7 @@ This preserves the distinction between **model-level aggregation** and **layer-l
 
 For identical authoritative upstream evidence and identical authoritative layer identities, D6 SHALL produce the same selected layer on repeated execution.
 
-The report SHALL preserve the authoritative selected `layer_id` and SHALL expose the corresponding authoritative per-layer evidence value `E(l)` where the report schema permits it.
+The report SHALL preserve the authoritative selected `layer_name` (the production form of the conceptual `layer_id` defined in §3) and SHALL expose the corresponding authoritative per-layer evidence value `E(l)` where the report schema permits it.
 
 Where the upstream contract preserves the feature identity attaining the layer reduction, the report MAY identify that feature as supporting evidence; D6 SHALL NOT invent a separate feature-scoring method.
 
@@ -217,7 +219,7 @@ At minimum, D6 implementation tests SHALL verify:
 
 1. a valid set of per-layer evidence selects the layer with the largest `E(l)`;
 2. repeated execution is deterministic;
-3. exact ties follow canonical authoritative `layer_id` ordering;
+3. exact ties follow canonical lexical `layer_name` ordering (§3 identity clarification);
 4. no eligible layer produces `highest_risk_layer = unavailable`;
 5. invalid/missing evidence is not imputed or fabricated;
 6. `DEGENERATE_DEVIATION` is not converted to ordinary evidence;
@@ -253,4 +255,4 @@ This decision does not itself claim CP6 PASS or completed implementation.
 
 **D6: RESOLVED / LOCKED.**
 
-> P1 owns authoritative production/preservation of per-layer evidence and layer identity; P3/D6 owns final highest-risk-layer selection and security-report presentation. D6 selects `argmax E(l)` over eligible D5 per-layer evidence, with deterministic canonical-layer-ID tie handling, while respecting D7 validity/degeneracy and without recalculating upstream signals, inventing layer granularity, inventing quantized behavioral evidence, or using TreeSHAP for layer selection.
+> P1 owns authoritative production/preservation of per-layer evidence and layer identity; P3/D6 owns final highest-risk-layer selection and security-report presentation. D6 selects `argmax E(l)` over eligible D5 per-layer evidence, with deterministic canonical-`layer_name` tie handling (§3), while respecting D7 validity/degeneracy and without recalculating upstream signals, inventing layer granularity, inventing quantized behavioral evidence, or using TreeSHAP for layer selection.
