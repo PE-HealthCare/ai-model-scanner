@@ -107,7 +107,7 @@ def intake_model(path: Path, declared_architecture: str = None) -> Optional[Trus
                 )
 
             is_quantized = None
-            for key in trusted_keys:
+            for key in st_keys_list:
                 trusted_shape = list(trusted_state_dict[key].shape)
                 st_slice = st.get_slice(key)
                 st_shape = list(st_slice.get_shape())
@@ -143,7 +143,9 @@ def intake_model(path: Path, declared_architecture: str = None) -> Optional[Trus
             if is_quantized is None:
                 is_quantized = False
 
-            loaded_state_dict = {key: st.get_tensor(key) for key in trusted_keys}
+            # Materialize every validated tensor, including control tensors,
+            # while excluding them from quantized statistical evidence below.
+            loaded_state_dict = {key: st.get_tensor(key) for key in st_keys_list}
             if is_quantized:
                 # Do not assign quantized tensors into the floating-point trusted graph.
                 # Preserve the validated quantized tensors in a scanner-controlled state dict.
@@ -228,6 +230,18 @@ def extract_features(
             name: tensor for name, tensor in state_dict.items()
             if _is_quantized_torch_tensor(tensor)
         }
+        unsupported = [
+            name for name, tensor in state_dict.items()
+            if not _is_quantized_torch_tensor(tensor)
+            and tensor.dtype not in {
+                torch.int64, torch.int32, torch.int16, torch.bool,
+            }
+        ]
+        if unsupported:
+            raise ValueError(
+                "Integrity violated: unsupported quantized tensor representation "
+                f"for tensor {unsupported[0]!r}"
+            )
     else:
         feature_tensors = {
             name: tensor for name, tensor in state_dict.items()
