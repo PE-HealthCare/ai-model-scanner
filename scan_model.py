@@ -31,7 +31,11 @@ from pathlib import Path
 
 from src.common.utils import ROOT, get_generation_commit, validate_artifact
 from src.p1_static_engine.analyzer import extract_features, intake_model
-from src.p3_ml_dashboard.classifier import build_ml_results, build_mock_ml_results
+from src.p3_ml_dashboard.classifier import (
+    build_ml_results,
+    build_mock_ml_results,
+    build_quantized_ml_results,
+)
 
 # P2 and the D2 bridge are imported lazily inside each pipeline: the recovered
 # live P2 modules pull in the behavioral probing stack (torch/scipy) and the D2
@@ -112,8 +116,12 @@ def run_pipeline(
         lambda: features, "features.json", "features.schema.json"
     )
     features = json.loads(features_path.read_text(encoding="utf-8"))
+    if features.get("is_quantized") is True:
+        build_p3_results = build_quantized_ml_results
+    else:
+        build_p3_results = build_ml_results
     ml_path = _validated_step(
-        lambda f, c: build_ml_results(f, c),
+        lambda f, c: build_p3_results(f, c),
         "ml_results.json",
         "ml_results.schema.json",
         features,
