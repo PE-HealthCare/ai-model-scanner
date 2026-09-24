@@ -346,6 +346,25 @@ def extract_features(
                 "sparsity": sparsity,
                 "outlier_pct": outlier_pct,
             }
+            # Fail closed: every required FP statistical feature must be a
+            # finite numeric value before this layer may be emitted.
+            for _feature_name in (
+                "entropy",
+                "pov_chi2",
+                "lsb_kl",
+                "ks_stat",
+                "mean",
+                "std",
+                "skewness",
+                "kurtosis",
+                "sparsity",
+                "outlier_pct",
+            ):
+                if not np.isfinite(feat_dict[_feature_name]):
+                    raise ValueError(
+                        "Integrity violated: non-finite derived feature "
+                        f"{_feature_name} in layer {layer_name}"
+                    )
         static_features.append(feat_dict)
 
     return {

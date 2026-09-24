@@ -39,7 +39,7 @@ class TestExtractor(unittest.TestCase):
     def test_fp16_features(self):
         t1 = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float16)
         t2 = torch.tensor([2.0, 3.0, 4.0], dtype=torch.float16)
-        t3 = torch.tensor([10.0, 100.0, -50.0], dtype=torch.float16)
+        t3 = torch.tensor([10.0, 4.0, -2.0], dtype=torch.float16)
         ctx = TrustedModelContext(MockModel({"l1": t1, "l2": t2, "l3": t3}), "resnet18", "VISION", False)
         res = extract_features(ctx, "commit123")
         self.assertIsNotNone(res["static_features"][0]["entropy"])
@@ -118,12 +118,24 @@ class TestExtractor(unittest.TestCase):
         t2 = torch.tensor([2.0, 3.0, 4.0, 5.0, 6.0])
         t3 = torch.tensor([10.0, 100.0, -50.0, 0.0, 0.0])
         ctx = TrustedModelContext(MockModel({"l1": t1, "l2": t2, "l3": t3}), "resnet18", "VISION", False)
-        res = extract_features(ctx, "commit123")
-        l1 = res["static_features"][0]
-        self.assertEqual(l1["std"], 0.0)
-        self.assertTrue(math.isnan(l1["skewness"]))
-        self.assertTrue(math.isnan(l1["kurtosis"]))
-        self.assertEqual(l1["sparsity"], 0.0)
+        # Approved decision: derived non-finite statistics fail closed for the
+        # whole extraction (l1 is constant -> NaN skew/kurtosis; l2/l3 are
+        # valid). One invalid layer must reject the entire extraction rather
+        # than silently excluding that layer.
+        with self.assertRaisesRegex(ValueError, "Integrity violated: non-finite derived feature"):
+            extract_features(ctx, "commit123")
+
+    def test_all_emitted_fp_features_are_finite(self):
+        """Approved decision: every emitted FP feature is a finite numeric value."""
+        t1 = torch.tensor([1.0, 2.0, 3.0, 4.0, 5.0], dtype=torch.float32)
+        t2 = torch.tensor([2.0, 3.0, 4.0, 5.0, 6.0], dtype=torch.float32)
+        t3 = torch.tensor([10.0, 100.0, -50.0, 0.0, 0.0], dtype=torch.float32)
+        ctx = TrustedModelContext(MockModel({"l1": t1, "l2": t2, "l3": t3}), "resnet18", "VISION", False)
+        for feat in extract_features(ctx, "commit123")["static_features"]:
+            for name, value in feat.items():
+                if name == "layer_name":
+                    continue
+                self.assertTrue(math.isfinite(value), f"{name} not finite")
 
 
 if __name__ == "__main__":

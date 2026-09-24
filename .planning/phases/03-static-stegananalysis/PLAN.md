@@ -76,6 +76,23 @@ If a required semantic choice remains unresolved, the affected feature contract 
 
 Do not invent epsilon values, bins, thresholds, or fallbacks.
 
+### 4.1 Established: Derived FP Statistic Validity (P1 owner approved)
+
+For non-quantized models, every emitted FP static feature must be a finite
+numeric value: `entropy`, `pov_chi2`, `lsb_kl`, `ks_stat`, `mean`, `std`,
+`skewness`, `kurtosis`, `sparsity`, `outlier_pct`.
+
+- If computation of any required FP static feature produces NaN or Inf
+  (e.g. skewness/kurtosis of a constant finite tensor), P1 fails closed:
+  `extract_features()` raises and no feature set is emitted.
+- Non-finite derived values must not be emitted, serialized, imputed, or
+  substituted with null, zero, epsilon, or any other fallback.
+- Source-input NaN/Inf rejection behavior remains unchanged.
+- Failure granularity is extraction-level: one invalid layer rejects the
+  whole extraction; layer exclusion / skip-and-continue is forbidden.
+- D11 quantized null behavior remains unchanged: quantized records keep
+  JSON `null` for FP-specific measurements, exactly as D11 defines.
+
 ## 5. D7 — MAD Guard
 
 Detection of degenerate MAD or insufficient comparable layers is allowed.
