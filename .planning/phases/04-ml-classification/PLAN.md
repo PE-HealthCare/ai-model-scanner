@@ -4,44 +4,51 @@
 
 **Owner:** P3 — Brain & Voice  
 **Checkpoint:** CP4  
-**Prerequisite:** CP3 = PASS  
-**Branch:** `phase-4/ml-classification`
+**Current integration baseline:** `recovery-mainline`  
+**Historical development branch:** `phase-4/ml-classification`  
+**Current audit date:** 2026-09-25
 
-Phase 4 converts verified P1 features into the final LightGBM classifier, P_tamper, TreeSHAP evidence, and approved ML contract.
+Phase 4 converts verified P1 features into the LightGBM classifier, D10 `P_tamper`, TreeSHAP evidence, and the approved ML contract.
 
-## 1. Agent Execution Control
+> **Recovery-mainline clarification:** Historical Phase-4 work was substantially implemented across fragmented branches and was subsequently recovered/reconciled into the shared recovery lineage. Do **not** restart Phase 4 or treat historical branch copies of P1 as authoritative. Historical Phase-4 branches are forensic provenance only. The current P1 implementation on `recovery-mainline` is the authoritative upstream contract.
 
-Before final training, verify CP3 PASS.
+## 1. Current Phase-4 State
 
-If P1 real features are unavailable or unverified, final training is BLOCKED.
+The current recovery implementation contains:
 
-P3 may prepare:
+- FP LightGBM classification;
+- real P1 extraction in the training path;
+- canonical ten-feature ordering;
+- mock/placeholder leakage guards;
+- classifier provenance and D8 generation checks;
+- D10 `P_tamper = max_l p_l`;
+- FP TreeSHAP;
+- a separate quantized `ks_stat`-only LightGBM path;
+- quantized D10 and TreeSHAP;
+- quantized routing;
+- Phase-4 classifier and integration tests.
 
-- clean pretrained model fixtures;
-- synthetic tampering generation;
-- training scaffolding;
-- TreeSHAP scaffolding
+This means Phase 4 is **not missing and must not be restarted**.
 
-before CP3, but such work remains non-authoritative.
+However, implementation presence is not equivalent to a current CP4 PASS.
 
-## 2. Allowed Files
+## 2. Historical Recovery / P1 Boundary
 
-Allowed:
+Historical Phase-4 branches contain older copies of P1. Those copies are not authoritative.
 
-- `src/p3_ml_dashboard/classifier.py`
-- `src/p3_ml_dashboard/dashboard.py` only where Phase-4 functionality requires it
-- Phase-4 tests under `tests/...`
-- approved ML artifact path
+The recovery process established the following rule:
 
-Forbidden:
+```
+historical Phase-4 branch
+        ↓
+retain valid downstream Phase-4 implementation
+        ↓
+compare embedded P1 against current recovery P1
+        ↓
+use current recovery P1 as authoritative
+```
 
-- P1 implementation;
-- P2 implementation;
-- unauthorized `scan_model.py`;
-- planning governance files;
-- Master Graph.
-
-Shared utility changes require explicit authorization and impact/reverification.
+The historical record does **not** contain an exhaustive manifest proving that every fragmented historical P1 commit was enumerated, compared against every newer P1 version, and individually promoted. Therefore future recovery must be bounded and evidence-based: recover only a genuinely missing/newer P1 component and never overwrite current P1 with an older Phase-4 snapshot.
 
 ## 3. Training Data Rule
 
@@ -51,6 +58,10 @@ No copied/reimplemented feature extraction logic is permitted.
 
 The training path must use the same P1 producer, feature semantics, representation, and ordering as inference.
 
+Synthetic tampering is permitted for training-data creation when provenance is explicit, labels are explicit, generation is reproducible, and the real P1 path is used after CP3.
+
+Synthetic training data is engineering evidence; it is not real-world validation.
+
 ## 4. Mock Protection
 
 Mock/placeholder features may enter scaffold tests only.
@@ -59,82 +70,124 @@ They MUST NEVER enter final classifier artifact generation.
 
 Final model generation MUST fail if provenance is not VERIFIED-REAL P1 feature data.
 
-A mock-trained model is not a production classifier.
-
-## 5. Synthetic Tampering
-
-Synthetic tampering is permitted for training-data creation, provided:
-
-- provenance is explicit;
-- tampered/clean labels are explicit;
-- generation is reproducible;
-- training features are extracted through the real P1 path after CP3;
-- synthetic generation does not redefine P1 semantics.
-
-## 6. LightGBM / TreeSHAP
-
-Implement the approved LightGBM workflow and P_tamper.
+## 5. LightGBM / TreeSHAP
 
 TreeSHAP must use the exact feature names/order supplied by P1.
 
 TreeSHAP feature attribution is separate from highest-risk-layer determination.
 
-Phase 4 MUST NOT invent the feature→layer aggregation mechanism D6.
+Phase 4 MUST NOT invent or redefine D5/D6.
 
-## 7. D8 — Staleness
+For quantized models, the separate classifier consumes only the authoritative `ks_stat` feature. The nine unsupported FP-specific fields remain JSON `null`.
 
-Until D8 is explicitly resolved, use the conservative rule:
+## 6. D8 — Generation / Staleness
 
-```text
-P1 feature semantic/name/order/representation change
-→ lightgbm_model.txt = STALE
-→ CP4 BLOCKED
-→ retrain
-→ TreeSHAP remap/reverify
+Generation identity is mandatory.
+
+A classifier or downstream generated artifact is not current merely because its provenance says VERIFIED-REAL.
+
+At minimum, current use requires consistency between:
+
+- P1 generation identity;
+- classifier provenance;
+- `ml_results.json`;
+- applicable feature/schema contract;
+- current implementation semantics.
+
+If a P1 feature semantic/name/order/representation change invalidates the model artifact:
+
+```
+artifact = STALE
+CP4 = BLOCKED
+retrain
+reverify TreeSHAP
 ```
 
-A manual memory-based check is not sufficient to keep an artifact authoritative.
+The committed historical FP artifacts identified during the 2026-09-25 audit have older generation identities than the current recovery lineage and therefore are **not sufficient by themselves as current CP4 evidence**.
 
-## 8. Provenance
+## 7. Current Verification / Evidence State
 
-The classifier artifact and `ml_results.json` must identify/record, as applicable:
+Current production code is substantially implemented, but the repository verification layer is not fully synchronized with that implementation.
 
-- training feature source;
-- P1 producer commit/version;
-- feature semantic version;
-- schema/contract version;
-- training dataset provenance;
-- model artifact version/hash where available;
-- generation run;
-- mock/real state.
+Known reconciliation items:
 
-## 9. Commit / PR / Merge
+1. current generated FP/ML artifacts require current-generation verification;
+2. historical CP4 PASS text must not be treated as a current PASS certificate;
+3. some tests still target pre-recovery P1/P2 APIs;
+4. D6 implementation/tie tests remain inconsistent with the locked `layer_name` lexical decision;
+5. current end-to-end current-generation evidence has not been established by this read-only audit.
 
-Branch: `phase-4/ml-classification`.
+Therefore:
 
-Commit only Phase-4 changes.
+> **Phase 4 implementation: substantially present.  
+> Current CP4 verification: not yet certified.**
 
-PR only after verification evidence.
+## 8. Ownership / Integration Rules
 
-Agent MUST NOT self-merge.
+Phase 4 may modify P3-owned classifier/reporting code and authorized Phase-4 tests.
 
-Merge requires CP4 approval and required independent review.
+P3 MUST NOT silently modify P1 or P2 implementation to make Phase-4 tests pass.
 
-## 10. Exact CP4 Gate
+Shared changes require owner authorization and impact/reverification.
+
+All future publication follows the project-wide controlled Git integration protocol:
+
+```
+current remote SHA
+    ↓
+read-only audit
+    ↓
+isolate exact payload
+    ↓
+disposable integration worktree
+    ↓
+Git + logical + contract + provenance checks
+    ↓
+relevant tests
+    ↓
+owner authorization
+    ↓
+publish exact payload
+    ↓
+independently verify remote SHA
+    ↓
+next owner refreshes baseline
+```
+
+`TASK COMPLETE ≠ READY TO PUSH ≠ SAFE TO PUSH ≠ ALREADY INTEGRATED`.
+
+## 9. Exact CP4 Gate
 
 CP4 PASS requires:
 
 - CP3 PASS;
 - final training uses verified-real P1 extraction;
 - no mock leakage;
-- LightGBM artifact generated;
-- P_tamper verified;
+- applicable LightGBM artifact generated from current-compatible P1 semantics;
+- D10 verified;
 - TreeSHAP names/order verified;
 - provenance complete;
-- staleness status valid;
-- adversarial regression passes;
-- evidence complete.
+- D8 staleness status valid;
+- adversarial regression passes against the current API;
+- current-generation evidence complete;
+- required downstream decisions/contracts reconciled.
 
-Unresolved required D8 or another required decision = BLOCKED.
+Unresolved required evidence or interface conflict = **BLOCKED**.
 
-Only CP4 PASS permits final P2 risk integration.
+Only a separately evidenced CP4 PASS permits final CP5 integration.
+
+## 10. Do Not Restart Phase 4
+
+The correct continuation state is:
+
+```
+historical Phase-4 implementation
+        +
+current recovery-mainline P1
+        +
+current P3/P2 contracts
+        ↓
+continue Phase 4 from the reconciled baseline
+```
+
+Historical branches should be reopened only to answer a specific provenance/missing-component question.

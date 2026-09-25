@@ -1,3 +1,17 @@
+# CURRENT IMPLEMENTATION RECONCILIATION NOTE — 2026-09-25
+
+The D6 decision itself remains **RESOLVED / LOCKED**: the authoritative production identity is P1 `layer_name`, and exact ties must use canonical lexical `layer_name` ordering.
+
+The 2026-09-25 read-only audit found that the current `src/p2_behavioral_risk/risk_aggregator.py` and associated D6 tests still contain input-index tie behavior. Therefore the **decision is locked, but the current implementation is not yet certified compliant with this decision**.
+
+This note does not authorize changing P1 identity, inventing a numeric `layer_id`, or importing unrelated P2 WIP. P2/D6 must reconcile the implementation and tests against this locked contract through the normal controlled integration protocol.
+
+**Decision status:** RESOLVED / LOCKED  
+**Implementation status:** RECONCILIATION REQUIRED  
+**CP6/CP5 implication:** do not claim final D6 verification until the implementation and tests use the locked canonical tie rule.
+
+---
+
 # D6 — Highest-Risk-Layer Selection & Reporting
 
 **Owner:** P3 reporting / security report surface  

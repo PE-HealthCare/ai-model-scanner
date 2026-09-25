@@ -1,105 +1,177 @@
 # Phase 4 — ML Classification Verification
 
-## 1. Gate Rules
+## 1. Gate Semantics
 
-PASS requires reproducible evidence.
+PASS requires reproducible current evidence.
 
-Required unresolved decision/dependency = BLOCKED.
+A checkbox, historical command output, stale artifact, or old commit reference does not by itself prove CP4.
 
-Code execution success alone does not prove CP4.
+Required unresolved dependency = **BLOCKED**.
 
-## 2. Prerequisite
+**Current audit date:** 2026-09-25  
+**Current integration baseline:** `recovery-mainline`
 
-- [ ] CP3 PASS.
-- [ ] P1 real feature extractor is verified.
-- [ ] Exact feature semantics/order are locked.
+## 2. Current Verification Classification
 
-## 3. Training Path
+The current recovery implementation contains substantial Phase-4 functionality, but the historical CP4 PASS block previously recorded in this file is no longer sufficient as a current certificate.
 
-- [ ] final training directly invokes P1 extraction;
-- [ ] no copied feature extraction implementation exists;
-- [ ] clean and tampered training models both use the same P1 extraction path;
-- [ ] feature order matches inference.
+The historical evidence references older generation identities and predates later P1/P3 reconciliation.
 
-## 4. Mock Leakage Tests
+Therefore the current state is:
 
-Mandatory:
-
-- [ ] mock provenance supplied to final training;
-- [ ] placeholder feature source supplied to final training;
-- [ ] stale feature artifact supplied to final training.
-
-Expected result:
-```text
-REJECT / BLOCK
-NO FINAL MODEL ARTIFACT
+```
+Phase-4 implementation       = SUBSTANTIALLY IMPLEMENTED
+Historical CP4 evidence       = PRESERVED / NON-CURRENT
+Current CP4 certification     = NOT ESTABLISHED
+Current gate                  = BLOCKED PENDING REVERIFICATION
 ```
 
-## 5. Classifier / SHAP
+## 3. Prerequisite
 
-- [ ] LightGBM artifact generated from verified-real features;
-- [ ] P_tamper output is valid;
-- [ ] TreeSHAP uses exact feature names;
-- [ ] TreeSHAP ordering matches P1;
-- [ ] TreeSHAP feature attribution is not incorrectly presented as highest-risk-layer calculation.
+- [ ] Current CP3 PASS independently evidenced.
+- [ ] Current P1 real feature extractor verified.
+- [ ] Exact current feature semantics/order locked.
+- [ ] Current P1 generation identity recorded.
 
-## 6. Staleness Tests
+## 4. Training Path
 
-- [ ] change feature name;
-- [ ] change feature meaning;
-- [ ] change representation;
-- [ ] change feature ordering.
+Required evidence:
 
-Expected:
-```text
-classifier = STALE
-CP4 = BLOCKED
-retraining required
-TreeSHAP remap/reverification required
+- [ ] final training directly invokes current P1 extraction;
+- [ ] no copied feature extraction implementation;
+- [ ] clean and tampered training models use the same current P1 path;
+- [ ] feature order matches inference;
+- [ ] training provenance points to the current compatible P1 generation.
+
+## 5. Mock / Placeholder Leakage
+
+Mandatory current-API evidence:
+
+- [ ] mock provenance supplied to final training → reject;
+- [ ] placeholder feature source supplied → reject;
+- [ ] stale feature artifact supplied → reject;
+- [ ] no final model artifact is emitted on rejected training.
+
+Historical tests may document prior behavior but must not be counted as current evidence until reconciled with the recovery API.
+
+## 6. Classifier / SHAP
+
+- [ ] current FP LightGBM artifact generated from current-compatible VERIFIED-REAL P1 data;
+- [ ] current quantized LightGBM artifact generated from current-compatible VERIFIED-REAL P1 quantized data;
+- [ ] D10 `P_tamper = max_l p_l` verified;
+- [ ] TreeSHAP uses exact current feature names/order;
+- [ ] TreeSHAP is separate from D6 highest-risk-layer selection;
+- [ ] quantized TreeSHAP uses `ks_stat` only.
+
+## 7. D8 / Staleness
+
+Current generation consistency must be proven across:
+
+```
+P1 generation
+   ↕
+classifier provenance
+   ↕
+ml_results.json
+   ↕
+feature/schema contract
 ```
 
-## 7. Adversarial Regression
+The 2026-09-25 read-only audit found committed FP/ML artifacts with older generation identities than the current recovery lineage. Those artifacts are therefore historical evidence, not automatic current CP4 evidence.
+
+Required:
+
+- [ ] regenerate/reverify only when explicitly authorized;
+- [ ] current generation identity recorded;
+- [ ] current `ml_results.json` verified against current P1;
+- [ ] stale artifact rejection verified.
+
+## 8. Adversarial Regression
+
+Current API must cover:
 
 - [ ] NaN/Inf features;
 - [ ] missing feature;
-- [ ] extra feature;
+- [ ] extra/unknown feature;
 - [ ] wrong feature ordering;
 - [ ] stale model;
-- [ ] mock feature provenance;
+- [ ] mock provenance;
 - [ ] malformed `ml_results.json`;
-- [ ] invalid classifier artifact.
+- [ ] invalid classifier artifact;
+- [ ] quantized/FP routing mismatch;
+- [ ] invalid quantized `ks_stat`.
 
-## 8. Provenance
+Tests targeting removed pre-recovery APIs must be classified as stale and reconciled before being used as CP4 proof.
+
+## 9. Provenance
+
+Required current evidence:
 
 - [ ] training source;
-- [ ] P1 producer version;
-- [ ] semantic version;
+- [ ] P1 producer/version;
+- [ ] feature semantic version;
 - [ ] contract version;
 - [ ] dataset provenance;
-- [ ] model artifact identity;
+- [ ] model artifact identity/hash;
 - [ ] generation run;
 - [ ] mock/real state.
 
-## 9. Scope
+## 10. D6 Dependency
 
-- [ ] only Phase-4 files changed;
-- [ ] no P1/P2 implementation changes;
-- [ ] no governance changes;
-- [ ] shared utility changes authorized and reverification recorded.
+The current D6 decision document locks authoritative identity to P1 `layer_name` and requires canonical lexical tie ordering.
 
-## 10. CP4 Evidence
+The current P2 implementation/tests audited on 2026-09-25 still contain input-index tie behavior.
 
-```text
-Branch: recovery-mainline
-Commit: e5d1ab5
-Reviewer: Human verification in hackathon working session
-CP3: PASS - verified-real P1 feature extraction; current generation commit 594c9a91df08a211ee1270de566c70d61205af26
-Training command: python -c "import train_lightgbm_classifier as t; r=t.train(); print("TRAINING_COMPLETE"); print("ARTIFACT",r["artifact"]); print("ROWS",r["training_rows"]); print("CLEAN",r["clean_rows"]); print("TAMPERED",r["tampered_rows"]); print("MOCK_STATUS",r["mock_status"])"
-Training feature provenance: VERIFIED-REAL P1 extraction; 96 rows total (48 clean, 48 tampered)
-Model artifact: artifacts/lightgbm_model.txt; provenance: artifacts/lightgbm_model.provenance.json
-P_tamper: 0.9900758624030114; valid [0,1]
-TreeSHAP: 10 canonical feature attributions; 27/27 classifier regression tests passed
-Staleness evidence: current ml_results.json generation_commit matches verified P1 generation; stale-artifact handling covered by classifier regression tests
-Adversarial tests: 27/27 tests passed, including malformed payload, extra/unknown fields, invalid classifier, placeholder-source rejection, and prediction/SHAP validation
-Final state: PASS
+Therefore:
+
+> **D6 implementation reconciliation is a current integration dependency.**
+
+It must not be silently resolved by changing P1 or by importing unrelated P2 WIP.
+
+## 11. End-to-End Evidence
+
+Current `scan_model.py` orchestrates:
+
 ```
+P1 intake
+→ P1 features
+→ P3 classifier
+→ P2 trusted handoff / behavioral path
+→ D5/D6/risk
+→ contract validation
+```
+
+The orchestration is implemented and fail-closed at artifact-validation boundaries.
+
+However, this read-only audit did not establish a fresh, current-generation end-to-end execution proving all three stages against the present recovery state.
+
+Required:
+
+- [ ] current FP end-to-end run;
+- [ ] current quantized end-to-end run;
+- [ ] generated artifacts share the expected current generation/provenance;
+- [ ] current contracts validate;
+- [ ] no stale artifact remains after a failed stage.
+
+## 12. Historical Evidence
+
+The historical Phase-4 evidence recorded:
+
+- real P1 extraction;
+- 96-row synthetic training corpus;
+- LightGBM artifact;
+- D10;
+- TreeSHAP;
+- regression tests.
+
+That evidence remains useful provenance, but it is not silently promoted to current CP4 PASS.
+
+## 13. Final Current State
+
+**CP4: BLOCKED pending current-generation reverification and cross-owner reconciliation.**
+
+This does **not** mean Phase 4 is missing.
+
+It means the current repository has substantial implementation, while the evidence layer must be brought forward to the current recovery baseline.
+
+Do not restart Phase 4. Reverify and reconcile.

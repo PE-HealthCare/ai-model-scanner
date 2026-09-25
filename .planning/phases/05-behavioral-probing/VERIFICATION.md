@@ -4,67 +4,111 @@
 
 Exactly:
 
+```
 PASS / FAIL / BLOCKED
+```
 
-Required unresolved decision = BLOCKED.
+A checkbox without current evidence is not verification.
 
-A checkbox without evidence is not verification.
+**Current audit date:** 2026-09-25  
+**Current integration baseline:** `recovery-mainline`
 
-## 2. Prerequisites
+## 2. Current State
 
-- [ ] CP4 PASS.
-- [ ] P1 real inputs verified.
-- [ ] P3 `ml_results.json` verified-real.
+The current recovery branch contains substantial Phase-5 production implementation, including behavioral probing, quantized bypass, D4 normalization, D5/D7 aggregation, MRS, generation checks, and risk-contract validation.
+
+The historical verification checklist was not synchronized with that implementation.
+
+Therefore:
+
+```
+Phase-5 implementation = SUBSTANTIALLY IMPLEMENTED
+Historical verification = NON-CURRENT
+Current CP5 certification = NOT ESTABLISHED
+Current gate = BLOCKED
+```
+
+## 3. Prerequisites
+
+- [ ] current CP4 PASS;
+- [ ] current P1 real inputs verified;
+- [ ] current P3 `ml_results.json` verified-real;
+- [ ] current generation identities match;
 - [ ] required contracts resolved.
 
-## 3. Probe Routing
+## 4. Probe Routing
 
 - [ ] quantized models bypass behavioral probing;
-- [ ] non-quantized VISION uses float/image-noise probe path;
-- [ ] non-quantized NLP uses integer token-ID probe path;
-- [ ] no invalid input type is generated for a domain.
-
-## 4. Bounded Execution
-
-- [ ] finite production pass limit exists;
-- [ ] production limit is explicitly approved;
-- [ ] agent did not choose it autonomously;
-- [ ] time/resource constraints are tested where applicable.
-
-If production bound is unresolved: BLOCKED.
+- [ ] non-quantized VISION uses the bounded float/image-noise path;
+- [ ] non-quantized NLP uses the bounded integer token-ID path;
+- [ ] invalid domain/input combinations are rejected;
+- [ ] current production probe bound is explicitly evidenced/approved.
 
 ## 5. D3 / D4
 
-- [ ] STRIP baseline explicitly resolved.
-- [x] H_STRIP→S_behavior normalization explicitly resolved.
-  Resolved by the explicit project decision recorded in `.planning/STATE.md`
-  ("D4 — Behavioral Normalization — RESOLVED"). Locked formula:
+### D3
 
-  ```text
-  deviation = H_median - H_STRIP
-  Z = deviation / (1.4826 * H_MAD)
-  Z_clamped = max(0.0, Z)
-  S_behavior = min(1.0, Z_clamped / 3.0)
-  ```
+- [ ] scanner-controlled STRIP calibration artifact is current;
+- [ ] D3 baseline decision is explicitly recorded;
+- [ ] baseline provenance and replay evidence are current.
 
-  Implemented in `src/p2_behavioral_risk/prober.py::normalize_h_strip`.
-  Evidence: `tests/test_d4_behavioral.py` (formula, bounding, zero-MAD both
-  branches, non-finite/missing/invalid MAD rejection) and
-  `tests/test_p2_calibration_artifact.py` (calibration artifact replay,
-  including `test_non_quantized_s_behavior_matches_locked_d4_formula`).
-- [ ] no invented baseline/threshold/fallback exists.
+The implementation currently consumes calibration data, but the audit did not establish a synchronized standalone D3 decision record. Do not mark D3 PASS from implementation presence alone.
 
-Unresolved D3 or D4 = BLOCKED.
+### D4
 
-## 6. Risk Aggregation
+- [x] locked normalization formula implemented;
+- [x] zero-MAD equal branch returns 0;
+- [x] zero-MAD unequal branch fails closed;
+- [x] non-finite/missing invalid calibration inputs are rejected;
+- [x] current D4 tests cover the formula.
 
-- [ ] per-layer→model aggregation follows approved D5;
-- [ ] D7 MAD handling follows approved decision;
-- [ ] final non-quantized formula exact;
-- [ ] final quantized formula exact;
-- [ ] verdict ranges exact.
+Locked formula:
 
-## 7. Mandatory Adversarial Tests
+```
+deviation = H_median - H_STRIP
+Z = deviation / (1.4826 * H_MAD)
+Z_clamped = max(0.0, Z)
+S_behavior = min(1.0, Z_clamped / 3.0)
+```
+
+## 6. D5 / D7
+
+Current implementation evidence:
+
+- [x] D5 per-layer evidence reduction implemented;
+- [x] model-level static aggregation implemented;
+- [x] finite/missing evidence is not zero-imputed;
+- [x] D7 MAD/degeneracy handling implemented;
+- [x] non-quantized MRS formula implemented;
+- [x] quantized MRS formula implemented;
+- [x] verdict ranges implemented.
+
+Still required for CP5:
+
+- [ ] current decision/evidence records synchronized with implementation;
+- [ ] current-generation adversarial tests verified;
+- [ ] current end-to-end risk artifact verified.
+
+## 7. D6 Integration Dependency
+
+The locked D6 decision requires:
+
+```
+authoritative identity = P1 layer_name
+exact tie = lexical layer_name
+```
+
+Current audited P2 implementation/tests still contain input-index tie behavior.
+
+Therefore:
+
+**D6 = implementation reconciliation required.**
+
+This is not a P1 rework request. P1 identity is already defined by the current contract. P2/D6 must reconcile its implementation/tests with that identity contract.
+
+## 8. Mandatory Adversarial Evidence
+
+Current API evidence is required for:
 
 - [ ] one-layer model;
 - [ ] insufficient layers;
@@ -72,14 +116,15 @@ Unresolved D3 or D4 = BLOCKED.
 - [ ] near-zero MAD;
 - [ ] NaN/Inf evidence;
 - [ ] malformed `ml_results.json`;
-- [ ] missing P_tamper;
+- [ ] missing `P_tamper`;
 - [ ] stale P3 artifact;
 - [ ] quantized model accidentally entering behavioral path;
 - [ ] probe input type mismatch;
 - [ ] upstream failure.
 
 Expected upstream-failure behavior:
-```text
+
+```
 STOP
 NON-ZERO STATUS
 NO MRS
@@ -87,51 +132,67 @@ NO VERDICT
 NO FABRICATED OUTPUT
 ```
 
-## 8. Provenance
+## 9. Provenance
 
-- [ ] features source recorded;
-- [ ] ML source recorded;
-- [ ] source versions/commits recorded;
-- [ ] P2 version recorded;
-- [ ] contract/semantic version recorded;
-- [ ] run ID recorded;
-- [ ] mock/real status recorded.
+Current evidence must show:
 
-## 9. Scope
+- [ ] features source;
+- [ ] ML source;
+- [ ] source versions/commits;
+- [ ] P2 producer/version;
+- [ ] contract/semantic version;
+- [ ] run ID;
+- [ ] mock/real status;
+- [ ] current generation identity;
+- [ ] artifact identity/hash where applicable.
 
-- [ ] only Phase-5 files changed;
-- [ ] no P1/P3 implementation changes;
-- [ ] no unauthorized integration changes;
-- [ ] no governance changes.
+## 10. End-to-End Verification
 
-## 10. CP5 Evidence
+Current `scan_model.py` provides the intended orchestration:
 
-```text
-Branch: phase-5/behavioral-probing
-Commit:
-Reviewer:
-CP4:
-Probe evidence:
-Bound evidence:
-D3:
-D4: Resolved — explicit project decision recorded in `.planning/STATE.md`
-    ("D4 — Behavioral Normalization — RESOLVED"). Locked formula:
-    deviation = H_median - H_STRIP; Z = deviation / (1.4826 * H_MAD);
-    Z_clamped = max(0.0, Z); S_behavior = min(1.0, Z_clamped / 3.0).
-    Implementation: src/p2_behavioral_risk/prober.py::normalize_h_strip
-    (fail-closed zero-MAD handling; invalid/non-finite inputs rejected).
-    Evidence: tests/test_d4_behavioral.py;
-    tests/test_p2_calibration_artifact.py (artifact replay incl.
-    test_non_quantized_s_behavior_matches_locked_d4_formula);
-    calibration artifact data/calibration/calibration_data.json.
-    Independent review: PENDING.
-D5:
-D7:
-MRS:
-Verdict:
-Adversarial tests:
-Provenance:
-Final state: PASS / FAIL / BLOCKED
+```
+P1 → P3 → P2 → risk_results
 ```
 
-CP5 may be marked PASS only after every required criterion is PASS and independent approval is recorded.
+with contract validation and fail-closed cleanup.
+
+Current audit did **not** execute a new end-to-end run, so no current-generation PASS is claimed.
+
+Required:
+
+- [ ] fresh FP end-to-end evidence;
+- [ ] fresh quantized end-to-end evidence;
+- [ ] features/ml/risk generation identities reconciled;
+- [ ] current contracts validate;
+- [ ] no stale output survives a failed stage.
+
+## 11. Stale Test Classification
+
+Some repository tests still target pre-recovery APIs (for example old P1 intake helpers or old P2 risk functions).
+
+Those tests must be classified/reconciled before being counted as current CP5 evidence.
+
+Do not silently import unrelated WIP to make stale tests pass.
+
+## 12. Controlled Publication
+
+Phase-5 changes must follow the project-wide controlled Git integration protocol:
+
+1. verify actual `origin/recovery-mainline` SHA;
+2. audit current remote read-only;
+3. isolate the exact P2 payload;
+4. use a disposable integration worktree;
+5. check Git and logical/contract/provenance/ownership conflicts;
+6. run relevant tests;
+7. obtain explicit owner authorization;
+8. publish only the authorized payload;
+9. independently verify the actual remote SHA;
+10. require the next owner to refresh from the new baseline.
+
+## 13. Final Current State
+
+**CP5: BLOCKED pending current-generation evidence, D3 decision synchronization, D6 reconciliation, and current end-to-end verification.**
+
+This does not mean Phase 5 implementation is absent.
+
+It means the verification record must be brought forward to the current recovery implementation.
