@@ -21,12 +21,14 @@ Covers the P2-owned reconciliation checklist:
   10. quantized MRS uses the frozen 55/45 weighting
   11. non-quantized MRS retains the frozen 40/35/25 weighting
   12. no fake layer_id is introduced in active P2 code
-  13. D6 does not silently claim a resolved layer-identity contract
+  13. D6 documents the locked layer-identity contract (authoritative
+      layer_name identity, canonical lexical tie ordering)
   14. output schema remains valid (risk_results + features contracts)
   2.  legacy feature names are not consumed by active D5 code
 
-Scope discipline: no layer_id fixtures and no asserted canonical tie-break
-winner — that upstream contract decision is unresolved on purpose.
+Scope discipline: no layer_id fixtures. Exact-tie behavior follows the
+locked P1/D6 contract (authoritative ``layer_name``, canonical lexical
+ordering); tie-winner coverage lives in tests/test_d6_tie_break.py.
 """
 
 from __future__ import annotations
@@ -361,21 +363,44 @@ def test_non_quantized_mrs_retains_frozen_40_35_25_weighting():
 
 
 # -------------------------------------------- 12 / 13. no invented identity
+def _executable_layer_id_refs(source: str) -> list:
+    """Collect executable (non-comment) ``layer_id`` references from source.
+
+    ``ast`` drops comments, so explanatory prose such as "no production
+    ``layer_id`` field" is invisible here; only real code — variable names,
+    attribute access, and string keys like ``layer["layer_id"]`` — is found.
+    """
+    refs = []
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and node.id == "layer_id":
+            refs.append("Name:layer_id")
+        elif isinstance(node, ast.Attribute) and node.attr == "layer_id":
+            refs.append("Attribute:layer_id")
+        elif (
+            isinstance(node, ast.Constant)
+            and isinstance(node.value, str)
+            and node.value == "layer_id"
+        ):
+            refs.append("Constant:'layer_id'")
+    return refs
+
+
 def test_no_fake_layer_id_in_active_p2_code():
     for rel in P2_ACTIVE_MODULES:
         source = (REPO_ROOT / rel).read_text(encoding="utf-8")
         # AST excludes comments: the check covers ACTIVE code only, where a
         # commented-out legacy block is not executable semantics.
-        tree = ast.parse(source)
-        string_constants = [
-            node.value
-            for node in ast.walk(tree)
-            if isinstance(node, ast.Constant) and isinstance(node.value, str)
-        ]
-        assert "layer_id" not in string_constants, f"layer_id invented in {rel}"
+        assert _executable_layer_id_refs(source) == [], (
+            f"executable layer_id identity usage in {rel}"
+        )
 
-    # The active D5/D6 entry point must not reference layer_id at all.
-    assert "layer_id" not in inspect.getsource(compute_s_static_and_layer)
+    # The active D5/D6 entry point must not use layer_id as executable
+    # production identity. Explanatory comments documenting that there is NO
+    # production layer_id field are permitted and invisible to this check.
+    assert _executable_layer_id_refs(
+        inspect.getsource(compute_s_static_and_layer)
+    ) == []
 
     # Layer dicts without any layer_id key remain fully accepted.
     s_static, _ = compute_s_static_and_layer(
@@ -388,18 +413,18 @@ def test_no_fake_layer_id_in_active_p2_code():
     assert 0.0 <= s_static <= 1.0
 
 
-def test_d6_does_not_claim_resolved_layer_identity_contract():
+def test_d6_documents_locked_layer_identity_contract():
     src = inspect.getsource(compute_s_static_and_layer)
     lowered = src.lower()
 
-    # No invented identity term ...
-    assert "layer_id" not in src
-    # ... the unresolved upstream interface issue must be documented ...
-    assert "unresolved" in lowered
-    # ... and the code must not claim a canonical tie-break resolution that
-    # the upstream contract (layer_name only) does not establish.
-    assert "canonical index" not in lowered
-    assert "canonical ordering" not in lowered
+    # Locked contract is documented: authoritative layer_name identity and
+    # canonical lexical tie ordering (D6 decision Sections 3, 5.7, 13).
+    assert "layer_name" in lowered
+    assert "canonical lexical" in lowered
+    # The stale "unresolved upstream interface" marker must be gone.
+    assert "unresolved" not in lowered
+    # No executable layer_id identity usage (comments excluded via AST).
+    assert _executable_layer_id_refs(src) == []
 
 
 # ------------------------------------------- 2. legacy names are not consumed

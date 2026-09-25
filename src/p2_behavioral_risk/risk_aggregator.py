@@ -56,10 +56,10 @@ def compute_s_static_and_layer(layer_features):
     ]
     layer_E = []
     
-    # NOTE: the P1 contract supplies `layer_name` only. There is no
-    # authoritative upstream layer identity or guaranteed canonical layer
-    # ordering; list position is NOT layer identity (see the D6 selection
-    # note below).
+    # NOTE: the P1 contract supplies `layer_name` as the authoritative
+    # production layer identity (required string per static_features item).
+    # Canonical exact-tie ordering is lexical `layer_name`; list position is
+    # NOT layer identity (see the D6 selection note below).
     # Validate sufficient comparable layers for D7 when full stats are present
     full_stats = set(stat_keys)
     provides_full = any(full_stats.issubset(set(layer.keys())) for layer in layer_features)
@@ -110,15 +110,15 @@ def compute_s_static_and_layer(layer_features):
     S_static = 1.0 - np.prod([1.0 - item[2] for item in layer_E])
     
     # D6: highest_risk_layer = argmax_l (E_l)
-    # UNRESOLVED upstream interface issue: exact ties cannot be resolved
-    # canonically because the contract provides no authoritative layer
-    # identity and no canonical layer order. For run-to-run determinism only,
-    # an exact tie currently returns the first maximum in contract-supplied
-    # order. This is NOT a canonical tie-break decision and must not be
-    # presented as one; resolving it requires an upstream contract change.
+    # LOCKED P1/D6 contract: the authoritative production layer identity is
+    # `layer_name` (contracts/features.schema.json, required string per
+    # static_features item). There is no production `layer_id` field and no
+    # index/position-based identity. An exact tie returns the first name in
+    # canonical lexical `layer_name` ordering (docs/D6_HIGHEST_RISK_LAYER_DECISION.md
+    # Sections 3, 5.7, 13). Unique maxima are unaffected by this ordering.
     max_e_val = max([item[2] for item in layer_E])
     tied = [item for item in layer_E if item[2] == max_e_val]
-    tied.sort(key=lambda x: x[0])
+    tied.sort(key=lambda x: x[1])
     highest_risk_layer = tied[0][1]
 
     return S_static, highest_risk_layer
