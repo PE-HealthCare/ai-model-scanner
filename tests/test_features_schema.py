@@ -2,6 +2,7 @@ import json
 import unittest
 
 from jsonschema import Draft202012Validator
+from jsonschema.exceptions import ValidationError
 
 from src.common.utils import ROOT
 from src.p1_static_engine.analyzer import build_mock_features
@@ -24,7 +25,7 @@ class TestFeaturesSchemaLayerBaseline(unittest.TestCase):
         features["layer_count"] = 2
         features["static_features"] = features["static_features"][:2]
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             Draft202012Validator(self.schema).validate(features)
 
 
