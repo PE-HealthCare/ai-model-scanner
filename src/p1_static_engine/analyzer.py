@@ -270,6 +270,10 @@ def extract_features(
         requested = list(layer_names)
         if not requested:
             raise ValueError("Integrity violated: layer_names filter must be non-empty")
+        if len(requested) < 3:
+            raise ValueError(
+                "Integrity violated: layer_names filter must select at least 3 layers"
+            )
         unknown = [name for name in requested if name not in tensors]
         if unknown:
             raise ValueError(f"Integrity violated: unknown layer requested: {unknown[0]!r}")
