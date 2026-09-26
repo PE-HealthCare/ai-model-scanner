@@ -106,6 +106,12 @@ class TestContracts(unittest.TestCase):
         actual_shap_keys = list(ml_results["shap_attributions"].keys())
         self.assertEqual(actual_shap_keys, expected_order, "Producer output shap ordering does not match Master Graph")
 
+    def test_mock_features_meet_three_layer_baseline(self):
+        """P1 mock evidence must satisfy the current >=3-layer baseline."""
+        features = build_mock_features("TEST")
+        self.assertEqual(features["layer_count"], 3)
+        self.assertEqual(len(features["static_features"]), 3)
+
 
 class TestMockRealLifecycle(unittest.TestCase):
     def test_mock_status_enforced(self):
