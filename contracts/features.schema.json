@@ -19,9 +19,10 @@
     "generation_commit": {"type": "string"},
     "input_domain": {"type": "string", "enum": ["VISION", "NLP"]},
     "is_quantized": {"type": "boolean"},
-    "layer_count": {"type": "integer", "minimum": 1},
+    "layer_count": {"type": "integer", "minimum": 3},
     "static_features": {
       "type": "array",
+      "minItems": 3,
       "items": {
         "type": "object",
         "required": [
