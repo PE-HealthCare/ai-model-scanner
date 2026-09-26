@@ -242,3 +242,64 @@ def prepare_dashboard_results(
         "risk_summary": risk_summary,
         "ml_results": dict(ml_results),
     }
+
+
+def format_results_summary(prepared: Mapping[str, object]) -> str:
+    """Format prepared dashboard results as deterministic plain text.
+
+    P3 is presentation-only: every value is echoed from the already-validated
+    ``prepared`` context (see :func:`prepare_dashboard_results`). Nothing is
+    recomputed here — no MRS, verdict, risk aggregation, or D6
+    highest-risk-layer selection. TreeSHAP evidence is delegated verbatim to
+    :func:`format_treemap_section`.
+    """
+    if not isinstance(prepared, Mapping):
+        raise ValueError("prepared dashboard results must be a mapping")
+    risk_summary = prepared.get("risk_summary")
+    if not isinstance(risk_summary, Mapping):
+        raise ValueError("prepared dashboard results must contain a 'risk_summary' mapping")
+    ml_results = prepared.get("ml_results")
+    if not isinstance(ml_results, Mapping):
+        raise ValueError("prepared dashboard results must contain an 'ml_results' mapping")
+
+    for key in (
+        "producer",
+        "mock_status",
+        "contract_version",
+        "generation_commit",
+        "mrs_score",
+        "verdict",
+        "s_static",
+        "p_tamper",
+        "s_behavior",
+    ):
+        if key not in risk_summary:
+            raise ValueError(f"risk_summary missing required field: {key!r}")
+
+    s_behavior = risk_summary.get("s_behavior")
+    if s_behavior is None:
+        behavior_line = "Behavioral score (S_behavior): N/A (quantized — behavioral probing skipped)"
+    else:
+        behavior_line = f"Behavioral score (S_behavior): {float(s_behavior):.4f}"
+
+    lines = [
+        "Scan results (P2 risk + P3 classifier evidence)",
+        f"Verdict: {risk_summary.get('verdict')}",
+        f"MRS: {float(risk_summary.get('mrs_score')):.2f}",
+        f"Static score (S_static): {float(risk_summary.get('s_static')):.4f}",
+        f"Tamper score (P_tamper, risk): {float(risk_summary.get('p_tamper')):.4f}",
+        behavior_line,
+        (
+            f"Provenance: producer={risk_summary.get('producer')} "
+            f"mock_status={risk_summary.get('mock_status')} "
+            f"contract_version={risk_summary.get('contract_version')} "
+            f"generation_commit={risk_summary.get('generation_commit')}"
+        ),
+        (
+            f"ML evidence: model_version={ml_results.get('model_version')} "
+            f"generation_commit={ml_results.get('generation_commit')}"
+        ),
+        "Highest-risk layer: not available in current contracts",
+        format_treemap_section(ml_results),
+    ]
+    return "\n".join(lines)

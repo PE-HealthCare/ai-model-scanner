@@ -1444,7 +1444,9 @@ def page_scan_model() -> None:
 # ---------------------------------------------------------------------------
 
 def page_dashboard() -> None:
-    """Dashboard page — to be implemented in Chunk 3."""
+    """Dashboard page — renders prepared P2 risk + P3 classifier results."""
+    from src.p3_ml_dashboard.report import format_results_summary
+
     st.markdown(
         f"""
         <div style="padding:2rem 0 1rem 0;">
@@ -1460,11 +1462,42 @@ def page_dashboard() -> None:
         """,
         unsafe_allow_html=True,
     )
-    _coming_soon_banner(
-        icon="◉",
-        title="Results dashboard — coming in Chunk 3",
-        body="Run a scan first to see the full security analysis dashboard with MRS, verdict, and layer breakdown.",
+    scan_result = st.session_state.get("scan_result")
+    if not isinstance(scan_result, dict) or "risk_summary" not in scan_result or "ml_results" not in scan_result:
+        _coming_soon_banner(
+            icon="◉",
+            title="No scan results yet",
+            body="Run a scan first to see the security analysis dashboard with MRS, verdict, and classifier evidence.",
+        )
+        return
+    risk_summary = scan_result["risk_summary"]
+    ml_results = scan_result["ml_results"]
+    if not isinstance(risk_summary, dict) or not isinstance(ml_results, dict):
+        _coming_soon_banner(
+            icon="◉",
+            title="No scan results yet",
+            body="Run a scan first to see the security analysis dashboard with MRS, verdict, and classifier evidence.",
+        )
+        return
+    verdict = risk_summary.get("verdict")
+    mrs_score = risk_summary.get("mrs_score")
+    s_static = risk_summary.get("s_static")
+    p_tamper = risk_summary.get("p_tamper")
+    s_behavior = risk_summary.get("s_behavior")
+    st.markdown(f"**Verdict:** {verdict}")
+    st.metric("MRS", f"{float(mrs_score):.2f}")
+    st.markdown(f"**Static score (S_static):** {float(s_static):.4f}")
+    st.markdown(f"**Tamper score (P_tamper):** {float(p_tamper):.4f}")
+    if s_behavior is None:
+        st.markdown("**Behavioral score (S_behavior):** N/A (quantized — behavioral probing skipped)")
+    else:
+        st.markdown(f"**Behavioral score (S_behavior):** {float(s_behavior):.4f}")
+    st.caption(
+        f"producer={risk_summary.get('producer')} "
+        f"mock_status={risk_summary.get('mock_status')} "
+        f"generation_commit={risk_summary.get('generation_commit')}"
     )
+    st.text(format_results_summary(scan_result))
 
 
 # ---------------------------------------------------------------------------
