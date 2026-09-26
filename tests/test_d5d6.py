@@ -124,3 +124,15 @@ def test_d5_is_deterministic_and_order_stable_for_unique_maximum():
 
     assert second_s == first_s
     assert second_layer == first_layer == EXPECTED_HIGHEST_RISK_LAYER
+
+def test_d5_fails_closed_when_no_layer_has_eligible_evidence():
+    """D5 must fail closed when every layer has only unavailable evidence."""
+    layers = []
+    for layer_name, _ in KS_BY_LAYER:
+        layer = {"layer_name": layer_name, "ks_stat": None}
+        for stat in FP_ONLY_STATS:
+            layer[stat] = None
+        layers.append(layer)
+
+    with pytest.raises(RuntimeError, match="No D7-valid layer evidence available for D5"):
+        compute_s_static_and_layer(layers)

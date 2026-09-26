@@ -84,6 +84,16 @@ def test_artifact_has_expected_top_level_keys():
     assert "calibration_data" in artifact
     assert "provenance" in artifact
 
+def test_replay_provenance_does_not_claim_new_measurement():
+    """The committed calibration artifact is a replay, not a fresh measurement."""
+    provenance = load_artifact()["provenance"]
+
+    assert provenance["new_measurement_performed"] is False
+    assert provenance["observations_replayed"] == {
+        "VISION": 30,
+        "NLP": 30,
+    }
+
 
 def test_both_domains_present():
     assert artifact_domains() == ["NLP", "VISION"]
