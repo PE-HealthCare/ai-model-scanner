@@ -25,7 +25,11 @@ Future chunks will implement:
 
 from __future__ import annotations
 
+from typing import Mapping
+
 import streamlit as st
+
+from src.p3_ml_dashboard.report import prepare_dashboard_results
 
 # ---------------------------------------------------------------------------
 # Page config — MUST be the first Streamlit call
@@ -782,6 +786,19 @@ def _init_session_state() -> None:
         if key not in st.session_state:
             st.session_state[key] = val
 
+
+def set_dashboard_results(
+    risk_results: Mapping[str, object],
+    ml_results: Mapping[str, object],
+    *,
+    session_state: dict[str, object] | None = None,
+) -> dict[str, object]:
+    """Validate and store scan results in Streamlit session_state."""
+    prepared = prepare_dashboard_results(risk_results, ml_results)
+    state = session_state if session_state is not None else st.session_state
+    state["scan_result"] = prepared
+    state["scan_status"] = "complete"
+    return prepared
 
 # ---------------------------------------------------------------------------
 # Sidebar

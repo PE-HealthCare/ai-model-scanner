@@ -185,3 +185,60 @@ def format_risk_summary(risk_results: Mapping[str, object]) -> dict[str, object]
         "p_tamper": float(p_tamper),
         "s_behavior": normalized_s_behavior,
     }
+
+
+def prepare_dashboard_results(
+    risk_results: Mapping[str, object],
+    ml_results: Mapping[str, object],
+) -> dict[str, object]:
+    """Combine and validate P2 risk_results and P3 ml_results for dashboard display.
+
+    Parameters
+    ----------
+    risk_results:
+        Mapping conforming to contracts/risk_results.schema.json.
+    ml_results:
+        Mapping conforming to contracts/ml_results.schema.json.
+
+    Returns
+    -------
+    dict[str, object]
+        Dashboard context mapping containing:
+        - "risk_summary": validated risk summary from format_risk_summary
+        - "ml_results": verified ml_results mapping
+    """
+    if not isinstance(ml_results, Mapping):
+        raise ValueError("ml_results must be a mapping")
+
+    risk_summary = format_risk_summary(risk_results)
+
+    ml_producer = ml_results.get("producer")
+    if ml_producer != "P3":
+        raise ValueError(f"ml_results producer must be 'P3', got: {ml_producer!r}")
+
+    ml_status = ml_results.get("mock_status")
+    if ml_status not in {"MOCK", "VERIFIED-REAL", "STALE"}:
+        raise ValueError(f"Invalid ml_results mock_status: {ml_status!r}")
+
+    ml_commit = ml_results.get("generation_commit")
+    if not isinstance(ml_commit, str) or not ml_commit:
+        raise ValueError("ml_results generation_commit must be a non-empty string")
+
+    p_tamper = ml_results.get("p_tamper")
+    if isinstance(p_tamper, bool) or not isinstance(p_tamper, (int, float)) or not math.isfinite(p_tamper):
+        raise ValueError(f"ml_results p_tamper must be a finite number, got: {p_tamper!r}")
+    if not (0.0 <= float(p_tamper) <= 1.0):
+        raise ValueError(f"ml_results p_tamper out of range [0, 1]: {p_tamper}")
+
+    shap_attributions = ml_results.get("shap_attributions")
+    if not isinstance(shap_attributions, Mapping):
+        raise ValueError("ml_results must contain a 'shap_attributions' mapping")
+
+    model_version = ml_results.get("model_version")
+    if not isinstance(model_version, str) or not model_version:
+        raise ValueError("ml_results model_version must be a non-empty string")
+
+    return {
+        "risk_summary": risk_summary,
+        "ml_results": dict(ml_results),
+    }
