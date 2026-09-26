@@ -99,8 +99,11 @@ class TestP3DashboardDataPath(unittest.TestCase):
         ml = _valid_p3_ml()
 
         prepared = prepare_dashboard_results(risk, ml)
-        self.assertNotIn("highest_risk_layer", prepared)
         self.assertNotIn("highest_risk_layer", prepared["risk_summary"])
+        self.assertNotIn("highest_risk_layer", prepared["ml_results"])
+        # Without P1 static_features, D6 honestly reports unavailable.
+        self.assertEqual(prepared["highest_risk_layer"], "unavailable")
+        self.assertIsNone(prepared["highest_risk_evidence"])
 
     def test_set_dashboard_results_in_session_state(self):
         import ast

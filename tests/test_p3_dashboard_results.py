@@ -74,7 +74,7 @@ class TestP3DashboardResultsPresentation(unittest.TestCase):
         self.assertIn("MRS: 87.65", text)
         lowered = text.lower()
         self.assertNotIn("highest_risk_layer", lowered)
-        self.assertIn("highest-risk layer: not available in current contracts", lowered)
+        self.assertIn("highest-risk layer: unavailable (no eligible per-layer evidence)", lowered)
 
     def test_rejects_missing_or_invalid_results(self):
         with self.assertRaises(ValueError):

@@ -22,9 +22,10 @@ Semantic constraints (frozen Sub-steps 1-4):
 from __future__ import annotations
 
 import math
-from typing import Mapping
+from typing import Mapping, Sequence
 
 from src.common.feature_names import FEATURE_NAMES
+from src.p3_ml_dashboard.d6_layer import select_highest_risk_layer
 from src.p3_ml_dashboard.tree_shap_explainer import (
     QUANTIZED_FEATURE_NAMES,
     explain_shap_attributions,
@@ -190,6 +191,7 @@ def format_risk_summary(risk_results: Mapping[str, object]) -> dict[str, object]
 def prepare_dashboard_results(
     risk_results: Mapping[str, object],
     ml_results: Mapping[str, object],
+    static_features: Sequence[Mapping[str, object]] | None = None,
 ) -> dict[str, object]:
     """Combine and validate P2 risk_results and P3 ml_results for dashboard display.
 
@@ -199,6 +201,10 @@ def prepare_dashboard_results(
         Mapping conforming to contracts/risk_results.schema.json.
     ml_results:
         Mapping conforming to contracts/ml_results.schema.json.
+    static_features:
+        Optional P1 ``static_features[]`` records (``contracts/features.schema.json``).
+        When provided, the P3-owned D6 selector derives the highest-risk layer;
+        when omitted, the D6 result is reported as ``unavailable``.
 
     Returns
     -------
@@ -206,6 +212,8 @@ def prepare_dashboard_results(
         Dashboard context mapping containing:
         - "risk_summary": validated risk summary from format_risk_summary
         - "ml_results": verified ml_results mapping
+        - "highest_risk_layer": authoritative layer_name or "unavailable"
+        - "highest_risk_evidence": winning E(l) or None
     """
     if not isinstance(ml_results, Mapping):
         raise ValueError("ml_results must be a mapping")
@@ -238,9 +246,16 @@ def prepare_dashboard_results(
     if not isinstance(model_version, str) or not model_version:
         raise ValueError("ml_results model_version must be a non-empty string")
 
+    if static_features is None:
+        d6_result: dict[str, object] = {"highest_risk_layer": "unavailable", "evidence": None}
+    else:
+        d6_result = select_highest_risk_layer(static_features)
+
     return {
         "risk_summary": risk_summary,
         "ml_results": dict(ml_results),
+        "highest_risk_layer": d6_result["highest_risk_layer"],
+        "highest_risk_evidence": d6_result["evidence"],
     }
 
 
@@ -282,6 +297,13 @@ def format_results_summary(prepared: Mapping[str, object]) -> str:
     else:
         behavior_line = f"Behavioral score (S_behavior): {float(s_behavior):.4f}"
 
+    highest_layer = prepared.get("highest_risk_layer", "unavailable")
+    highest_evidence = prepared.get("highest_risk_evidence")
+    if highest_layer == "unavailable" or highest_evidence is None:
+        highest_line = "Highest-risk layer: unavailable (no eligible per-layer evidence)"
+    else:
+        highest_line = f"Highest-risk layer: {highest_layer} (D6 evidence E(l)={float(highest_evidence):.4f})"
+
     lines = [
         "Scan results (P2 risk + P3 classifier evidence)",
         f"Verdict: {risk_summary.get('verdict')}",
@@ -300,6 +322,7 @@ def format_results_summary(prepared: Mapping[str, object]) -> str:
             f"generation_commit={ml_results.get('generation_commit')}"
         ),
         "Highest-risk layer: not available in current contracts",
+        highest_line,
         format_treemap_section(ml_results),
     ]
     return "\n".join(lines)

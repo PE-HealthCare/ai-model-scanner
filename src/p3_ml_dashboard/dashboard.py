@@ -25,7 +25,7 @@ Future chunks will implement:
 
 from __future__ import annotations
 
-from typing import Mapping
+from typing import Mapping, Sequence
 
 import streamlit as st
 
@@ -790,11 +790,12 @@ def _init_session_state() -> None:
 def set_dashboard_results(
     risk_results: Mapping[str, object],
     ml_results: Mapping[str, object],
+    static_features: Sequence[Mapping[str, object]] | None = None,
     *,
     session_state: dict[str, object] | None = None,
 ) -> dict[str, object]:
     """Validate and store scan results in Streamlit session_state."""
-    prepared = prepare_dashboard_results(risk_results, ml_results)
+    prepared = prepare_dashboard_results(risk_results, ml_results, static_features)
     state = session_state if session_state is not None else st.session_state
     state["scan_result"] = prepared
     state["scan_status"] = "complete"
@@ -1486,6 +1487,12 @@ def page_dashboard() -> None:
     s_behavior = risk_summary.get("s_behavior")
     st.markdown(f"**Verdict:** {verdict}")
     st.metric("MRS", f"{float(mrs_score):.2f}")
+    highest_layer = scan_result.get("highest_risk_layer", "unavailable")
+    highest_evidence = scan_result.get("highest_risk_evidence")
+    if highest_layer == "unavailable" or highest_evidence is None:
+        st.markdown("**Highest-risk layer:** unavailable (no eligible per-layer evidence)")
+    else:
+        st.markdown(f"**Highest-risk layer:** {highest_layer} (D6 evidence E(l)={float(highest_evidence):.4f})")
     st.markdown(f"**Static score (S_static):** {float(s_static):.4f}")
     st.markdown(f"**Tamper score (P_tamper):** {float(p_tamper):.4f}")
     if s_behavior is None:
