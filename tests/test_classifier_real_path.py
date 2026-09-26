@@ -81,8 +81,9 @@ def _real_features_payload(
     """Contract-valid VERIFIED-REAL P1 payload built by the current P1 extractor.
 
     Uses the *current* real P1 ResNet18 intake boundary for the test fixture, then
-    overwrites exactly one real layer tensor with a synthetic tensor so the payload
-    exercises the canonical 10-feature contract extraction path.
+    overwrites the selected real layer tensors with synthetic tensors so the payload
+    exercises the canonical 10-feature contract extraction path. Callers must
+    pass at least 3 tensors (P1 requires a >=3-layer selection).
     """
     from safetensors.torch import save_file
 
@@ -121,7 +122,7 @@ class TestRealClassifierPath(unittest.TestCase):
     def setUp(self):
         with (CONTRACT_DIR / "features.schema.json").open(encoding="utf-8") as fh:
             features_schema = json.load(fh)
-        Draft202012Validator(features_schema).validate(_real_features_payload([_tensor(0)]))
+        Draft202012Validator(features_schema).validate(_real_features_payload([_tensor(0), _tensor(1), _tensor(2)]))
         # --- LightGBM artifact loading (fail-closed) ----------------------------
 
     def test_committed_lightgbm_artifact_loads_with_canonical_features(self):
@@ -159,7 +160,7 @@ class TestRealClassifierPath(unittest.TestCase):
         )
         self.assertEqual(_load_final_model().feature_name(), list(FEATURE_NAMES))
 
-        feats = _real_features_payload([_tensor(3)])["static_features"][0]
+        feats = _real_features_payload([_tensor(3), _tensor(30), _tensor(31)])["static_features"][0]
         self.assertEqual(
             [k for k in feats.keys() if k != "layer_name"], list(FEATURE_NAMES)
         )
@@ -167,7 +168,7 @@ class TestRealClassifierPath(unittest.TestCase):
         # --- real path: LightGBM inference on real P1 features ------------------
 
     def test_build_ml_results_consumes_real_features(self):
-        features = _real_features_payload([_tensor(1), _tensor(2)])
+        features = _real_features_payload([_tensor(1), _tensor(2), _tensor(3)])
         result = build_ml_results(features, "TEST-GEN")
 
         self.assertTrue(0.0 <= result["p_tamper"] <= 1.0)
@@ -208,7 +209,7 @@ class TestRealClassifierPath(unittest.TestCase):
     def test_treeshap_maps_to_canonical_features_and_corresponds_to_prediction(self):
         import shap
 
-        features = _real_features_payload([_tensor(10), _tensor(11)])
+        features = _real_features_payload([_tensor(10), _tensor(11), _tensor(12)])
         model = _load_final_model()
         X = _feature_matrix(features)
         probs = np.asarray(model.predict(X), dtype=np.float64)
@@ -247,7 +248,7 @@ class TestRealClassifierPath(unittest.TestCase):
             build_ml_results(mock_features, "TEST")
 
     def test_rejects_non_p1_producer_and_stale_generation(self):
-        features = _real_features_payload([_tensor(4)])
+        features = _real_features_payload([_tensor(4), _tensor(40), _tensor(41)])
         foreign = copy.deepcopy(features)
         foreign["producer"] = "PX"
         with self.assertRaisesRegex(ValueError, "P1"):
@@ -256,7 +257,7 @@ class TestRealClassifierPath(unittest.TestCase):
             build_ml_results(features, "OTHER-COMMIT")
 
     def test_non_finite_feature_rejected_without_imputation(self):
-        features = _real_features_payload([_tensor(4)])
+        features = _real_features_payload([_tensor(4), _tensor(42), _tensor(43)])
         features["static_features"][0]["entropy"] = float("nan")
         with self.assertRaisesRegex(ValueError, "non-finite"):
             build_ml_results(features, "TEST-GEN")
@@ -264,7 +265,7 @@ class TestRealClassifierPath(unittest.TestCase):
     # --- determinism ---------------------------------------------------------
 
     def test_scoring_is_deterministic(self):
-        features = _real_features_payload([_tensor(5), _tensor(6)])
+        features = _real_features_payload([_tensor(5), _tensor(6), _tensor(7)])
         self.assertEqual(
             build_ml_results(features, "TEST-GEN"),
             build_ml_results(features, "TEST-GEN"),
@@ -272,7 +273,7 @@ class TestRealClassifierPath(unittest.TestCase):
         # --- contract compatibility of the real P3 payload ----------------------
 
     def test_real_ml_results_payload_is_contract_valid(self):
-        ml_results = build_ml_results(_real_features_payload([_tensor(5)]), "TEST-GEN")
+        ml_results = build_ml_results(_real_features_payload([_tensor(5), _tensor(50), _tensor(51)]), "TEST-GEN")
         with (CONTRACT_DIR / "ml_results.schema.json").open(encoding="utf-8") as fh:
             schema = json.load(fh)
         Draft202012Validator(schema).validate(ml_results)
@@ -424,25 +425,25 @@ class TestRealClassifierPath(unittest.TestCase):
     # --- CP4 §7: malformed-layer adversarial matrix --------------------------
 
     def test_feature_matrix_rejects_missing_feature_in_layer(self):
-        features = _real_features_payload([_tensor(4)])
+        features = _real_features_payload([_tensor(4), _tensor(44), _tensor(45)])
         del features["static_features"][0]["entropy"]
         with self.assertRaisesRegex(ValueError, "missing feature"):
             build_ml_results(features, "TEST-GEN")
 
     def test_feature_matrix_rejects_layer_count_mismatch(self):
-        features = _real_features_payload([_tensor(4), _tensor(5)])
+        features = _real_features_payload([_tensor(4), _tensor(5), _tensor(46)])
         features["layer_count"] = 1
         with self.assertRaisesRegex(ValueError, "layer_count"):
             build_ml_results(features, "TEST-GEN")
 
     def test_feature_matrix_rejects_missing_layer_name(self):
-        features = _real_features_payload([_tensor(4)])
+        features = _real_features_payload([_tensor(4), _tensor(47), _tensor(48)])
         del features["static_features"][0]["layer_name"]
         with self.assertRaisesRegex(ValueError, "layer_name"):
             build_ml_results(features, "TEST-GEN")
 
     def test_feature_matrix_rejects_empty_static_features(self):
-        features = _real_features_payload([_tensor(4)])
+        features = _real_features_payload([_tensor(4), _tensor(49), _tensor(52)])
         features["static_features"] = []
         features["layer_count"] = 0
         with self.assertRaisesRegex(ValueError, "non-empty list"):
@@ -453,7 +454,7 @@ class TestRealClassifierPath(unittest.TestCase):
         classifier reads exactly the canonical D1 fields by name. This is
         documented behavior, not a gap: unknown keys must not break or
         silently alter contract-valid scoring."""
-        features = _real_features_payload([_tensor(4)])
+        features = _real_features_payload([_tensor(4), _tensor(53), _tensor(54)])
         features["static_features"][0]["debug_note"] = "unexpected extra field"
         result = build_ml_results(features, "TEST-GEN")
         self.assertEqual(result["mock_status"], "VERIFIED-REAL")
@@ -503,7 +504,7 @@ class TestRealClassifierPath(unittest.TestCase):
     def test_malformed_ml_results_payload_fails_contract_schema(self):
         with (CONTRACT_DIR / "ml_results.schema.json").open(encoding="utf-8") as fh:
             schema = json.load(fh)
-        malformed = build_ml_results(_real_features_payload([_tensor(5)]), "TEST-GEN")
+        malformed = build_ml_results(_real_features_payload([_tensor(5), _tensor(55), _tensor(56)]), "TEST-GEN")
         del malformed["p_tamper"]  # required field per contract
         with self.assertRaises(Exception):
             Draft202012Validator(schema).validate(malformed)
