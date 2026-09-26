@@ -103,3 +103,85 @@ def format_treemap_section(
             )
             lines.append(f"     {attr.explanation}")
     return "\n".join(lines)
+
+
+def format_risk_summary(risk_results: Mapping[str, object]) -> dict[str, object]:
+    """Validate and present a parsed P2 risk_results payload for P3 presentation.
+
+    P3 is consumer-only: it performs no risk aggregation, no MRS calculation,
+    and no verdict assignment. Supplied decision values are preserved without
+    recalculation or alteration, while numeric values may be normalized to float
+    for the presentation mapping.
+
+    Parameters
+    ----------
+    risk_results:
+        Parsed mapping conforming to contracts/risk_results.schema.json.
+
+    Returns
+    -------
+    dict[str, object]
+        Normalized presentation dictionary containing the 9 contract fields.
+    """
+    if not isinstance(risk_results, Mapping):
+        raise ValueError("risk_results must be a mapping")
+
+    producer = risk_results.get("producer")
+    if producer != "P2":
+        raise ValueError(f"risk_results producer must be 'P2', got: {producer!r}")
+
+    mock_status = risk_results.get("mock_status")
+    if mock_status not in {"MOCK", "VERIFIED-REAL", "STALE"}:
+        raise ValueError(f"Invalid mock_status: {mock_status!r}")
+
+    verdict = risk_results.get("verdict")
+    if verdict not in {"PASS", "REVIEW", "FAIL"}:
+        raise ValueError(f"Invalid verdict: {verdict!r}")
+
+    mrs_score = risk_results.get("mrs_score")
+    if isinstance(mrs_score, bool) or not isinstance(mrs_score, (int, float)) or not math.isfinite(mrs_score):
+        raise ValueError(f"mrs_score must be a finite number, got: {mrs_score!r}")
+    if not (0.0 <= float(mrs_score) <= 100.0):
+        raise ValueError(f"mrs_score out of range [0, 100]: {mrs_score}")
+
+    s_static = risk_results.get("s_static")
+    if isinstance(s_static, bool) or not isinstance(s_static, (int, float)) or not math.isfinite(s_static):
+        raise ValueError(f"s_static must be a finite number, got: {s_static!r}")
+    if not (0.0 <= float(s_static) <= 1.0):
+        raise ValueError(f"s_static out of range [0, 1]: {s_static}")
+
+    p_tamper = risk_results.get("p_tamper")
+    if isinstance(p_tamper, bool) or not isinstance(p_tamper, (int, float)) or not math.isfinite(p_tamper):
+        raise ValueError(f"p_tamper must be a finite number, got: {p_tamper!r}")
+    if not (0.0 <= float(p_tamper) <= 1.0):
+        raise ValueError(f"p_tamper out of range [0, 1]: {p_tamper}")
+
+    s_behavior = risk_results.get("s_behavior")
+    if s_behavior is not None:
+        if isinstance(s_behavior, bool) or not isinstance(s_behavior, (int, float)) or not math.isfinite(s_behavior):
+            raise ValueError(f"s_behavior must be a finite number or None, got: {s_behavior!r}")
+        if not (0.0 <= float(s_behavior) <= 1.0):
+            raise ValueError(f"s_behavior out of range [0, 1]: {s_behavior}")
+        normalized_s_behavior: float | None = float(s_behavior)
+    else:
+        normalized_s_behavior = None
+
+    contract_version = risk_results.get("contract_version")
+    if not isinstance(contract_version, str) or not contract_version:
+        raise ValueError("contract_version must be a non-empty string")
+
+    generation_commit = risk_results.get("generation_commit")
+    if not isinstance(generation_commit, str) or not generation_commit:
+        raise ValueError("generation_commit must be a non-empty string")
+
+    return {
+        "producer": "P2",
+        "mock_status": str(mock_status),
+        "contract_version": str(contract_version),
+        "generation_commit": str(generation_commit),
+        "mrs_score": float(mrs_score),
+        "verdict": str(verdict),
+        "s_static": float(s_static),
+        "p_tamper": float(p_tamper),
+        "s_behavior": normalized_s_behavior,
+    }
