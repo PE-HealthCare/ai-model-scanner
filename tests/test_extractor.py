@@ -2,6 +2,7 @@ import unittest
 import math
 import numpy as np
 import torch
+from scipy import stats
 
 from src.p1_static_engine.analyzer import extract_features, TrustedModelContext
 
@@ -138,5 +139,132 @@ class TestExtractor(unittest.TestCase):
                 self.assertTrue(math.isfinite(value), f"{name} not finite")
 
 
+    def test_layer_names_filter_emits_exactly_selected_layers(self):
+        tensors = {
+            "l1": torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32),
+            "l2": torch.tensor([2.0, 3.0, 4.0], dtype=torch.float32),
+            "l3": torch.tensor([10.0, 100.0, -50.0], dtype=torch.float32),
+            "l4": torch.tensor([-8.0, 6.0, 7.0], dtype=torch.float32),
+        }
+        ctx = TrustedModelContext(MockModel(tensors), "resnet18", "VISION", False)
+
+        res = extract_features(ctx, "commit123", layer_names=["l3", "l1", "l4"])
+
+        self.assertEqual(
+            [feature["layer_name"] for feature in res["static_features"]],
+            ["l3", "l1", "l4"],
+        )
+        self.assertEqual(res["layer_count"], 3)
+
+    def test_layer_names_filter_layer_count_matches_selection(self):
+        tensors = {
+            "l1": torch.tensor([1.0, 2.0, 3.0]),
+            "l2": torch.tensor([2.0, 3.0, 4.0]),
+            "l3": torch.tensor([10.0, 100.0, -50.0]),
+            "l4": torch.tensor([-8.0, 6.0, 7.0]),
+            "l5": torch.tensor([11.0, 12.0, 13.0]),
+        }
+        ctx = TrustedModelContext(MockModel(tensors), "resnet18", "VISION", False)
+
+        res = extract_features(
+            ctx,
+            "commit123",
+            layer_names=["l1", "l3", "l5", "l2"],
+        )
+
+        self.assertEqual(res["layer_count"], 4)
+        self.assertEqual(len(res["static_features"]), 4)
+
+    def test_layer_names_filter_unknown_layer_fails_closed(self):
+        tensors = {
+            "l1": torch.tensor([1.0, 2.0, 3.0]),
+            "l2": torch.tensor([2.0, 3.0, 4.0]),
+            "l3": torch.tensor([10.0, 100.0, -50.0]),
+        }
+        ctx = TrustedModelContext(MockModel(tensors), "resnet18", "VISION", False)
+
+        with self.assertRaisesRegex(ValueError, "unknown layer requested"):
+            extract_features(
+                ctx,
+                "commit123",
+                layer_names=["l1", "l2", "missing"],
+            )
+
+    def test_layer_names_filter_fewer_than_three_fails_closed(self):
+        tensors = {
+            "l1": torch.tensor([1.0, 2.0, 3.0]),
+            "l2": torch.tensor([2.0, 3.0, 4.0]),
+            "l3": torch.tensor([10.0, 100.0, -50.0]),
+        }
+        ctx = TrustedModelContext(MockModel(tensors), "resnet18", "VISION", False)
+
+        with self.assertRaisesRegex(ValueError, "at least 3 layers"):
+            extract_features(
+                ctx,
+                "commit123",
+                layer_names=["l1", "l2"],
+            )
+
+    def test_layer_names_filter_empty_selection_fails_closed(self):
+        tensors = {
+            "l1": torch.tensor([1.0, 2.0, 3.0]),
+            "l2": torch.tensor([2.0, 3.0, 4.0]),
+            "l3": torch.tensor([10.0, 100.0, -50.0]),
+        }
+        ctx = TrustedModelContext(MockModel(tensors), "resnet18", "VISION", False)
+
+        with self.assertRaisesRegex(ValueError, "layer_names filter must be non-empty"):
+            extract_features(ctx, "commit123", layer_names=[])
+
+    def test_layer_names_filter_ks_reference_remains_full_model(self):
+        tensors = {
+            "l1": torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32),
+            "l2": torch.tensor([2.0, 3.0, 4.0], dtype=torch.float32),
+            "l3": torch.tensor([10.0, 100.0, -50.0], dtype=torch.float32),
+            "l4": torch.tensor([1000.0, 1001.0, 1002.0], dtype=torch.float32),
+        }
+        ctx = TrustedModelContext(MockModel(tensors), "resnet18", "VISION", False)
+
+        filtered = extract_features(
+            ctx,
+            "commit123",
+            layer_names=["l1", "l2", "l3"],
+        )
+        l1_filtered = next(
+            row for row in filtered["static_features"]
+            if row["layer_name"] == "l1"
+        )
+
+        selected = tensors["l1"].numpy()
+        full_reference = np.concatenate([
+            tensors["l2"].numpy(),
+            tensors["l3"].numpy(),
+            tensors["l4"].numpy(),
+        ])
+        expected_full_model_ks = float(
+            stats.ks_2samp(selected, full_reference).statistic
+        )
+
+        self.assertAlmostEqual(
+            l1_filtered["ks_stat"],
+            expected_full_model_ks,
+        )
+
+    def test_omitting_layer_names_preserves_full_model_behavior(self):
+        tensors = {
+            "l1": torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32),
+            "l2": torch.tensor([2.0, 3.0, 4.0], dtype=torch.float32),
+            "l3": torch.tensor([10.0, 100.0, -50.0], dtype=torch.float32),
+        }
+        ctx = TrustedModelContext(MockModel(tensors), "resnet18", "VISION", False)
+
+        implicit = extract_features(ctx, "commit123")
+        explicit = extract_features(
+            ctx,
+            "commit123",
+            layer_names=["l1", "l2", "l3"],
+        )
+
+        self.assertEqual(implicit, explicit)
 if __name__ == "__main__":
     unittest.main()
