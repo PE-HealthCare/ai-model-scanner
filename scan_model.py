@@ -30,7 +30,7 @@ import sys
 from pathlib import Path
 
 from src.common.utils import ROOT, get_generation_commit, validate_artifact
-from src.p1_static_engine.analyzer import extract_features, intake_model
+from src.p1_static_engine.analyzer import build_mock_features, extract_features, intake_model
 from src.p3_ml_dashboard.classifier import (
     build_ml_results,
     build_mock_ml_results,

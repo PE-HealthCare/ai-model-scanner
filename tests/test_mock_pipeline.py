@@ -268,16 +268,19 @@ class TestArtifactFailureModes(unittest.TestCase):
 class TestPipelineFailurePropagation(unittest.TestCase):
     def test_p1_failure_prevents_downstream(self):
         """Test P1 failure prevents P3/P2 execution."""
-        original_build = scan_model.build_mock_features
         def failing_build(generation_commit: str) -> NoReturn:
             raise RuntimeError("P1 Failure")
 
-        scan_model.build_mock_features = failing_build
-        try:
+        # Current architecture: P1 mock producer lives in
+        # src.p1_static_engine.analyzer.build_mock_features and is looked up
+        # as a scan_model global by run_mock_pipeline(). scan_model has no
+        # such attribute until set, so patch with create=True to preserve the
+        # failure-propagation intent without touching production code.
+        with mock.patch.object(
+            scan_model, "build_mock_features", failing_build, create=True
+        ):
             with self.assertRaisesRegex(RuntimeError, "P1 Failure"):
                 scan_model.run_mock_pipeline()
-        finally:
-            scan_model.build_mock_features = original_build
 
     def test_p3_failure_prevents_downstream(self):
         """Test P3 failure prevents downstream P2 execution."""
@@ -287,8 +290,15 @@ class TestPipelineFailurePropagation(unittest.TestCase):
 
         scan_model.build_mock_ml_results = failing_build #type: ignore[assignment]
         try:
-            with self.assertRaisesRegex(RuntimeError, "P3 Failure"):
-                scan_model.run_mock_pipeline()
+            # Test-only: seed the real P1 mock producer as a scan_model
+            # global so run_mock_pipeline() reaches the P3 stage, where the
+            # injected failure must stop the pipeline. Production code is
+            # untouched.
+            with mock.patch.object(
+                scan_model, "build_mock_features", build_mock_features, create=True
+            ):
+                with self.assertRaisesRegex(RuntimeError, "P3 Failure"):
+                    scan_model.run_mock_pipeline()
         finally:
             scan_model.build_mock_ml_results = original_build
 
@@ -306,6 +316,12 @@ class TestPipelineFailurePropagation(unittest.TestCase):
                 with mock.patch(
                     "src.p2_behavioral_risk.analyzer.run_assessment",
                     failing_run_assessment,
+                ), mock.patch.object(
+                    # Test-only: seed the real P1 mock producer as a
+                    # scan_model global so the pipeline reaches the P2
+                    # stage, where the injected P2 failure must propagate.
+                    # Production code is untouched.
+                    scan_model, "build_mock_features", build_mock_features, create=True
                 ):
                     with self.assertRaisesRegex(
                         RuntimeError,
@@ -333,8 +349,15 @@ class TestPipelineFailurePropagation(unittest.TestCase):
             scan_model._write_json = failing_write
 
             try:
-                with self.assertRaises(FileNotFoundError):
-                    scan_model.run_mock_pipeline()
+                # Test-only: seed the real P1 mock producer as a scan_model
+                # global so the pipeline reaches the persistence stage, where
+                # the broken writer must halt the run. Production code is
+                # untouched.
+                with mock.patch.object(
+                    scan_model, "build_mock_features", build_mock_features, create=True
+                ):
+                    with self.assertRaises(FileNotFoundError):
+                        scan_model.run_mock_pipeline()
             finally:
                 scan_model._write_json = original_write
                 scan_model.OUTPUT_DIR = original_output_dir
