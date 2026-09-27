@@ -18,9 +18,11 @@ Chunk 2 implements:
       Step 2: Configure domain / precision / architecture
       Step 3: Review & Begin Security Scan
 
-Future chunks will implement:
-    - Dashboard / results  (Chunk 3)
-    - Evidence & Explainability  (Chunk 4)
+Stage 3 implements:
+    - Dashboard results presentation from prepared P2 risk + P3 classifier
+      results (scan_model.py -> prepare_dashboard_results(...) ->
+      dashboard_results)
+    - Evidence / Explainability pages remain future placeholders.
 """
 
 from __future__ import annotations
@@ -1441,7 +1443,7 @@ def page_scan_model() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Page: Dashboard (stub — Chunk 3)
+# Page: Dashboard (results presentation)
 # ---------------------------------------------------------------------------
 
 def page_dashboard() -> None:
@@ -1508,11 +1510,11 @@ def page_dashboard() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Page: Evidence (stub — Chunk 4)
+# Page: Evidence (placeholder — future work)
 # ---------------------------------------------------------------------------
 
 def page_evidence() -> None:
-    """Evidence page — to be implemented in Chunk 4."""
+    """Evidence page — placeholder for future work."""
     st.markdown(
         f"""
         <div style="padding:2rem 0 1rem 0;">
@@ -1530,17 +1532,17 @@ def page_evidence() -> None:
     )
     _coming_soon_banner(
         icon="◎",
-        title="Evidence viewer — coming in Chunk 4",
+        title="Evidence viewer — not yet available",
         body="Per-layer statistical evidence, SHAP feature attribution, and behavioral signal breakdown.",
     )
 
 
 # ---------------------------------------------------------------------------
-# Page: Explainability (stub — Chunk 4)
+# Page: Explainability (placeholder — future work)
 # ---------------------------------------------------------------------------
 
 def page_explainability() -> None:
-    """Explainability page — to be implemented in Chunk 4."""
+    """Explainability page — placeholder for future work."""
     st.markdown(
         f"""
         <div style="padding:2rem 0 1rem 0;">
@@ -1558,7 +1560,7 @@ def page_explainability() -> None:
     )
     _coming_soon_banner(
         icon="◍",
-        title="Explainability — coming in Chunk 4",
+        title="Explainability — not yet available",
         body="TreeSHAP waterfall charts, highest-risk-layer attribution, and feature importance breakdown.",
     )
 

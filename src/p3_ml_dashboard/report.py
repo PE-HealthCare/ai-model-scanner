@@ -321,7 +321,6 @@ def format_results_summary(prepared: Mapping[str, object]) -> str:
             f"ML evidence: model_version={ml_results.get('model_version')} "
             f"generation_commit={ml_results.get('generation_commit')}"
         ),
-        "Highest-risk layer: not available in current contracts",
         highest_line,
         format_treemap_section(ml_results),
     ]

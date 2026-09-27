@@ -24,9 +24,12 @@ document docs/D10_P3_REMAINING_WORK_CROSS_VERIFICATION.md):
       evidence only and never selects the D6 layer.
     - The public ml_results schema stays closed: no
       classifier_evidence_layer field is added (D10 decision doc #8).
-    - Quantized classifier support remains blocked at the upstream P1
-      contract boundary (D10 decision doc #6); no quantized path is
-      fabricated here.
+    - The quantized classifier path is implemented as the locked D11
+      ks_stat-only path: P1 quantized features expose ks_stat only,
+      train_quantized_classifier / build_quantized_ml_results use the
+      dedicated quantized LightGBM artifact
+      (artifacts/lightgbm_model_quantized.txt), and quantized models bypass
+      behavioral probing downstream.
 
 Dependencies: LightGBM/SHAP are D9-locked direct dependencies
 (lightgbm==4.3.0, shap==0.45.1). They are imported lazily so the Phase-1
