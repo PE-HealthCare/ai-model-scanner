@@ -87,10 +87,32 @@ def _validated_p2_step(produce, out_name: str, schema_name: str) -> Path:
     return artifact_path
 
 
+def _deliver_validated_risk_to_p3(
+    risk_path: Path, ml_path: Path, features_path: Path
+) -> dict:
+    """Hand the validated P2 risk artifact to the existing P3 consumer.
+
+    The P2 validation step above already schema-validated ``risk_results.json``;
+    this helper only parses the validated files into in-memory mappings and
+    passes them to the existing P3 mapping-level API. P3 itself never touches
+    the filesystem here. Any parse or consumer failure propagates (fail-closed);
+    nothing is silently swallowed and P2 validation is not duplicated.
+    """
+    risk_results = json.loads(risk_path.read_text(encoding="utf-8"))
+    ml_results = json.loads(ml_path.read_text(encoding="utf-8"))
+    features_doc = json.loads(features_path.read_text(encoding="utf-8"))
+    static_features = features_doc.get("static_features")
+    from src.p3_ml_dashboard.report import prepare_dashboard_results
+
+    return prepare_dashboard_results(
+        risk_results, ml_results, static_features
+    )
+
+
 def run_pipeline(
     model_path: str | Path,
     declared_architecture: str = "resnet18",
-) -> dict[str, Path]:
+) -> dict[str, object]:
     """End-to-end zero-trust scan of a SafeTensors artifact.
 
     ``declared_architecture`` is an explicit declaration, never a detected
@@ -145,7 +167,15 @@ def run_pipeline(
         "risk_results.json",
         "risk_results.schema.json",
     )
-    return {"features": features_path, "ml_results": ml_path, "risk_results": risk_path}
+    dashboard_results = _deliver_validated_risk_to_p3(
+        risk_path, ml_path, features_path
+    )
+    return {
+        "features": features_path,
+        "ml_results": ml_path,
+        "risk_results": risk_path,
+        "dashboard_results": dashboard_results,
+    }
 
 
 def run_mock_pipeline() -> dict[str, Path]:
