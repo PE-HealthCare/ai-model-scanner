@@ -106,6 +106,62 @@ def format_treemap_section(
     return "\n".join(lines)
 
 
+def build_why_flagged_rows(
+    ml_results: Mapping[str, object],
+    *,
+    top_n: int | None = None,
+) -> list[dict[str, object]]:
+    """Build structured, ranked ``Why Flagged?`` evidence rows for display.
+
+    P3 is presentation-only. This delegates verbatim to the frozen explainer
+    through the same path :func:`format_treemap_section` uses, so it never
+    re-derives, re-ranks, or re-words attribution evidence. It performs no
+    detection, classification, MRS/verdict computation, or D6
+    highest-risk-layer selection.
+
+    Parameters
+    ----------
+    ml_results:
+        Validated ``ml_results`` payload mapping containing at minimum a
+        ``shap_attributions`` mapping.
+    top_n:
+        Optional positive integer forwarded to the frozen explainer to bound
+        the ranked attribution list.
+
+    Returns
+    -------
+    list[dict[str, object]]
+        Ranked rows in explainer order with a 1-based ``rank``, or ``[]``
+        when every attribution is zero (``TreeSHAPSummary.all_zero``).
+    """
+    if not isinstance(ml_results, Mapping):
+        raise ValueError("ml_results must be a mapping")
+    shap_attributions = ml_results.get("shap_attributions")
+    if not isinstance(shap_attributions, Mapping):
+        raise ValueError("ml_results must contain a 'shap_attributions' mapping")
+
+    is_quantized = _resolve_is_quantized(set(shap_attributions.keys()))
+    summary = explain_shap_attributions(
+        shap_attributions,
+        is_quantized=is_quantized,
+        top_n=top_n,
+    )
+    if summary.all_zero:
+        return []
+
+    return [
+        {
+            "rank": rank,
+            "feature": attr.ui_label,
+            "feature_name": attr.feature_name,
+            "shap_value": attr.shap_value,
+            "direction": attr.direction,
+            "explanation": attr.explanation,
+        }
+        for rank, attr in enumerate(summary.attributions, 1)
+    ]
+
+
 def format_risk_summary(risk_results: Mapping[str, object]) -> dict[str, object]:
     """Validate and present a parsed P2 risk_results payload for P3 presentation.
 

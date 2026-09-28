@@ -84,6 +84,43 @@ class TestP3DashboardResultsPresentation(unittest.TestCase):
         with self.assertRaises(ValueError):
             format_results_summary({"risk_summary": {}, "ml_results": {}})
 
+    def test_why_flagged_rows_are_ranked_and_match_frozen_explainer(self):
+        from src.p3_ml_dashboard.report import build_why_flagged_rows
+        from src.p3_ml_dashboard.tree_shap_explainer import explain_shap_attributions
+
+        shap = {name: 0.01 for name in FEATURE_NAMES}
+        shap["entropy"] = 0.9
+        shap["std"] = -0.4
+        ml = _valid_p3_ml(shap_attributions=shap)
+        rows = build_why_flagged_rows(ml)
+
+        self.assertEqual([r["rank"] for r in rows], list(range(1, len(rows) + 1)))
+        self.assertEqual(rows[0]["feature_name"], "entropy")
+        self.assertEqual(rows[0]["direction"], "POSITIVE")
+        self.assertEqual(rows[1]["feature_name"], "std")
+        self.assertEqual(rows[1]["direction"], "NEGATIVE")
+
+        # Presentation only: rows must equal the frozen explainer output verbatim.
+        expected = explain_shap_attributions(ml["shap_attributions"], is_quantized=False)
+        self.assertEqual(
+            [r["explanation"] for r in rows],
+            [a.explanation for a in expected.attributions],
+        )
+
+        # Honest empty state when every attribution is zero.
+        zero_ml = _valid_p3_ml(shap_attributions={name: 0.0 for name in FEATURE_NAMES})
+        self.assertEqual(build_why_flagged_rows(zero_ml), [])
+
+    def test_why_flagged_rows_top_n_bounds_ranking(self):
+        from src.p3_ml_dashboard.report import build_why_flagged_rows
+
+        shap = {name: 0.01 for name in FEATURE_NAMES}
+        shap["entropy"] = 0.9
+        rows = build_why_flagged_rows(_valid_p3_ml(shap_attributions=shap), top_n=3)
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(rows[0]["feature_name"], "entropy")
+        self.assertEqual([r["rank"] for r in rows], [1, 2, 3])
+
 
 if __name__ == "__main__":
     unittest.main()

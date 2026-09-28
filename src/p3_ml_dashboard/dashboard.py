@@ -1448,7 +1448,7 @@ def page_scan_model() -> None:
 
 def page_dashboard() -> None:
     """Dashboard page — renders prepared P2 risk + P3 classifier results."""
-    from src.p3_ml_dashboard.report import format_results_summary
+    from src.p3_ml_dashboard.report import build_why_flagged_rows
 
     st.markdown(
         f"""
@@ -1506,7 +1506,17 @@ def page_dashboard() -> None:
         f"mock_status={risk_summary.get('mock_status')} "
         f"generation_commit={risk_summary.get('generation_commit')}"
     )
-    st.text(format_results_summary(scan_result))
+    st.markdown("**Why Flagged?**")
+    why_flagged_rows = build_why_flagged_rows(ml_results, top_n=5)
+    if why_flagged_rows:
+        st.dataframe(why_flagged_rows, use_container_width=True, hide_index=True)
+    else:
+        st.info("No non-zero feature attributions: the prediction matches the model baseline.")
+    st.caption(
+        "Ranked TreeSHAP attributions (classifier evidence only) describe how each feature "
+        "moved the classifier score relative to the model baseline. They are not proof that "
+        "a feature is malicious, abnormal, or tampered."
+    )
 
 
 # ---------------------------------------------------------------------------
