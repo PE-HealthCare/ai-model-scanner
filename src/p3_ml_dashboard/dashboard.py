@@ -1506,6 +1506,24 @@ def page_dashboard() -> None:
         f"mock_status={risk_summary.get('mock_status')} "
         f"generation_commit={risk_summary.get('generation_commit')}"
     )
+    st.markdown("**Benign-vs-Suspicious Model Assessment**")
+    if p_tamper is None:
+        st.markdown("**Classifier class scores:** N/A (no P_tamper score available)")
+    else:
+        clean_score = 1.0 - float(p_tamper)
+        col_suspicious, col_clean = st.columns(2)
+        with col_suspicious:
+            st.metric("Suspicious score", f"{float(p_tamper):.4f}")
+        with col_clean:
+            st.metric("Clean score", f"{clean_score:.4f}")
+    st.caption(
+        "Suspicious score is the P3 classifier's P_tamper class score for this model; Clean "
+        "score is its complement (1 - P_tamper) for the same model. Both are classifier class "
+        "scores only: they are not malware probabilities, not a verdict, and not a comparison "
+        "against an external clean reference model. This panel is presentation-only and does "
+        "not assert that a model is malicious or backdoored; it does not affect the scanner "
+        "verdict."
+    )
     st.markdown("**Security Finding Categories**")
     finding_categories = build_finding_categories(scan_result)
     if finding_categories:
