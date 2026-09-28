@@ -162,6 +162,135 @@ def build_why_flagged_rows(
     ]
 
 
+# ---------------------------------------------------------------------------
+# Security finding categories (presentation-only, no new detection)
+# ---------------------------------------------------------------------------
+
+CATEGORY_FEATURES: dict[str, tuple[str, ...]] = {
+    "bit_plane_lsb": ("pov_chi2", "lsb_kl"),
+    "byte_distribution": ("entropy",),
+    "layer_divergence": ("ks_stat",),
+    "weight_value_distribution": (
+        "mean",
+        "std",
+        "skewness",
+        "kurtosis",
+        "sparsity",
+        "outlier_pct",
+    ),
+}
+
+CATEGORY_LABELS: dict[str, str] = {
+    "bit_plane_lsb": "Bit-plane / LSB indicator evidence",
+    "byte_distribution": "Byte-distribution evidence",
+    "layer_divergence": "Layer-distribution divergence evidence",
+    "weight_value_distribution": "Weight-value distribution evidence",
+}
+
+_QUANTIZED_CATEGORY_ID = "layer_divergence"
+
+_NO_EVIDENCE_LABEL = "No non-zero attribution"
+_PRESENT_LABEL = "Attribution evidence present"
+_NOT_EVALUATED_LABEL = "Not evaluated (quantized)"
+
+
+def build_finding_categories(
+    prepared: Mapping[str, object],
+) -> list[dict[str, object]]:
+    """Group existing TreeSHAP attributions into attribution-only categories.
+
+    Presentation-only. Every value is echoed from the frozen explainer output
+    for the already-validated ``prepared`` context. This function invents no
+    detector, no threshold, no severity level, and no score, and it recomputes
+    no MRS, verdict, ``p_tamper``, or D6 highest-risk-layer selection.
+
+    Only ``prepared["ml_results"]`` is consulted. ``highest_risk_layer`` and
+    ``highest_risk_evidence`` are deliberately ignored: the D6 selected layer
+    and the D10 explained layer are different layers chosen by different
+    rules, and the public contract withholds the explained-layer identity, so
+    categories are never associated with a layer.
+
+    Labels describe the *kind of evidence* a feature family represents, never
+    that manipulation, malware, a backdoor, or steganographic embedding was
+    detected.
+
+    Parameters
+    ----------
+    prepared:
+        Dashboard context mapping from :func:`prepare_dashboard_results`.
+
+    Returns
+    -------
+    list[dict[str, object]]
+        One row per category, in :data:`CATEGORY_FEATURES` order. Returns
+        ``[]`` when every attribution is zero
+        (``TreeSHAPSummary.all_zero``). For quantized payloads only the
+        ``layer_divergence`` family is evaluated; the remaining families report
+        ``NOT_EVALUATED_QUANTIZED`` rather than claiming no evidence exists.
+    """
+    if not isinstance(prepared, Mapping):
+        raise ValueError("prepared dashboard results must be a mapping")
+    ml_results = prepared.get("ml_results")
+    if not isinstance(ml_results, Mapping):
+        raise ValueError("prepared dashboard results must contain an 'ml_results' mapping")
+    shap_attributions = ml_results.get("shap_attributions")
+    if not isinstance(shap_attributions, Mapping):
+        raise ValueError("ml_results must contain a 'shap_attributions' mapping")
+
+    is_quantized = _resolve_is_quantized(set(shap_attributions.keys()))
+    summary = explain_shap_attributions(shap_attributions, is_quantized=is_quantized)
+    if summary.all_zero:
+        return []
+
+    by_feature = {attr.feature_name: attr for attr in summary.attributions}
+
+    rows: list[dict[str, object]] = []
+    for category_id, features in CATEGORY_FEATURES.items():
+        row: dict[str, object] = {
+            "category_id": category_id,
+            "category": CATEGORY_LABELS[category_id],
+            "features": ", ".join(features),
+            "feature_count": len(features),
+        }
+
+        if is_quantized and category_id != _QUANTIZED_CATEGORY_ID:
+            row.update(
+                status="NOT_EVALUATED_QUANTIZED",
+                status_label=_NOT_EVALUATED_LABEL,
+                top_feature=None,
+                max_abs_shap=None,
+                direction=None,
+            )
+            rows.append(row)
+            continue
+
+        members = [by_feature[name] for name in features if name in by_feature]
+        if not members:
+            row.update(
+                status="NO_ATTRIBUTION",
+                status_label=_NO_EVIDENCE_LABEL,
+                top_feature=None,
+                max_abs_shap=None,
+                direction=None,
+            )
+            rows.append(row)
+            continue
+
+        # Deterministic: ``members`` is already in canonical Master Graph order,
+        # so max() resolves an exact tie to the earliest canonical feature.
+        top = max(members, key=lambda attr: attr.abs_shap_value)
+        row.update(
+            status="EVIDENCE_PRESENT",
+            status_label=_PRESENT_LABEL,
+            top_feature=top.ui_label,
+            max_abs_shap=float(top.abs_shap_value),
+            direction=top.direction,
+        )
+        rows.append(row)
+
+    return rows
+
+
 def format_risk_summary(risk_results: Mapping[str, object]) -> dict[str, object]:
     """Validate and present a parsed P2 risk_results payload for P3 presentation.
 

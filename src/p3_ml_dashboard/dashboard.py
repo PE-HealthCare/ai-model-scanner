@@ -1448,7 +1448,7 @@ def page_scan_model() -> None:
 
 def page_dashboard() -> None:
     """Dashboard page — renders prepared P2 risk + P3 classifier results."""
-    from src.p3_ml_dashboard.report import build_why_flagged_rows
+    from src.p3_ml_dashboard.report import build_finding_categories, build_why_flagged_rows
 
     st.markdown(
         f"""
@@ -1505,6 +1505,18 @@ def page_dashboard() -> None:
         f"producer={risk_summary.get('producer')} "
         f"mock_status={risk_summary.get('mock_status')} "
         f"generation_commit={risk_summary.get('generation_commit')}"
+    )
+    st.markdown("**Security Finding Categories**")
+    finding_categories = build_finding_categories(scan_result)
+    if finding_categories:
+        st.dataframe(finding_categories, use_container_width=True, hide_index=True)
+    else:
+        st.info("No non-zero feature attributions: no evidence categories are available.")
+    st.caption(
+        "Categories group existing TreeSHAP attributions by the kind of evidence they "
+        "represent. They are classifier evidence only, are not a verdict, are not "
+        "associated with the highest-risk layer above, and do not assert that a model "
+        "is malicious, backdoored, or tampered."
     )
     st.markdown("**Why Flagged?**")
     why_flagged_rows = build_why_flagged_rows(ml_results, top_n=5)
