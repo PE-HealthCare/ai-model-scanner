@@ -6,6 +6,8 @@ from jsonschema.exceptions import ValidationError
 
 from src.common.utils import ROOT
 from src.p1_static_engine.analyzer import build_mock_features
+from src.p1_static_engine.analyzer import TrustedModelContext, extract_features
+import torch
 
 
 class TestFeaturesSchemaLayerBaseline(unittest.TestCase):
@@ -27,6 +29,21 @@ class TestFeaturesSchemaLayerBaseline(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             Draft202012Validator(self.schema).validate(features)
+
+    def test_b1_extension_is_schema_valid_without_changing_b0_mock_contract(self):
+        class Model:
+            def state_dict(self):
+                return {
+                    "l1": torch.tensor([1., 2., 3.]),
+                    "l2": torch.tensor([2., 3., 4.]),
+                    "l3": torch.tensor([3., 4., 5.]),
+                }
+
+        features = extract_features(
+            TrustedModelContext(Model(), "resnet18", "VISION", False),
+            "TEST", feature_set="b1",
+        )
+        Draft202012Validator(self.schema).validate(features)
 
 
 if __name__ == "__main__":

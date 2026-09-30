@@ -1,0 +1,1822 @@
+{
+  "score_source": "PROMPT3C_FULL_OOF",
+  "threshold_selection_data": "DEVELOPMENT_ONLY",
+  "selected": {
+    "threshold": 3.180525532491262,
+    "TN": 12,
+    "FP": 1,
+    "FN": 0,
+    "TP": 52,
+    "clean_specificity": 0.9230769230769231,
+    "tampered_recall": 1.0,
+    "balanced_accuracy": 0.9615384615384616,
+    "overall_accuracy": 0.9846153846153847
+  },
+  "records": [
+    {
+      "file": "data/training/sources/behradg_resnet18_mri_brain_canonical.safetensors",
+      "artifact_sha256": "288e18d81535bf0eb741ed5d5b4c4add8809da8b1188873895241f2fd0360927",
+      "source_model_id": "behradg-resnet18-mri-brain",
+      "parent_lineage_id": "unverified-behradg-resnet18-mri-brain",
+      "partition": "DEVELOPMENT",
+      "attack_family": "CLEAN",
+      "attack_strength": null,
+      "label": 0,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9925409579033297,
+        "max_window_printable_fraction": 0.39501953125,
+        "max_window_byte_chi2": 332.25,
+        "max_window_transition_deviation": 0.009567552720725125,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/sources/gaborcselle_font_identifier_canonical.safetensors",
+      "artifact_sha256": "2de1028065336861a7ec15ffaed60dc3a0499287ea30cc50882fc38cf88ba93b",
+      "source_model_id": "gaborcselle-font-identifier",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "CLEAN",
+      "attack_strength": null,
+      "label": 0,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9928123859925675,
+        "max_window_printable_fraction": 0.392578125,
+        "max_window_byte_chi2": 315.875,
+        "max_window_transition_deviation": 0.010940885647145016,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/sources/iust1n2_resnet18_wikiart_canonical.safetensors",
+      "artifact_sha256": "e433f5ae18db707128f27f57872e5db533c699a64730b100bcf98b3acf0cbe16",
+      "source_model_id": "iust1n2-resnet18-wikiart",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "CLEAN",
+      "attack_strength": null,
+      "label": 0,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9924370064707908,
+        "max_window_printable_fraction": 0.39453125,
+        "max_window_byte_chi2": 338.625,
+        "max_window_transition_deviation": 0.008224738303781232,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/sources/kgoli_resnet18_fraud_canonical.safetensors",
+      "artifact_sha256": "c180f8190f2271f9c2be350ce36a3741ae871b55c66d96300ff592af27b27a32",
+      "source_model_id": "kgoli-resnet18-fraud",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "CLEAN",
+      "attack_strength": null,
+      "label": 0,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9928426215093166,
+        "max_window_printable_fraction": 0.390625,
+        "max_window_byte_chi2": 323.0,
+        "max_window_transition_deviation": 0.010238959929197045,
+        "max_window_repeat_fraction": 0.01171875
+      }
+    },
+    {
+      "file": "data/training/sources/man1103_resnet18_petimages.safetensors",
+      "artifact_sha256": "5f7135382ab18abf77a666b5b2708b74de4598854417a99d9f819bef7c34dd52",
+      "source_model_id": "man1103-resnet18-petimages",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "CLEAN",
+      "attack_strength": null,
+      "label": 0,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9923587901575424,
+        "max_window_printable_fraction": 0.39404296875,
+        "max_window_byte_chi2": 339.125,
+        "max_window_transition_deviation": 0.010330515457625089,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/sources/microsoft_resnet18_imagenet1k_canonical.safetensors",
+      "artifact_sha256": "8646a223bac46def53f3a333fd1b7389315dffe664b4dc26925d9b87b7c72779",
+      "source_model_id": "microsoft-resnet-18-imagenet1k",
+      "parent_lineage_id": "torchvision-resnet18-imagenet1k-v1",
+      "partition": "DEVELOPMENT",
+      "attack_family": "CLEAN",
+      "attack_strength": null,
+      "label": 0,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9923587901575424,
+        "max_window_printable_fraction": 0.3935546875,
+        "max_window_byte_chi2": 339.125,
+        "max_window_transition_deviation": 0.008590960417493188,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/sources/robertz2011_resnet18_birb_canonical.safetensors",
+      "artifact_sha256": "50fb50b681859587e7dfeaa948f3f74d81fec842c7d802775058c7bb9f482ae1",
+      "source_model_id": "robertz2011-resnet18-birb",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "CLEAN",
+      "attack_strength": null,
+      "label": 0,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9927025182369364,
+        "max_window_printable_fraction": 0.39501953125,
+        "max_window_byte_chi2": 323.25,
+        "max_window_transition_deviation": 0.008774071474349165,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/sources/stomoya_resnet18_st_safebooru_1k.safetensors",
+      "artifact_sha256": "7681a9e4bb19f0deb04ee3745e2c8f45a8bedbb873ecf2376ed81acb270dcd2a",
+      "source_model_id": "stomoya-resnet18-st-safebooru-1k",
+      "parent_lineage_id": "stomoya-resnet18-st-safebooru-1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "CLEAN",
+      "attack_strength": null,
+      "label": 0,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9925651122257853,
+        "max_window_printable_fraction": 0.393798828125,
+        "max_window_byte_chi2": 328.25,
+        "max_window_transition_deviation": 0.00782799768059328,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/sources/timm_resnet18_a2_in1k.safetensors",
+      "artifact_sha256": "38d21c4e4c443c4840804f6dd33bb9df2659c0d1480e610ddee9af23bee4d5b6",
+      "source_model_id": "timm-resnet18-a2-in1k",
+      "parent_lineage_id": "timm-resnet18-a2-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "CLEAN",
+      "attack_strength": null,
+      "label": 0,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9910762831491852,
+        "max_window_printable_fraction": 0.39990234375,
+        "max_window_byte_chi2": 437.25,
+        "max_window_transition_deviation": 0.011520737327188946,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/sources/timm_resnet18_fb_ssl_yfcc100m_ft_in1k.safetensors",
+      "artifact_sha256": "94399bb8c40388c4c6e2b551e706503ade7cb3816a2b67c9a99cbdd19dce97cb",
+      "source_model_id": "timm-resnet18-fb-ssl-yfcc100m-ft-in1k",
+      "parent_lineage_id": "timm-resnet18-fb-ssl-yfcc100m-ft-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "CLEAN",
+      "attack_strength": null,
+      "label": 0,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9924940853317719,
+        "max_window_printable_fraction": 0.3916015625,
+        "max_window_byte_chi2": 336.125,
+        "max_window_transition_deviation": 0.007339701528977338,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/sources/timm_resnet18_fb_swsl_ig1b_ft_in1k.safetensors",
+      "artifact_sha256": "69834a6388a8f9a929176775935920a8b1925c1a9b834ea4208b6e749b9bc20f",
+      "source_model_id": "timm-resnet18-fb-swsl-ig1b-ft-in1k",
+      "parent_lineage_id": "timm-resnet18-fb-swsl-ig1b-ft-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "CLEAN",
+      "attack_strength": null,
+      "label": 0,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9928977007378943,
+        "max_window_printable_fraction": 0.39453125,
+        "max_window_byte_chi2": 319.875,
+        "max_window_transition_deviation": 0.009140293588061121,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/sources/timm_resnet18_gluon_in1k.safetensors",
+      "artifact_sha256": "6991fcc0c58379a8496f6273b2f211e492f6af6494041fded649a482772ad2bf",
+      "source_model_id": "timm-resnet18-gluon-in1k",
+      "parent_lineage_id": "timm-resnet18-gluon-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "CLEAN",
+      "attack_strength": null,
+      "label": 0,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9924936689265763,
+        "max_window_printable_fraction": 0.395751953125,
+        "max_window_byte_chi2": 336.5,
+        "max_window_transition_deviation": 0.008133182775353243,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/sources/wcosmas_resnet18_papsmear_canonical.safetensors",
+      "artifact_sha256": "ce72dc4fdd0348fbe77a771a89b58bcbab05a0976a7fff21e7d392d89d724947",
+      "source_model_id": "wcosmas-resnet18-papsmear",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "CLEAN",
+      "attack_strength": null,
+      "label": 0,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9923835114810263,
+        "max_window_printable_fraction": 0.394287109375,
+        "max_window_byte_chi2": 340.25,
+        "max_window_transition_deviation": 0.008102664265877246,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/8ce8fd79b1064148863d3d9e.safetensors",
+      "artifact_sha256": "fe0cd4ff948b30bfca02cccf73a59baf4b637fff3bbcf6fe59038c184024fb0c",
+      "source_model_id": "behradg-resnet18-mri-brain",
+      "parent_lineage_id": "unverified-behradg-resnet18-mri-brain",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.005,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5342264560503046,
+        "max_window_printable_fraction": 0.5751953125,
+        "max_window_byte_chi2": 66458.375,
+        "max_window_transition_deviation": 0.10319833979308446,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/b5319144de2ad8b77cc70d51.safetensors",
+      "artifact_sha256": "e8b0a8336d90fd136d5d74b7ec3943912c78b4b378c93d8118b6215be12ec83d",
+      "source_model_id": "behradg-resnet18-mri-brain",
+      "parent_lineage_id": "unverified-behradg-resnet18-mri-brain",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.01,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5342264560503046,
+        "max_window_printable_fraction": 0.5751953125,
+        "max_window_byte_chi2": 66470.875,
+        "max_window_transition_deviation": 0.10319833979308446,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/6ac5df61bb39ed08b915fd5f.safetensors",
+      "artifact_sha256": "414a5bb6dc18176cfdc5eb5bc56ebedbf126dcb90b2bd05a54b9a83cbba65d09",
+      "source_model_id": "behradg-resnet18-mri-brain",
+      "parent_lineage_id": "unverified-behradg-resnet18-mri-brain",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.02,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5342264560503046,
+        "max_window_printable_fraction": 0.5751953125,
+        "max_window_byte_chi2": 66470.875,
+        "max_window_transition_deviation": 0.10319833979308446,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/55b178a7fb210a068ab72020.safetensors",
+      "artifact_sha256": "99cdee5b72409b7f171b8182fa2803217131b250d056253b9fbb2a23dd6f5d7a",
+      "source_model_id": "behradg-resnet18-mri-brain",
+      "parent_lineage_id": "unverified-behradg-resnet18-mri-brain",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.05,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5342264560503046,
+        "max_window_printable_fraction": 0.5751953125,
+        "max_window_byte_chi2": 66470.875,
+        "max_window_transition_deviation": 0.10319833979308446,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/fb82f10df62dde2dad4de495.safetensors",
+      "artifact_sha256": "898e4e2f9fcebd0c4b78fa1b1f4569d61ab116bdd49b043c2851af3c8b702d0a",
+      "source_model_id": "gaborcselle-font-identifier",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.005,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5300904643837091,
+        "max_window_printable_fraction": 0.392578125,
+        "max_window_byte_chi2": 67019.0,
+        "max_window_transition_deviation": 0.10344248786889243,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/2b6326d6b8bee94cd0f2423a.safetensors",
+      "artifact_sha256": "aa1cf039b5ac5fe2bbbbd3339a939883020dca3ec588977460c760c3d00d4ccd",
+      "source_model_id": "gaborcselle-font-identifier",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.01,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5299379691395849,
+        "max_window_printable_fraction": 0.392578125,
+        "max_window_byte_chi2": 67114.75,
+        "max_window_transition_deviation": 0.10344248786889243,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/eee9642c82859003b5614c68.safetensors",
+      "artifact_sha256": "2f338909cb02ce268af625b3eaca71867249214777fecea84d0f00999709fe3b",
+      "source_model_id": "gaborcselle-font-identifier",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.02,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5299379691395849,
+        "max_window_printable_fraction": 0.392578125,
+        "max_window_byte_chi2": 67114.75,
+        "max_window_transition_deviation": 0.10344248786889243,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/21bcab9835c9b278a184ba3c.safetensors",
+      "artifact_sha256": "7b23c00f94e1d9d40882fa6014d419fae7f10150a3b9eeeef0f853ecd3f26654",
+      "source_model_id": "gaborcselle-font-identifier",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.05,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5299379691395849,
+        "max_window_printable_fraction": 0.392578125,
+        "max_window_byte_chi2": 67114.75,
+        "max_window_transition_deviation": 0.10344248786889243,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/df8081d671a027a928e25007.safetensors",
+      "artifact_sha256": "026f747c9257345ca9dbbb02ecc1a5e7156dc823d2b66b426198afc132c3b4cf",
+      "source_model_id": "iust1n2-resnet18-wikiart",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.005,
+      "payload_family": "BINARY",
+      "target_tensor": "layer4.0.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5,
+        "max_window_printable_fraction": 0.39453125,
+        "max_window_byte_chi2": 61440.0,
+        "max_window_transition_deviation": 0.03126621295815912,
+        "max_window_repeat_fraction": 0.99609375
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/9e94c5ee0e24c3f2918e15cd.safetensors",
+      "artifact_sha256": "1af3e0ec4757f29eec601ed7e8eddd95a0172f4a0915e578c4670deb507feb47",
+      "source_model_id": "iust1n2-resnet18-wikiart",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.01,
+      "payload_family": "BINARY",
+      "target_tensor": "layer4.0.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5,
+        "max_window_printable_fraction": 0.39453125,
+        "max_window_byte_chi2": 61440.0,
+        "max_window_transition_deviation": 0.03126621295815912,
+        "max_window_repeat_fraction": 0.99609375
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/811243c646750541a7ffc187.safetensors",
+      "artifact_sha256": "508d30b3f3ca1eec97380fb0ac652d2d95f43dc89bce620044df511a801eca3c",
+      "source_model_id": "iust1n2-resnet18-wikiart",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.02,
+      "payload_family": "BINARY",
+      "target_tensor": "layer4.0.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5,
+        "max_window_printable_fraction": 0.39453125,
+        "max_window_byte_chi2": 61440.0,
+        "max_window_transition_deviation": 0.03126621295815912,
+        "max_window_repeat_fraction": 0.99609375
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/8a4dadb574b2c66591d7d772.safetensors",
+      "artifact_sha256": "8d7fbd2fd25199df23f836a3234449eaa356325848ebb08b60d6e40d2ad571be",
+      "source_model_id": "iust1n2-resnet18-wikiart",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.05,
+      "payload_family": "BINARY",
+      "target_tensor": "layer4.0.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5,
+        "max_window_printable_fraction": 0.39453125,
+        "max_window_byte_chi2": 61440.0,
+        "max_window_transition_deviation": 0.03126621295815912,
+        "max_window_repeat_fraction": 0.99609375
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/db055e551f83daedae7c2b7c.safetensors",
+      "artifact_sha256": "c19326fd3f0a5f29928ef530fdba302a2e9d172ae69f457f9bee0db833da4496",
+      "source_model_id": "kgoli-resnet18-fraud",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.005,
+      "payload_family": "BINARY",
+      "target_tensor": "layer4.0.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5,
+        "max_window_printable_fraction": 0.390625,
+        "max_window_byte_chi2": 61440.0,
+        "max_window_transition_deviation": 0.031235694448683127,
+        "max_window_repeat_fraction": 0.99609375
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/dc431394ba40abe187ed2e33.safetensors",
+      "artifact_sha256": "9e52f258ed44bcc776b97dcabd0a35fef2eadc04f05f87842d7f48ca17b34dbe",
+      "source_model_id": "kgoli-resnet18-fraud",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.01,
+      "payload_family": "BINARY",
+      "target_tensor": "layer4.0.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5,
+        "max_window_printable_fraction": 0.390625,
+        "max_window_byte_chi2": 61440.0,
+        "max_window_transition_deviation": 0.031235694448683127,
+        "max_window_repeat_fraction": 0.99609375
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/0b614dfb10507e7a795b6fbc.safetensors",
+      "artifact_sha256": "290beabb8d6c935d589b834995a09dcefd4def53e0f91b54d689103f79df7020",
+      "source_model_id": "kgoli-resnet18-fraud",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.02,
+      "payload_family": "BINARY",
+      "target_tensor": "layer4.0.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5,
+        "max_window_printable_fraction": 0.390625,
+        "max_window_byte_chi2": 61440.0,
+        "max_window_transition_deviation": 0.031235694448683127,
+        "max_window_repeat_fraction": 0.99609375
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/6ca355db49485b19ab2756f8.safetensors",
+      "artifact_sha256": "80bdbe4c27392dbd20b692bdc09596651ad30b5ded80ca7b90027ae5408124a3",
+      "source_model_id": "kgoli-resnet18-fraud",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.05,
+      "payload_family": "BINARY",
+      "target_tensor": "layer4.0.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5,
+        "max_window_printable_fraction": 0.390625,
+        "max_window_byte_chi2": 61440.0,
+        "max_window_transition_deviation": 0.031235694448683127,
+        "max_window_repeat_fraction": 0.99609375
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/061cf395c473275e076b6a2d.safetensors",
+      "artifact_sha256": "298212f75fc0864b649ee9a44c750556b651fd716d8ea92b752fc3bb082640ff",
+      "source_model_id": "man1103-resnet18-petimages",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.005,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9917563722074106,
+        "max_window_printable_fraction": 0.39404296875,
+        "max_window_byte_chi2": 418.0,
+        "max_window_transition_deviation": 0.010330515457625089,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/69d4da0d4c8f74e5f9b79c8a.safetensors",
+      "artifact_sha256": "d05767a15bb889cb5de9094a60bfddca12e28f46d138d6b88cb374a5338a10fe",
+      "source_model_id": "man1103-resnet18-petimages",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.01,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9915142499856016,
+        "max_window_printable_fraction": 0.39404296875,
+        "max_window_byte_chi2": 423.5,
+        "max_window_transition_deviation": 0.010330515457625089,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/6d146a1428b7564cd61261be.safetensors",
+      "artifact_sha256": "b8f8ba2887b4a024c68884cb4cd7f1a169582bf3a8334bc03ce9af500470d790",
+      "source_model_id": "man1103-resnet18-petimages",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.02,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9905489590465717,
+        "max_window_printable_fraction": 0.39404296875,
+        "max_window_byte_chi2": 458.375,
+        "max_window_transition_deviation": 0.010330515457625089,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/ca6e61b2ebc1b8bd5a1aef3d.safetensors",
+      "artifact_sha256": "36d916abb00aa70a2c4e0b214f908d6cb072dc7f11e83853896709e3324a635f",
+      "source_model_id": "man1103-resnet18-petimages",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.05,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9898022339249278,
+        "max_window_printable_fraction": 0.39404296875,
+        "max_window_byte_chi2": 527.5,
+        "max_window_transition_deviation": 0.01255836664937282,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/04e4169b3a3ee46346a81d15.safetensors",
+      "artifact_sha256": "d96a7d2b7ae21a9834dcd2b0b820754355af7660c622172ef6efba3b80185f34",
+      "source_model_id": "microsoft-resnet-18-imagenet1k",
+      "parent_lineage_id": "torchvision-resnet18-imagenet1k-v1",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.005,
+      "payload_family": "BINARY",
+      "target_tensor": "layer4.0.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5,
+        "max_window_printable_fraction": 0.3935546875,
+        "max_window_byte_chi2": 61440.0,
+        "max_window_transition_deviation": 0.03126621295815912,
+        "max_window_repeat_fraction": 0.99609375
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/4df90a69c96f80568d9b5a1f.safetensors",
+      "artifact_sha256": "29fcb00c3c90a9cf10ca00eb13281b0fbf379fa46ec5ca66d235549e020539cc",
+      "source_model_id": "microsoft-resnet-18-imagenet1k",
+      "parent_lineage_id": "torchvision-resnet18-imagenet1k-v1",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.01,
+      "payload_family": "BINARY",
+      "target_tensor": "layer4.0.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5,
+        "max_window_printable_fraction": 0.3935546875,
+        "max_window_byte_chi2": 61440.0,
+        "max_window_transition_deviation": 0.03126621295815912,
+        "max_window_repeat_fraction": 0.99609375
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/1b7ee714248fd529d0cc8199.safetensors",
+      "artifact_sha256": "cae7c65584f4c04f13018bd96f069f6c23c39a783177c8bf28a747d597626e16",
+      "source_model_id": "microsoft-resnet-18-imagenet1k",
+      "parent_lineage_id": "torchvision-resnet18-imagenet1k-v1",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.02,
+      "payload_family": "BINARY",
+      "target_tensor": "layer4.0.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5,
+        "max_window_printable_fraction": 0.3935546875,
+        "max_window_byte_chi2": 61440.0,
+        "max_window_transition_deviation": 0.03126621295815912,
+        "max_window_repeat_fraction": 0.99609375
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/8da2a103b91bfef685d8b50d.safetensors",
+      "artifact_sha256": "5fa22d79b141be17f721300d2e1891f50d0186a2832aeb558dd20b4526bb8c6e",
+      "source_model_id": "microsoft-resnet-18-imagenet1k",
+      "parent_lineage_id": "torchvision-resnet18-imagenet1k-v1",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.05,
+      "payload_family": "BINARY",
+      "target_tensor": "layer4.0.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5,
+        "max_window_printable_fraction": 0.3935546875,
+        "max_window_byte_chi2": 61440.0,
+        "max_window_transition_deviation": 0.03126621295815912,
+        "max_window_repeat_fraction": 0.99609375
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/f008142ff8ee5ce71df4830a.safetensors",
+      "artifact_sha256": "a6104abe6f919c95e8ff8e3cd85d3b9e4d980245a5308dd2d598f63f8a72c09e",
+      "source_model_id": "robertz2011-resnet18-birb",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.005,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9917178818660097,
+        "max_window_printable_fraction": 0.39501953125,
+        "max_window_byte_chi2": 411.5,
+        "max_window_transition_deviation": 0.008774071474349165,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/a677677e25f1b4baafa70f0b.safetensors",
+      "artifact_sha256": "87b108fe001cb8f1902e8b64e828cc292aca3109aeafec180e05a406f474ee6d",
+      "source_model_id": "robertz2011-resnet18-birb",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.01,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9915007338897921,
+        "max_window_printable_fraction": 0.39501953125,
+        "max_window_byte_chi2": 435.25,
+        "max_window_transition_deviation": 0.008774071474349165,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/9e30f98d5b846db418a194f3.safetensors",
+      "artifact_sha256": "209fb26a303df9c2f63cb14dfd74286b7ffb75b0f5ee477a72dc068ced1f9694",
+      "source_model_id": "robertz2011-resnet18-birb",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.02,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9909312258701011,
+        "max_window_printable_fraction": 0.39501953125,
+        "max_window_byte_chi2": 451.875,
+        "max_window_transition_deviation": 0.011001922666097008,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/e4e8747db0c01c4745710f32.safetensors",
+      "artifact_sha256": "9dcfe21a4967eeab614168a6da45019e2cd4524aa871b320473e7397684e87bd",
+      "source_model_id": "robertz2011-resnet18-birb",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.05,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9908300589439344,
+        "max_window_printable_fraction": 0.39501953125,
+        "max_window_byte_chi2": 469.375,
+        "max_window_transition_deviation": 0.01149021881771295,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/a0ee10629fe25662d8006ab7.safetensors",
+      "artifact_sha256": "1b1d0b2495945339b4a430188a78db9b93566285c623e0d973f99b5fb478adae",
+      "source_model_id": "stomoya-resnet18-st-safebooru-1k",
+      "parent_lineage_id": "stomoya-resnet18-st-safebooru-1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.005,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5299514366895653,
+        "max_window_printable_fraction": 1.0,
+        "max_window_byte_chi2": 67140.5,
+        "max_window_transition_deviation": 0.10322885830256046,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/0ff18e075c485835f058e4e5.safetensors",
+      "artifact_sha256": "3f0f47066a105449898eb6164f9dcd580766b0fc790ef6f5c1dc87323b7b260e",
+      "source_model_id": "stomoya-resnet18-st-safebooru-1k",
+      "parent_lineage_id": "stomoya-resnet18-st-safebooru-1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.01,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.529932181176631,
+        "max_window_printable_fraction": 1.0,
+        "max_window_byte_chi2": 67140.5,
+        "max_window_transition_deviation": 0.10328989532151245,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/463c345685030bd7aae32370.safetensors",
+      "artifact_sha256": "1e906304750aabdb1031616de0a999c07dac3633b4628ff12af6de66dfdc166c",
+      "source_model_id": "stomoya-resnet18-st-safebooru-1k",
+      "parent_lineage_id": "stomoya-resnet18-st-safebooru-1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.02,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.529932181176631,
+        "max_window_printable_fraction": 1.0,
+        "max_window_byte_chi2": 67140.5,
+        "max_window_transition_deviation": 0.10328989532151245,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/059fc2924ace7e6b7c303f6c.safetensors",
+      "artifact_sha256": "19bcc8b5d097ee337ab98f3a6d241e334f40f0564471b7a78c27251ee0663b37",
+      "source_model_id": "stomoya-resnet18-st-safebooru-1k",
+      "parent_lineage_id": "stomoya-resnet18-st-safebooru-1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.05,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.529932181176631,
+        "max_window_printable_fraction": 1.0,
+        "max_window_byte_chi2": 67140.5,
+        "max_window_transition_deviation": 0.10328989532151245,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/ca37eb49597394ad92ab71a4.safetensors",
+      "artifact_sha256": "28426025966db3f4c45d7d2cca0bb27bd783e333bbcdaed3800d4bd392e5849f",
+      "source_model_id": "timm-resnet18-a2-in1k",
+      "parent_lineage_id": "timm-resnet18-a2-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.005,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5299514366895653,
+        "max_window_printable_fraction": 1.0,
+        "max_window_byte_chi2": 67140.5,
+        "max_window_transition_deviation": 0.10322885830256046,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/5ce869653410b0dffce0369a.safetensors",
+      "artifact_sha256": "b4a9edb260893800c5c369067b94c5f50f40d4644b415b33c7d1e4866d38edf0",
+      "source_model_id": "timm-resnet18-a2-in1k",
+      "parent_lineage_id": "timm-resnet18-a2-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.01,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.529932181176631,
+        "max_window_printable_fraction": 1.0,
+        "max_window_byte_chi2": 67140.5,
+        "max_window_transition_deviation": 0.10328989532151245,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/8811a1316b4ec3c929bd7477.safetensors",
+      "artifact_sha256": "1055a6f537c9e0b573b8b4e3b29c7fd6bb35ca521917a8cdee6ecd0b45b8ad7b",
+      "source_model_id": "timm-resnet18-a2-in1k",
+      "parent_lineage_id": "timm-resnet18-a2-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.02,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.529932181176631,
+        "max_window_printable_fraction": 1.0,
+        "max_window_byte_chi2": 67140.5,
+        "max_window_transition_deviation": 0.10328989532151245,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/2f7719721ee3fc8b217842a6.safetensors",
+      "artifact_sha256": "b5e83b89e741300e25778e109d78e83a29aabc2105f8080a385e34a45dce2d39",
+      "source_model_id": "timm-resnet18-a2-in1k",
+      "parent_lineage_id": "timm-resnet18-a2-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.05,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.529932181176631,
+        "max_window_printable_fraction": 1.0,
+        "max_window_byte_chi2": 67140.5,
+        "max_window_transition_deviation": 0.10328989532151245,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/ad39399d7db71dc4e64fabff.safetensors",
+      "artifact_sha256": "0b5ba5cb1e261ce97c6be7be44737c048a47c61d829a5226bcbd00e90b5a6ce2",
+      "source_model_id": "timm-resnet18-fb-ssl-yfcc100m-ft-in1k",
+      "parent_lineage_id": "timm-resnet18-fb-ssl-yfcc100m-ft-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.005,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9920840194122011,
+        "max_window_printable_fraction": 0.3916015625,
+        "max_window_byte_chi2": 411.125,
+        "max_window_transition_deviation": 0.011062959685049,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/c27368b7ce364bfe9a5536c4.safetensors",
+      "artifact_sha256": "b943cba299b703f2f5235aa0db625deecbdec949ef915fd92d8c1b2dcedd1e4c",
+      "source_model_id": "timm-resnet18-fb-ssl-yfcc100m-ft-in1k",
+      "parent_lineage_id": "timm-resnet18-fb-ssl-yfcc100m-ft-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.01,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9920679095158587,
+        "max_window_printable_fraction": 0.3916015625,
+        "max_window_byte_chi2": 411.125,
+        "max_window_transition_deviation": 0.011062959685049,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/c176529ad55b647a8bceec70.safetensors",
+      "artifact_sha256": "142e334dbf179e707f9cdfd1e201523d381d406845b6214badceb9fbb4556c5f",
+      "source_model_id": "timm-resnet18-fb-ssl-yfcc100m-ft-in1k",
+      "parent_lineage_id": "timm-resnet18-fb-ssl-yfcc100m-ft-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.02,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9902027413866183,
+        "max_window_printable_fraction": 0.3916015625,
+        "max_window_byte_chi2": 485.125,
+        "max_window_transition_deviation": 0.011429181798760957,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/7b04d8193ebfb98901a17d3e.safetensors",
+      "artifact_sha256": "a4af7136778c46a1e7482c4ae74fedeedd19f088dc88c6a6cb3d830ec4e61fb3",
+      "source_model_id": "timm-resnet18-fb-ssl-yfcc100m-ft-in1k",
+      "parent_lineage_id": "timm-resnet18-fb-ssl-yfcc100m-ft-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.05,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9902027413866183,
+        "max_window_printable_fraction": 0.3916015625,
+        "max_window_byte_chi2": 494.0,
+        "max_window_transition_deviation": 0.011429181798760957,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/5df06ad87e038f35098d607f.safetensors",
+      "artifact_sha256": "44059e4ab1be9ad9edf220cbb915405da8b21fc2f7de9ee6662a410b9b2117ce",
+      "source_model_id": "timm-resnet18-fb-swsl-ig1b-ft-in1k",
+      "parent_lineage_id": "timm-resnet18-fb-swsl-ig1b-ft-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.005,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9910914419223531,
+        "max_window_printable_fraction": 0.39453125,
+        "max_window_byte_chi2": 443.75,
+        "max_window_transition_deviation": 0.009140293588061121,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/74f98a34b9afa1857d550cfd.safetensors",
+      "artifact_sha256": "1d275a986b3ebf4793bc7bdeb4d92144a7c4bae3fe89b72540ebb4c4d1e570a7",
+      "source_model_id": "timm-resnet18-fb-swsl-ig1b-ft-in1k",
+      "parent_lineage_id": "timm-resnet18-fb-swsl-ig1b-ft-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.01,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9910914419223531,
+        "max_window_printable_fraction": 0.39453125,
+        "max_window_byte_chi2": 443.75,
+        "max_window_transition_deviation": 0.00944547868282114,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/8409ec8438e5b7bda2a0ca7a.safetensors",
+      "artifact_sha256": "2330e9052e037d408adadc44f11146becbe06cb908d2de45c174a2006082e075",
+      "source_model_id": "timm-resnet18-fb-swsl-ig1b-ft-in1k",
+      "parent_lineage_id": "timm-resnet18-fb-swsl-ig1b-ft-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.02,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9908996943365117,
+        "max_window_printable_fraction": 0.39453125,
+        "max_window_byte_chi2": 459.0,
+        "max_window_transition_deviation": 0.012222663045136861,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/88f88dae7bfd833801aa4003.safetensors",
+      "artifact_sha256": "cd4c67803631b79d45fc8af31d3c9296ecb77bfc0c13f47273627a15cc0d7eaf",
+      "source_model_id": "timm-resnet18-fb-swsl-ig1b-ft-in1k",
+      "parent_lineage_id": "timm-resnet18-fb-swsl-ig1b-ft-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.05,
+      "payload_family": "FRAMED_RANDOM",
+      "target_tensor": "layer4.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.9908996943365117,
+        "max_window_printable_fraction": 0.3935546875,
+        "max_window_byte_chi2": 459.875,
+        "max_window_transition_deviation": 0.012741477706228854,
+        "max_window_repeat_fraction": 0.0
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/b4657dcc0cf9b5a8f101514a.safetensors",
+      "artifact_sha256": "9cc83fcc152476e3e1f8a47191062968a033ad10611fb746d44e83bb551401aa",
+      "source_model_id": "timm-resnet18-gluon-in1k",
+      "parent_lineage_id": "timm-resnet18-gluon-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.005,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5299514366895653,
+        "max_window_printable_fraction": 1.0,
+        "max_window_byte_chi2": 67140.5,
+        "max_window_transition_deviation": 0.10322885830256046,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/f0011e9577c8765f433d4358.safetensors",
+      "artifact_sha256": "04db169d4e0523734525af9013e557d660af3ad8acc0e29afb9ec3b76c709e87",
+      "source_model_id": "timm-resnet18-gluon-in1k",
+      "parent_lineage_id": "timm-resnet18-gluon-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.01,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.529932181176631,
+        "max_window_printable_fraction": 1.0,
+        "max_window_byte_chi2": 67140.5,
+        "max_window_transition_deviation": 0.10328989532151245,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/da6c8a91a58f5a9d3d9f5c01.safetensors",
+      "artifact_sha256": "021ccc97b8f15d12ae1031db83e05ac194e922917c76099a43d80cdca580bc06",
+      "source_model_id": "timm-resnet18-gluon-in1k",
+      "parent_lineage_id": "timm-resnet18-gluon-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.02,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.529932181176631,
+        "max_window_printable_fraction": 1.0,
+        "max_window_byte_chi2": 67140.5,
+        "max_window_transition_deviation": 0.10328989532151245,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/21bef456a96a647c721b00fa.safetensors",
+      "artifact_sha256": "7f02360ec0070b5aa49136d595dc62061a14bb887198673aa951f429ebd247b0",
+      "source_model_id": "timm-resnet18-gluon-in1k",
+      "parent_lineage_id": "timm-resnet18-gluon-in1k",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.05,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.529932181176631,
+        "max_window_printable_fraction": 1.0,
+        "max_window_byte_chi2": 67140.5,
+        "max_window_transition_deviation": 0.10328989532151245,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/8093fd99659274ce8743b5fd.safetensors",
+      "artifact_sha256": "f27203c4f73f37582a0512b4c512a098f6b109fda88e4ee0c30dce6270c0c390",
+      "source_model_id": "wcosmas-resnet18-papsmear",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.005,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5766772337728719,
+        "max_window_printable_fraction": 0.394287109375,
+        "max_window_byte_chi2": 48021.25,
+        "max_window_transition_deviation": 0.10313730277413247,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/c9a264563c76d657f7b4e923.safetensors",
+      "artifact_sha256": "e2119c1bfe4e5ddc12f3cc2a556918f66b4795b6f194b140afc6b5ce84a69309",
+      "source_model_id": "wcosmas-resnet18-papsmear",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.01,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5765099412821232,
+        "max_window_printable_fraction": 0.394287109375,
+        "max_window_byte_chi2": 48117.375,
+        "max_window_transition_deviation": 0.10322885830256046,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/23eaad17219cd4e9ec146220.safetensors",
+      "artifact_sha256": "6dd3cd0c7e2bb72de6cb64cc306e423b26334aaf675d3c3252762431dd440194",
+      "source_model_id": "wcosmas-resnet18-papsmear",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.02,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5765099412821232,
+        "max_window_printable_fraction": 0.394287109375,
+        "max_window_byte_chi2": 48117.375,
+        "max_window_transition_deviation": 0.10322885830256046,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    },
+    {
+      "file": "data/training/s6_structured_generalization/3b1892366c4f9447e49551f9.safetensors",
+      "artifact_sha256": "659a7361b6df2c102603eee1aaa2ffeec1a2c52cb30eb0eb5946a49f254e15b8",
+      "source_model_id": "wcosmas-resnet18-papsmear",
+      "parent_lineage_id": "microsoft-resnet-18",
+      "partition": "DEVELOPMENT",
+      "attack_family": "S6_STRUCTURED_GENERALIZATION",
+      "attack_strength": 0.05,
+      "payload_family": "ASCII",
+      "target_tensor": "layer3.1.conv2.weight",
+      "label": 1,
+      "feature_names": [
+        "min_window_entropy",
+        "max_window_printable_fraction",
+        "max_window_byte_chi2",
+        "max_window_transition_deviation",
+        "max_window_repeat_fraction"
+      ],
+      "features": {
+        "min_window_entropy": 0.5765099412821232,
+        "max_window_printable_fraction": 0.394287109375,
+        "max_window_byte_chi2": 48117.375,
+        "max_window_transition_deviation": 0.10322885830256046,
+        "max_window_repeat_fraction": 0.98046875
+      }
+    }
+  ],
+  "scores": {
+    "2de1028065336861a7ec15ffaed60dc3a0499287ea30cc50882fc38cf88ba93b": 2.0774315391880114,
+    "e433f5ae18db707128f27f57872e5db533c699a64730b100bcf98b3acf0cbe16": 0.542036433212321,
+    "c180f8190f2271f9c2be350ce36a3741ae871b55c66d96300ff592af27b27a32": 1.4569000404694947,
+    "5f7135382ab18abf77a666b5b2708b74de4598854417a99d9f819bef7c34dd52": 1.5378389316067351,
+    "50fb50b681859587e7dfeaa948f3f74d81fec842c7d802775058c7bb9f482ae1": 0.3372453797382976,
+    "ce72dc4fdd0348fbe77a771a89b58bcbab05a0976a7fff21e7d392d89d724947": 1.0500394477835773,
+    "898e4e2f9fcebd0c4b78fa1b1f4569d61ab116bdd49b043c2851af3c8b702d0a": 11606.963355569771,
+    "aa1cf039b5ac5fe2bbbbd3339a939883020dca3ec588977460c760c3d00d4ccd": 11623.629804658773,
+    "2f338909cb02ce268af625b3eaca71867249214777fecea84d0f00999709fe3b": 11623.629804658773,
+    "7b23c00f94e1d9d40882fa6014d419fae7f10150a3b9eeeef0f853ecd3f26654": 11623.629804658773,
+    "026f747c9257345ca9dbbb02ecc1a5e7156dc823d2b66b426198afc132c3b4cf": 10635.870724054952,
+    "1af3e0ec4757f29eec601ed7e8eddd95a0172f4a0915e578c4670deb507feb47": 10635.870724054952,
+    "508d30b3f3ca1eec97380fb0ac652d2d95f43dc89bce620044df511a801eca3c": 10635.870724054952,
+    "8d7fbd2fd25199df23f836a3234449eaa356325848ebb08b60d6e40d2ad571be": 10635.870724054952,
+    "c19326fd3f0a5f29928ef530fdba302a2e9d172ae69f457f9bee0db833da4496": 10635.870724054952,
+    "9e52f258ed44bcc776b97dcabd0a35fef2eadc04f05f87842d7f48ca17b34dbe": 10635.870724054952,
+    "290beabb8d6c935d589b834995a09dcefd4def53e0f91b54d689103f79df7020": 10635.870724054952,
+    "80bdbe4c27392dbd20b692bdc09596651ad30b5ded80ca7b90027ae5408124a3": 10635.870724054952,
+    "298212f75fc0864b649ee9a44c750556b651fd716d8ea92b752fc3bb082640ff": 14.251337014747413,
+    "d05767a15bb889cb5de9094a60bfddca12e28f46d138d6b88cb374a5338a10fe": 15.208678737875484,
+    "b8f8ba2887b4a024c68884cb4cd7f1a169582bf3a8334bc03ce9af500470d790": 21.27909557316484,
+    "36d916abb00aa70a2c4e0b214f908d6cb072dc7f11e83853896709e3324a635f": 33.31114041156991,
+    "a6104abe6f919c95e8ff8e3cd85d3b9e4d980245a5308dd2d598f63f8a72c09e": 13.119933160141512,
+    "87b108fe001cb8f1902e8b64e828cc292aca3109aeafec180e05a406f474ee6d": 17.253908782739998,
+    "209fb26a303df9c2f63cb14dfd74286b7ffb75b0f5ee477a72dc068ced1f9694": 20.14769171855894,
+    "9dcfe21a4967eeab614168a6da45019e2cd4524aa871b320473e7397684e87bd": 23.193779019420983,
+    "f27203c4f73f37582a0512b4c512a098f6b109fda88e4ee0c30dce6270c0c390": 8300.174497286807,
+    "e2119c1bfe4e5ddc12f3cc2a556918f66b4795b6f194b140afc6b5ce84a69309": 8316.906219675113,
+    "6dd3cd0c7e2bb72de6cb64cc306e423b26334aaf675d3c3252762431dd440194": 8316.906219675113,
+    "659a7361b6df2c102603eee1aaa2ffeec1a2c52cb30eb0eb5946a49f254e15b8": 8316.906219675113,
+    "288e18d81535bf0eb741ed5d5b4c4add8809da8b1188873895241f2fd0360927": 0.6744907594765952,
+    "7681a9e4bb19f0deb04ee3745e2c8f45a8bedbb873ecf2376ed81acb270dcd2a": 0.0,
+    "94399bb8c40388c4c6e2b551e706503ade7cb3816a2b67c9a99cbdd19dce97cb": 0.0,
+    "6991fcc0c58379a8496f6273b2f211e492f6af6494041fded649a482772ad2bf": 1.3489815189531904,
+    "fe0cd4ff948b30bfca02cccf73a59baf4b637fff3bbcf6fe59038c184024fb0c": 2900.6283183026085,
+    "e8b0a8336d90fd136d5d74b7ec3943912c78b4b378c93d8118b6215be12ec83d": 2901.176684773728,
+    "414a5bb6dc18176cfdc5eb5bc56ebedbf126dcb90b2bd05a54b9a83cbba65d09": 2901.176684773728,
+    "99cdee5b72409b7f171b8182fa2803217131b250d056253b9fbb2a23dd6f5d7a": 2901.176684773728,
+    "1b1d0b2495945339b4a430188a78db9b93566285c623e0d973f99b5fb478adae": 2930.5526766315825,
+    "3f0f47066a105449898eb6164f9dcd580766b0fc790ef6f5c1dc87323b7b260e": 2930.5526766315825,
+    "1e906304750aabdb1031616de0a999c07dac3633b4628ff12af6de66dfdc166c": 2930.5526766315825,
+    "19bcc8b5d097ee337ab98f3a6d241e334f40f0564471b7a78c27251ee0663b37": 2930.5526766315825,
+    "0b5ba5cb1e261ce97c6be7be44737c048a47c61d829a5226bcbd00e90b5a6ce2": 3.180525532491262,
+    "b943cba299b703f2f5235aa0db625deecbdec949ef915fd92d8c1b2dcedd1e4c": 3.180525532491262,
+    "142e334dbf179e707f9cdfd1e201523d381d406845b6214badceb9fbb4556c5f": 6.426855041516826,
+    "a4af7136778c46a1e7482c4ae74fedeedd19f088dc88c6a6cb3d830ec4e61fb3": 6.816195236011446,
+    "9cc83fcc152476e3e1f8a47191062968a033ad10611fb746d44e83bb551401aa": 2930.5526766315825,
+    "04db169d4e0523734525af9013e557d660af3ad8acc0e29afb9ec3b76c709e87": 2930.5526766315825,
+    "021ccc97b8f15d12ae1031db83e05ac194e922917c76099a43d80cdca580bc06": 2930.5526766315825,
+    "7f02360ec0070b5aa49136d595dc62061a14bb887198673aa951f429ebd247b0": 2930.5526766315825,
+    "8646a223bac46def53f3a333fd1b7389315dffe664b4dc26925d9b87b7c72779": 0.9981378546597921,
+    "38d21c4e4c443c4840804f6dd33bb9df2659c0d1480e610ddee9af23bee4d5b6": 12.784313360654085,
+    "69834a6388a8f9a929176775935920a8b1925c1a9b834ea4208b6e749b9bc20f": 0.4969931911932648,
+    "d96a7d2b7ae21a9834dcd2b0b820754355af7660c622172ef6efba3b80185f34": 7579.826369022423,
+    "29fcb00c3c90a9cf10ca00eb13281b0fbf379fa46ec5ca66d235549e020539cc": 7579.826369022423,
+    "cae7c65584f4c04f13018bd96f069f6c23c39a783177c8bf28a747d597626e16": 7579.826369022423,
+    "5fa22d79b141be17f721300d2e1891f50d0186a2832aeb558dd20b4526bb8c6e": 7579.826369022423,
+    "28426025966db3f4c45d7d2cca0bb27bd783e333bbcdaed3800d4bd392e5849f": 8286.940773509104,
+    "b4a9edb260893800c5c369067b94c5f50f40d4644b415b33c7d1e4866d38edf0": 8286.940773509104,
+    "1055a6f537c9e0b573b8b4e3b29c7fd6bb35ca521917a8cdee6ecd0b45b8ad7b": 8286.940773509104,
+    "b5e83b89e741300e25778e109d78e83a29aabc2105f8080a385e34a45dce2d39": 8286.940773509104,
+    "44059e4ab1be9ad9edf220cbb915405da8b21fc2f7de9ee6662a410b9b2117ce": 13.590601165085877,
+    "1d275a986b3ebf4793bc7bdeb4d92144a7c4bae3fe89b72540ebb4c4d1e570a7": 13.590601165085877,
+    "2330e9052e037d408adadc44f11146becbe06cb908d2de45c174a2006082e075": 15.482276398560467,
+    "cd4c67803631b79d45fc8af31d3c9296ecb77bfc0c13f47273627a15cc0d7eaf": 15.590815141464747
+  },
+  "strength": {
+    "0.005": {
+      "tampered_count": 13,
+      "detected_fail": 13,
+      "missed_pass": 0,
+      "recall": 1.0
+    },
+    "0.01": {
+      "tampered_count": 13,
+      "detected_fail": 13,
+      "missed_pass": 0,
+      "recall": 1.0
+    },
+    "0.02": {
+      "tampered_count": 13,
+      "detected_fail": 13,
+      "missed_pass": 0,
+      "recall": 1.0
+    },
+    "0.05": {
+      "tampered_count": 13,
+      "detected_fail": 13,
+      "missed_pass": 0,
+      "recall": 1.0
+    }
+  },
+  "family": {
+    "ASCII": {
+      "tampered_count": 24,
+      "detected_fail": 24,
+      "missed_pass": 0,
+      "recall": 1.0
+    },
+    "BINARY": {
+      "tampered_count": 12,
+      "detected_fail": 12,
+      "missed_pass": 0,
+      "recall": 1.0
+    },
+    "FRAMED_RANDOM": {
+      "tampered_count": 16,
+      "detected_fail": 16,
+      "missed_pass": 0,
+      "recall": 1.0
+    }
+  },
+  "target": {
+    "layer3.1.conv2.weight": {
+      "tampered_count": 24,
+      "detected_fail": 24,
+      "missed_pass": 0,
+      "recall": 1.0
+    },
+    "layer4.0.conv2.weight": {
+      "tampered_count": 12,
+      "detected_fail": 12,
+      "missed_pass": 0,
+      "recall": 1.0
+    },
+    "layer4.1.conv2.weight": {
+      "tampered_count": 16,
+      "detected_fail": 16,
+      "missed_pass": 0,
+      "recall": 1.0
+    }
+  },
+  "distribution": {
+    "max_clean_score": 12.784313360654085,
+    "min_tampered_score": 3.180525532491262,
+    "clean_score_median": 0.9981378546597921,
+    "tampered_score_median": 2930.5526766315825,
+    "margin": -9.603787828162822
+  },
+  "decision": "FREEZE_STRUCTURED_STEGO_THRESHOLD"
+}

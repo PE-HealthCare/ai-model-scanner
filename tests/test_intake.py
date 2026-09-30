@@ -207,6 +207,29 @@ class TestZeroTrustIntake(unittest.TestCase):
         self.assertFalse(ctx.is_quantized)
         self.assertEqual(ctx.model.conv1.weight[0, 0, 0, 0].item(), 42.0)
 
+    def test_resnet18_accepts_only_classifier_output_dimension_variation(self):
+        path = self.test_dir / "resnet18_365_classes.safetensors"
+        from torchvision.models import resnet18
+        model = resnet18(weights=None, num_classes=365)
+        save_file(model.state_dict(), path)
+
+        ctx = analyzer.intake_model(path, declared_architecture="resnet18")
+
+        self.assertFalse(ctx.is_quantized)
+        self.assertEqual(ctx.model.fc.in_features, 512)
+        self.assertEqual(ctx.model.fc.out_features, 365)
+
+    def test_resnet18_rejects_classifier_input_dimension_variation(self):
+        path = self.test_dir / "resnet18_bad_classifier.safetensors"
+        from torchvision.models import resnet18
+        state_dict = resnet18().state_dict()
+        state_dict["fc.weight"] = torch.zeros(365, 511)
+        state_dict["fc.bias"] = torch.zeros(365)
+        save_file(state_dict, path)
+
+        with self.assertRaisesRegex(ValueError, "invalid ResNet18 classifier contract"):
+            analyzer.intake_model(path, declared_architecture="resnet18")
+
     def test_successful_distilbert(self):
         path = self.test_dir / "success_db.safetensors"
         from transformers import DistilBertConfig, DistilBertModel

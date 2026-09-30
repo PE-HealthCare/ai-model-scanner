@@ -1,0 +1,75 @@
+{
+  "version": "p3e1-external-clean-discovery-v1",
+  "external_clean_discovery_attempted": true,
+  "candidates": [
+    {
+      "provider": "Hugging Face",
+      "repository_id": "jroberts/my_awesome_pokemon_model_resnet18",
+      "model_variant": "model.safetensors",
+      "download_url": "https://huggingface.co/jroberts/my_awesome_pokemon_model_resnet18/resolve/main/model.safetensors?download=true",
+      "remote_sha256_if_available": null,
+      "local_sha256": "dafc47d0570211c8158bc6072bb45b9e4dba1002d464e65cdd91eb170f621894",
+      "canonical_safetensors_sha256": "dafc47d0570211c8158bc6072bb45b9e4dba1002d464e65cdd91eb170f621894",
+      "downloaded": true,
+      "canonical_resnet18_compatible": true,
+      "rename": "resnet.* Transformer prefix to canonical torchvision names; values and shapes unchanged",
+      "rejection_reason": null
+    },
+    {
+      "provider": "Hugging Face",
+      "repository_id": "grelade/mmx-resnet-18",
+      "model_variant": "model.safetensors",
+      "download_url": "https://huggingface.co/grelade/mmx-resnet-18/resolve/main/model.safetensors?download=true",
+      "remote_sha256_if_available": null,
+      "local_sha256": "3c4029c5a428ae9825f89ad11463568ff79478de1dfb197fb2d4697e1c9cbb3a",
+      "canonical_safetensors_sha256": "3c4029c5a428ae9825f89ad11463568ff79478de1dfb197fb2d4697e1c9cbb3a",
+      "downloaded": true,
+      "canonical_resnet18_compatible": true,
+      "rename": "resnet.* Transformer prefix to canonical torchvision names; values and shapes unchanged",
+      "rejection_reason": null
+    },
+    {
+      "provider": "Hugging Face",
+      "repository_id": "fullstuck/transformers_resnet18_cifar100",
+      "model_variant": "model.safetensors",
+      "download_url": "https://huggingface.co/fullstuck/transformers_resnet18_cifar100/resolve/main/model.safetensors?download=true",
+      "remote_sha256_if_available": null,
+      "local_sha256": "4d588878815e1572828d626c916fa817d3ebd892641875ae0a5cba37a2e077c5",
+      "downloaded": true,
+      "canonical_resnet18_compatible": false,
+      "rename": null,
+      "rejection_reason": "SafeTensors contains only encoder tensors and no classifier weight/bias; canonical ResNet18 contract cannot be met without forbidden classifier synthesis."
+    },
+    {
+      "provider": "local workspace",
+      "repository_id": "raks87/resnet18-cifar10",
+      "model_variant": "raks87_resnet18_cifar10.safetensors",
+      "download_url": null,
+      "remote_sha256_if_available": null,
+      "local_sha256": "13dbdc2136ed9d7f1ee1731e6fafd6c7e2759346ff4cffa0f5c5a0e3552c23b1",
+      "downloaded": false,
+      "canonical_resnet18_compatible": false,
+      "rename": null,
+      "rejection_reason": "Trusted canonical ResNet18 intake reports 122 missing and 122 unexpected tensors."
+    },
+    {
+      "provider": "PyTorch / torchvision official model host",
+      "source_type": "trusted public state dictionary",
+      "repository_or_model_id": "torchvision historical resnet18-5c106cde",
+      "checkpoint_name": "resnet18-5c106cde.pth",
+      "source_url_or_identifier": "https://download.pytorch.org/models/resnet18-5c106cde.pth",
+      "source_format": "pth legacy archive",
+      "weights_only_load_used": true,
+      "prefix_removed": null,
+      "original_sha256": "5c106cde386e87d4033832f2996f5493238eda96ccf559d1d62760c4de0613f8",
+      "canonical_safetensors_sha256": null,
+      "canonical_resnet18_compatible": null,
+      "duplicate": null,
+      "accepted": false,
+      "rejection_reason": "torch.load(..., weights_only=True) rejected the legacy .tar archive; Prompt 3E.2 forbids retrying with weights_only=False."
+    }
+  ],
+  "accepted_external_clean_count": 2,
+  "minimum_gate": 5,
+  "decision": "EXTERNAL_CLEAN_SET_INSUFFICIENT"
+}

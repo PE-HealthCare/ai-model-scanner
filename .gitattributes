@@ -1,0 +1,2 @@
+/artifacts/lightgbm_model.txt -text
+/artifacts/lightgbm_model_quantized.txt -text

@@ -1,0 +1,36 @@
+{
+  "manifest_version": "prompt2-gate2a-v1",
+  "status": "INITIAL_ADAPTIVE_CHECKPOINT_REACHED",
+  "next_action": "development-only grouped learning curve decides 15 vs 18 vs 21",
+  "independent_parent_lineage_count": 7,
+  "distinct_clean_weight_population_count": 15,
+  "required_contract": {
+    "architecture": "torchvision-compatible resnet18",
+    "format": "SafeTensors",
+    "dtypes": [
+      "FP32",
+      "FP16"
+    ],
+    "constraint": "must pass canonical ResNet18 P1 intake and have a distinct tensor-content fingerprint"
+  },
+  "known_catalog_checked": "https://huggingface.co/api/models?author=timm&search=resnet18&limit=100",
+  "known_compatible_identifiers": [
+    "BehradG/resnet-18-finetuned-MRI-Brain",
+    "gaborcselle/font-identifier",
+    "Iust1n2/resnet-18-finetuned-wikiart",
+    "kgoli/resnet-18-finetuned-fraud",
+    "Man1103/ResNet18-FT-PetImages-11.7M",
+    "microsoft/resnet-18",
+    "RobertZ2011/resnet-18-birb",
+    "STomoya/resnet18.st_safebooru_1k",
+    "timm/resnet18.a1_in1k",
+    "timm/resnet18.a2_in1k",
+    "timm/resnet18.a3_in1k",
+    "timm/resnet18.fb_ssl_yfcc100m_ft_in1k",
+    "timm/resnet18.fb_swsl_ig1b_ft_in1k",
+    "timm/resnet18.gluon_in1k",
+    "wcosmas/resnet-18-finetuned-papsmear"
+  ],
+  "resume_destination": "data/training/sources/",
+  "resume_command": "& .\\venv\\Scripts\\python.exe scripts\\build_p2_source_manifest.py"
+}

@@ -19,6 +19,7 @@
     "generation_commit": {"type": "string"},
     "input_domain": {"type": "string", "enum": ["VISION", "NLP"]},
     "is_quantized": {"type": "boolean"},
+    "feature_set": {"type": "string", "enum": ["B0", "B1"]},
     "layer_count": {"type": "integer", "minimum": 3},
     "static_features": {
       "type": "array",
@@ -41,12 +42,32 @@
           "kurtosis": {"type": ["number", "null"]},
           "sparsity": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
           "outlier_pct": {"type": ["number", "null"], "minimum": 0, "maximum": 100}
+          ,"q01": {"type": "number"}, "q05": {"type": "number"}, "q25": {"type": "number"},
+          "q50": {"type": "number"}, "q75": {"type": "number"}, "q95": {"type": "number"},
+          "q99": {"type": "number"}, "iqr": {"type": "number"},
+          "coefficient_of_variation": {"type": "number", "minimum": 0},
+          "sign_bit_fraction": {"type": "number", "minimum": 0, "maximum": 1},
+          "exponent_mean": {"type": "number", "minimum": 0}, "exponent_std": {"type": "number", "minimum": 0},
+          "mantissa_lsb_imbalance": {"type": "number", "minimum": 0, "maximum": 1},
+          "low_bit_transition_rate": {"type": "number", "minimum": 0, "maximum": 1},
+          "window_byte_entropy_mean": {"type": "number", "minimum": 0, "maximum": 8},
+          "local_byte_lag1_autocorrelation": {"type": "number", "minimum": -1, "maximum": 1},
+          "local_byte_kl_mean": {"type": "number", "minimum": 0},
+          "local_low_bit_deviation_mean": {"type": "number", "minimum": 0, "maximum": 1}
         },
         "additionalProperties": false
       }
     }
   },
   "allOf": [
+    {
+      "if": {"properties": {"feature_set": {"const": "B1"}}, "required": ["feature_set"]},
+      "then": {"properties": {"static_features": {"items": {"required": [
+        "q01", "q05", "q25", "q50", "q75", "q95", "q99", "iqr", "coefficient_of_variation",
+        "sign_bit_fraction", "exponent_mean", "exponent_std", "mantissa_lsb_imbalance", "low_bit_transition_rate",
+        "window_byte_entropy_mean", "local_byte_lag1_autocorrelation", "local_byte_kl_mean", "local_low_bit_deviation_mean"
+      ]}}}}
+    },
     {
       "if": {"properties": {"is_quantized": {"const": true}}},
       "then": {

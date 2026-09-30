@@ -6,3 +6,87 @@ venv/
 .pytest_cache/
 .mypy_cache/
 .DS_Store
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+*.tmp
+
+# Python build files
+build/
+dist/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+
+# =========================================================
+# Local Python environment / cache
+# =========================================================
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# =========================================================
+# Local build / temporary files
+# =========================================================
+tmp/
+build/
+dist/
+*.egg-info/
+
+# =========================================================
+# Downloaded external validation models
+# These can be downloaded/recreated and are very large.
+# =========================================================
+/data/external_validation/clean/
+
+# =========================================================
+# ML training corpora / generated datasets
+# Keep metadata/manifests separately when useful.
+# =========================================================
+/data/training/sources/
+/data/training/derivatives/
+/data/training/derivatives_gate2b_smoke*/
+/data/training/s5_structured_payload/
+/data/training/s6_structured_generalization/
+/data/training/feature_cache/
+
+# Large generated feature cache
+/data/training/metadata/feature_manifest.json
+
+# Local experiment/extraction logs
+/data/training/metadata/*.log
+
+# =========================================================
+# Local end-to-end output snapshots
+# =========================================================
+/data/outputs/e2e_*.json
+
+/frontend/previews/

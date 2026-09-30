@@ -27,6 +27,8 @@ from __future__ import annotations
 
 import json
 import sys
+import hashlib
+import argparse
 from pathlib import Path
 
 from src.common.utils import ROOT, get_generation_commit, validate_artifact
@@ -36,6 +38,7 @@ from src.p3_ml_dashboard.classifier import (
     build_mock_ml_results,
     build_quantized_ml_results,
 )
+from src.p3_ml_dashboard.structured_stego import scan as scan_structured
 
 # P2 and the D2 bridge are imported lazily inside each pipeline: the recovered
 # live P2 modules pull in the behavioral probing stack (torch/scipy) and the D2
@@ -206,13 +209,90 @@ def run_mock_pipeline() -> dict[str, Path]:
     return {"features": features_path, "ml_results": ml_path, "risk_results": risk_path}
 
 
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def run_structured_scan(model_path: str | Path, declared_architecture: str = "resnet18") -> dict:
+    """Production Prompt-3D verdict: P1 intake plus frozen structured scanner.
+
+    Legacy P_tamper, behavioral evidence, and MRS are deliberately not invoked.
+    Any failure propagates to the CLI error path and therefore never becomes PASS.
+    """
+    path = Path(model_path)
+    if declared_architecture not in SUPPORTED_ARCHITECTURES:
+        raise ValueError(f"Unsupported declared architecture '{declared_architecture}'")
+    context = intake_model(path, declared_architecture)
+    # This detector consumes FP32 bit planes, not dequantized/cast approximations.
+    # Reject unsupported floating representations instead of silently skipping them.
+    from safetensors import safe_open
+    if context.is_quantized:
+        raise ValueError("Structured-LSB assessment is unavailable for quantized artifacts; FP32 is required.")
+    with safe_open(path, framework="pt", device="cpu") as handle:
+        from src.p1_static_engine.analyzer import CONTROL_DTYPES
+        unsupported = {}
+        for name in handle.keys():
+            dtype = handle.get_slice(name).get_dtype()
+            is_counter = name.endswith(".num_batches_tracked")
+            if dtype != "F32" and not (is_counter and dtype in CONTROL_DTYPES):
+                unsupported[name] = dtype
+    if unsupported:
+        raise ValueError("Structured-LSB assessment requires FP32 weights (P1-supported counters are allowed); unsupported tensor dtypes: "
+                         + str(unsupported))
+    import numpy as np
+    with safe_open(path, framework="np", device="cpu") as handle:
+        for name in handle.keys():
+            if handle.get_slice(name).get_dtype() == "F32" and not np.isfinite(handle.get_tensor(name)).all():
+                raise ValueError(f"Structured-LSB assessment requires finite weights: {name}")
+    structured = scan_structured(path)
+    state = context.model.state_dict() if context.model is not None else context.raw_state_dict
+    dtype = "FP32" if not context.is_quantized else "quantized"
+    return {
+        "artifact": {"filename": path.name, "sha256": _sha256(path), "architecture": declared_architecture,
+                     "input_domain": context.input_domain, "dtype": dtype, "is_quantized": bool(context.is_quantized),
+                     "layer_count": len(state)},
+        "intake": {"status": "PASS"},
+        "structured_stego": structured,
+        "static_evidence": {"status": "NOT_USED_FOR_VERDICT", "reason": "Frozen structured-LSB detector is authoritative."},
+        "behavioral": {"validated_for_final_decision": False},
+        "verdict": structured["verdict"],
+    }
+
+
+def _print_structured_summary(result: dict) -> None:
+    artifact, structured = result["artifact"], result["structured_stego"]
+    print("=" * 50); print("AI MODEL SECURITY SCAN"); print("=" * 50)
+    print(f"Artifact: {artifact['filename']}")
+    print(f"SHA256: {artifact['sha256']}")
+    print(f"Architecture: {artifact['architecture']}")
+    print(f"Input Domain: {artifact['input_domain']}")
+    print(f"Dtype: {artifact['dtype']}; Quantized: {artifact['is_quantized']}")
+    print(f"Layer count: {artifact['layer_count']}")
+    print("Intake: PASS\nStructured Steganography Analysis")
+    for name, value in structured["features"].items(): print(f"{name}: {value}")
+    print(f"Score: {structured['score']}"); print(f"Threshold: {structured['threshold']}")
+    print(f"Dominant Signal: {structured['dominant_signal']}")
+    print(f"Verdict: {structured['verdict']}"); print(f"Final Verdict: {result['verdict']}")
+    print("=" * 50)
+
+
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        model_arg = Path(sys.argv[1])
-        for name, path in run_pipeline(model_arg).items():
-            print(f"{name}: {path}")
-        print("SigTensor pipeline: PASS (artifacts contract-validated, mock_status=VERIFIED-REAL)")
-    else:
-        for name, path in run_mock_pipeline().items():
-            print(f"{name}: {path}")
-        print("Phase 1 mock pipeline: PASS (contract validation succeeded)")
+    parser = argparse.ArgumentParser(description="Frozen structured-LSB SafeTensors scanner")
+    parser.add_argument("model", type=Path)
+    parser.add_argument("--architecture", default="resnet18")
+    parser.add_argument("--json-output", type=Path, default=OUTPUT_DIR / "structured_scan_result.json")
+    args = parser.parse_args()
+    try:
+        result = run_structured_scan(args.model, args.architecture)
+        _write_json(args.json_output, result)
+        _print_structured_summary(result)
+        print(f"JSON result: {args.json_output}")
+    except Exception as exc:
+        error = {"intake": {"status": "REJECTED"}, "verdict": "REJECTED", "error": f"{type(exc).__name__}: {exc}"}
+        _write_json(args.json_output, error)
+        print(f"REJECTED: {error['error']}", file=sys.stderr)
+        sys.exit(2)
