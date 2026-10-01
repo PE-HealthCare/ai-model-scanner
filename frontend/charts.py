@@ -1,4 +1,5 @@
 """Presentation only: all observations and decision values come from the snapshot."""
+import math
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -83,15 +84,42 @@ def fusion_chart(evidence):
 
 
 def statistical_decision(detector):
-    """Actual detector units, with no conversion to a 0–100 scale."""
-    fig = go.Figure(go.Bar(x=[detector['score']], y=['S_FULL'], orientation='h',
-        marker_color='#3f5f45' if detector['verdict'] == 'PASS' else '#9f2f38',
-        hovertemplate='Observed score: %{x:.12g}<extra></extra>'))
-    fig.add_vline(x=detector['threshold'], line_color='#080808', line_dash='dash',
-                  annotation_text=f"Frozen threshold {detector['threshold']:.6g}")
-    fig.update_xaxes(range=[0, max(detector['score'], detector['threshold'])*1.15])
-    fig.update_layout(xaxis_title='Structured-LSB anomaly statistic · not a probability', showlegend=False)
-    return finish(fig, 250)
+    """Display backend decision signals as threshold multiples on a log-compressed axis."""
+    names = list(detector['z_scores'])
+    threshold = detector['threshold']
+    multiples = [max(0, detector['z_scores'][name]) / threshold for name in names]
+    positions = [math.log10(1 + multiple) for multiple in multiples]
+    dominant = detector['dominant_signal']
+    colors = [('#9f2f38' if multiple >= 1 else '#474747') if detector['verdict'] == 'FAIL'
+              else ('#3f5f45' if name == dominant else '#474747')
+              for name, multiple in zip(names, multiples)]
+    fig = go.Figure(go.Bar(
+        x=positions, y=names, orientation='h',
+        marker=dict(color=colors, line=dict(color=['#080808' if name == dominant else color
+                                                   for name, color in zip(names, colors)],
+                                            width=[2 if name == dominant else 0 for name in names])),
+        customdata=[[detector['z_scores'][name], multiple] for name, multiple in zip(names, multiples)],
+        text=[f'{multiple:.3g}×' for multiple in multiples], textposition='outside', cliponaxis=False,
+        hovertemplate='%{y}<br>Backend signal: %{customdata[0]:.12g}'
+                      '<br>Positive signal / frozen threshold: %{customdata[1]:.12g}×'
+                      f'<br>Frozen threshold: {threshold:.12g}<extra></extra>'))
+    boundary = math.log10(2)
+    fig.add_vline(x=boundary, line_color='#9f2f38', line_dash='dash', line_width=2,
+                  annotation_text='Detection boundary · 1×', annotation_position='top right')
+    largest = max(1, *multiples)
+    ticks = [0, 1]
+    power = 1
+    while 10 ** power <= largest:
+        ticks.append(10 ** power)
+        power += 1
+    fig.update_xaxes(range=[0, math.log10(1 + largest) + .3],
+                     tickvals=[math.log10(1 + tick) for tick in ticks],
+                     ticktext=[f'{tick:g}×' for tick in ticks])
+    fig.update_layout(xaxis_title='Positive backend signal / frozen threshold · log-compressed scale',
+                      yaxis=dict(autorange='reversed'), showlegend=False)
+    finish(fig, 330)
+    fig.update_layout(margin_l=110, margin_r=85)
+    return fig
 
 
 def statistical_signals(detector):

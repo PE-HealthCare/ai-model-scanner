@@ -110,7 +110,11 @@ def explainability():
     value = snapshot(); runtime = value['backend'].get('canonical', {}); ml = runtime.get('ml_results')
     if not ml: unavailable(runtime, 'ml', 'EXPLAINABILITY UNAVAILABLE'); return
     explanation = runtime.get('explanation', {})
-    status('ADVISORY / EXPLAINABILITY', 'Not authoritative for the final assessment. This is the real LightGBM response, not malware probability or final security confidence. Positive SHAP is not proof of manipulation.')
+    authoritative_verdict = value['backend'].get('verdict')
+    if authoritative_verdict == 'PASS':
+        status('CLEAN MODEL', "No significant structured steganographic manipulation was detected. The TreeSHAP analysis below shows how the model's statistical features influenced the advisory classifier response.")
+    elif authoritative_verdict == 'FAIL':
+        status('TAMPERED MODEL', 'Structured steganographic manipulation was detected. The TreeSHAP analysis below shows which statistical features most influenced the advisory classifier response.')
     st.subheader('Feature contribution / TreeSHAP')
     plot(charts.shap_chart(ml, explanation), 'shap')
     contributions = ml['shap_attributions']
@@ -155,10 +159,12 @@ def risk():
     message = ('No statistical evidence exceeded the configured criteria within the tested scope.' if result['verdict'] == 'PASS'
                else 'Structured-LSB evidence met or exceeded the configured detection threshold within the tested scope.')
     status(result['verdict'], message, result['verdict'].lower())
-    st.subheader('Authoritative statistical assessment')
+    st.subheader('Statistical evidence vs detection threshold')
     plot(charts.statistical_decision(detector), 'statistical-decision')
     a,b,c = st.columns(3)
     a.metric('Observed S_FULL', f"{detector['score']:.9g}"); b.metric('Frozen threshold', f"{detector['threshold']:.9g}"); c.metric('Dominant signal', detector['dominant_signal'])
+    st.caption('None of the evaluated statistical signals exceeded the configured detection boundary.' if result['verdict'] == 'PASS'
+               else f"{detector['dominant_signal']} was the dominant statistical anomaly and exceeded the configured detection boundary.")
     st.subheader('Evidence behind the decision'); plot(charts.statistical_signals(detector), 'statistical-signals')
     st.caption('S_FULL = max(0, entropy, printable, chi2, transition normalized signals). Repeat fraction is excluded. No 0–100 score is defined for this detector.')
     observation = runtime.get('p2_evidence', {}).get('behavior', {})
