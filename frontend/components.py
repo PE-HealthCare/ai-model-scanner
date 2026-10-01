@@ -12,6 +12,7 @@ def asset_uri(name):
 def style():
     st.html('<style>' + (HERE/'styles.css').read_text() + '</style>')
     st.html('<style>:root { --hands:url("' + asset_uri('hero/hands-both.png') + '"); --mesh:url("' + asset_uri('shared/mesh-full.png') + '"); --dots:url("' + asset_uri('hero/hero-dot-field.png') + '"); }</style>')
+    st.html('<style>:root { --hand-left:url("' + asset_uri('hero/hand-left.png') + '"); --hand-right:url("' + asset_uri('hero/hand-right.png') + '"); }</style>')
 
 def status(title, body, kind='info'):
     st.html(f'<section class="status {kind}"><h2>{escape(title)}</h2><p>{escape(body)}</p></section>')
@@ -26,8 +27,13 @@ def snapshot():
     if value is None:
         status('Awaiting an artifact', 'Start a new scan to inspect evidence for your model.')
         st.stop()
+    if value.get('contract_version') != 'sigtensor-ui-assessment-v3':
+        status('New scan required', 'This session predates the current assessment contract. Start a new scan to obtain a consistent report.')
+        st.stop()
     artifact = value['backend']['artifact']
     text = f"{value['upload']['filename']}  /  {value['upload']['size_bytes']/1048576:.2f} MiB  /  SHA {artifact['sha256'][:16]}…  /  Scan {value['scan_id'][:8]}"
+    if artifact.get('architecture'):
+        text += f"  /  {artifact['architecture']} · {artifact['input_domain']} · {artifact['dtype']}"
     st.html(f'<div class="artifact-strip">{escape(text)}</div>')
     return value
 

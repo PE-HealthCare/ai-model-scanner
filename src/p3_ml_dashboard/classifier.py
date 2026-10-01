@@ -553,6 +553,7 @@ def build_ml_results(
     generation_commit: str,
     *,
     model_path: str | Path = DEFAULT_MODEL_PATH,
+    evidence: dict | None = None,
 ) -> dict:
     """Authoritative CP4 payload: LightGBM p_l -> D10 max(p_l) -> TreeSHAP(argmax layer).
 
@@ -603,6 +604,11 @@ def build_ml_results(
     if not math.isclose(base + float(shap_values.sum()), raw_margin, rel_tol=1e-6, abs_tol=1e-6):
         raise ValueError("TreeSHAP explanation does not correspond to the model prediction")
 
+    if evidence is not None:
+        evidence.update({"explained_layer": features["static_features"][evidence_layer]["layer_name"],
+                         "feature_values": dict(zip(FEATURE_NAMES, X[evidence_layer].tolist())),
+                         "expected_value": base, "raw_margin": raw_margin,
+                         "model_sha256": _sha256_file(Path(model_path))})
     return {
         "producer": "P3",
         "mock_status": "VERIFIED-REAL",
@@ -621,6 +627,7 @@ def build_quantized_ml_results(
     generation_commit: str,
     *,
     model_path: str | Path = DEFAULT_QUANTIZED_MODEL_PATH,
+    evidence: dict | None = None,
 ) -> dict:
     """D11 quantized payload: ks_stat-only p_l^Q -> D10 max -> TreeSHAP(argmax).
 
@@ -677,6 +684,11 @@ def build_quantized_ml_results(
             "Quantized TreeSHAP explanation does not correspond to the prediction"
         )
 
+    if evidence is not None:
+        evidence.update({"explained_layer": features["static_features"][evidence_layer]["layer_name"],
+                         "feature_values": dict(zip(QUANTIZED_FEATURE_NAMES, X[evidence_layer].tolist())),
+                         "expected_value": base, "raw_margin": raw_margin,
+                         "model_sha256": _sha256_file(Path(model_path))})
     return {
         "producer": "P3",
         "mock_status": "VERIFIED-REAL",

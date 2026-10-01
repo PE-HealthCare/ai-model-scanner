@@ -29,6 +29,8 @@ import json
 import sys
 import hashlib
 import argparse
+import time
+from threading import RLock
 from pathlib import Path
 
 from src.common.utils import ROOT, get_generation_commit, validate_artifact
@@ -48,6 +50,7 @@ SUPPORTED_ARCHITECTURES = ("resnet18",)
 
 OUTPUT_DIR = ROOT / "data" / "outputs"
 CONTRACT_DIR = ROOT / "contracts"
+_SCAN_LOCK = RLock()  # P2's trusted handoff is process-local, not session-local.
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -55,13 +58,13 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
-def _validated_step(produce, out_name: str, schema_name: str, *args):
+def _validated_step(produce, out_name: str, schema_name: str, *args, output_dir=None):
     """Run one stage, persist its artifact, and validate it against its contract.
 
     If persistence or validation fails, the artifact file is removed so a
     failed stage can never leave a stale/partial downstream artifact.
     """
-    artifact_path = OUTPUT_DIR / out_name
+    artifact_path = (output_dir or OUTPUT_DIR) / out_name
     payload = produce(*args)
     try:
         _write_json(artifact_path, payload)
@@ -72,7 +75,7 @@ def _validated_step(produce, out_name: str, schema_name: str, *args):
     return artifact_path
 
 
-def _validated_p2_step(produce, out_name: str, schema_name: str) -> Path:
+def _validated_p2_step(produce, out_name: str, schema_name: str, *, output_dir=None) -> Path:
     """Run a stage that persists its own artifact, then validate it.
 
     P2 writes risk_results.json itself (via its own analyzer), so there is no
@@ -80,7 +83,7 @@ def _validated_p2_step(produce, out_name: str, schema_name: str) -> Path:
     _validated_step is preserved: on failure the artifact is removed, so a
     failed stage can never leave a stale/partial downstream artifact behind.
     """
-    artifact_path = OUTPUT_DIR / out_name
+    artifact_path = (output_dir or OUTPUT_DIR) / out_name
     try:
         produce()
         validate_artifact(artifact_path, CONTRACT_DIR / schema_name)
@@ -115,6 +118,28 @@ def _deliver_validated_risk_to_p3(
 def run_pipeline(
     model_path: str | Path,
     declared_architecture: str = "resnet18",
+    *, output_dir: Path | None = None, evidence: dict | None = None,
+) -> dict[str, object]:
+    """Serialize the trusted handoff and optionally expose current-run evidence.
+
+    Caller-owned evidence survives downstream failure; it is never read from a
+    previous run. UI callers must supply a unique output directory.
+    """
+    with _SCAN_LOCK:
+        try:
+            return _run_pipeline(model_path, declared_architecture, output_dir=output_dir, evidence=evidence)
+        except Exception:
+            if evidence is not None:
+                for state in evidence.get('stages', {}).values():
+                    if state['status'] == 'pending':
+                        state.update(status='skipped', reason='An upstream required stage failed.')
+            raise
+
+
+def _run_pipeline(
+    model_path: str | Path,
+    declared_architecture: str = "resnet18",
+    *, output_dir: Path | None = None, evidence: dict | None = None,
 ) -> dict[str, object]:
     """End-to-end zero-trust scan of a SafeTensors artifact.
 
@@ -128,30 +153,57 @@ def run_pipeline(
             f"supported: {list(SUPPORTED_ARCHITECTURES)}"
         )
 
+    output_dir = Path(output_dir or OUTPUT_DIR)
+    runtime = evidence if evidence is not None else {}
+    runtime.clear()
+    runtime["stages"] = {name: {"status": "pending"} for name in ("intake", "static", "ml", "behavior_risk", "dashboard")}
+    def stage(name, operation):
+        started = time.perf_counter()
+        try:
+            value = operation()
+            runtime["stages"][name] = {"status": "complete", "seconds": time.perf_counter() - started}
+            return value
+        except Exception as exc:
+            runtime["stages"][name] = {"status": "failed", "seconds": time.perf_counter() - started,
+                                      "reason": str(exc), "error_type": type(exc).__name__}
+            raise
     generation_commit = get_generation_commit()
-    context = intake_model(Path(model_path), declared_architecture)
+    runtime["generation_commit"] = generation_commit
+    context = stage("intake", lambda: intake_model(Path(model_path), declared_architecture))
+    if evidence is not None:
+        from safetensors import safe_open
+        with safe_open(model_path, framework="pt", device="cpu") as handle:
+            tensors = [{"name": name, "shape": handle.get_slice(name).get_shape(),
+                        "dtype": handle.get_slice(name).get_dtype()} for name in handle.keys()]
+        runtime["artifact"] = {"sha256": _sha256(Path(model_path)), "architecture": context.architecture,
+                               "input_domain": context.input_domain, "is_quantized": context.is_quantized,
+                               "tensor_count": len(tensors), "dtype": ", ".join(sorted({t["dtype"] for t in tensors if not t["name"].endswith("num_batches_tracked")})),
+                               "tensors": tensors}
 
     # D2: deliver the exact P1 trusted context to P2's locked in-process
     # handoff. This is the only model transfer; P2 never reloads the artifact.
     from src.p2_behavioral_risk.handoff import receive_trusted_model
 
     receive_trusted_model(context)
-    features = extract_features(context, generation_commit)
-    features_path = _validated_step(
-        lambda: features, "features.json", "features.schema.json"
-    )
+    features_path = stage("static", lambda: _validated_step(
+        lambda: extract_features(context, generation_commit), "features.json", "features.schema.json", output_dir=output_dir
+    ))
     features = json.loads(features_path.read_text(encoding="utf-8"))
+    runtime["features"] = features
     if features.get("is_quantized") is True:
         build_p3_results = build_quantized_ml_results
     else:
         build_p3_results = build_ml_results
-    ml_path = _validated_step(
-        lambda f, c: build_p3_results(f, c),
+    runtime["explanation"] = {}
+    ml_path = stage("ml", lambda: _validated_step(
+        lambda f, c: build_p3_results(f, c, **({"evidence": runtime["explanation"]} if evidence is not None else {})),
         "ml_results.json",
         "ml_results.schema.json",
         features,
         generation_commit,
-    )
+        output_dir=output_dir,
+    ))
+    runtime["ml_results"] = json.loads(ml_path.read_text(encoding="utf-8"))
 
     # D2: the trusted context handed off above is the single trusted
     # representation of the artifact (nn.Module for FP, scanner-controlled
@@ -160,19 +212,24 @@ def run_pipeline(
     # P2 persists risk_results.json itself; the orchestrator only validates it.
     from src.p2_behavioral_risk.analyzer import run_assessment
 
-    risk_path = _validated_p2_step(
+    runtime["p2_evidence"] = {}
+    risk_path = stage("behavior_risk", lambda: _validated_p2_step(
         lambda: run_assessment(
             features_path=features_path,
             ml_results_path=ml_path,
-            output_path=OUTPUT_DIR / "risk_results.json",
+            output_path=output_dir / "risk_results.json",
             mock_mode=False,
+            **({"evidence": runtime["p2_evidence"]} if evidence is not None else {}),
         ),
         "risk_results.json",
         "risk_results.schema.json",
-    )
-    dashboard_results = _deliver_validated_risk_to_p3(
+        output_dir=output_dir,
+    ))
+    runtime["risk_results"] = json.loads(risk_path.read_text(encoding="utf-8"))
+    dashboard_results = stage("dashboard", lambda: _deliver_validated_risk_to_p3(
         risk_path, ml_path, features_path
-    )
+    ))
+    runtime["dashboard_results"] = dashboard_results
     return {
         "features": features_path,
         "ml_results": ml_path,

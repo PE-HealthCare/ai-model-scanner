@@ -7,7 +7,7 @@ import pytest
 from frontend.adapter import ROOT, canonical_bytes, json_export, scan_upload
 from frontend.report import pdf_export
 
-CLEAN = ROOT / 'data/training/sources/behradg_resnet18_mri_brain_canonical.safetensors'
+CLEAN = ROOT / 'data/models/resnet18_pretrained.safetensors'
 S6 = ROOT / 'data/training/s6_structured_generalization/8ce8fd79b1064148863d3d9e.safetensors'
 
 
@@ -21,8 +21,14 @@ def clean_snapshot():
 def test_real_backend_equivalence(clean_snapshot):
     from scan_model import run_structured_scan
     direct = run_structured_scan(CLEAN)
-    assert clean_snapshot['backend'] == direct
+    assert clean_snapshot['backend']['structured_stego'] == direct['structured_stego']
     assert direct['verdict'] == 'PASS'
+    runtime = clean_snapshot['backend']['canonical']
+    assert runtime['features']['layer_count'] == 102
+    assert clean_snapshot['backend']['verdict'] == direct['verdict'] == 'PASS'
+    assert clean_snapshot['backend']['roles']['legacy_mrs'] == 'experimental_excluded'
+    assert runtime['p2_evidence']['behavior']['successful_probe_count'] == 32
+    assert len(runtime['ml_results']['shap_attributions']) == 10
     assert len(clean_snapshot['evidence']) == 5
     assert all(e['category'] == 'STRUCTURED_LSB' for e in clean_snapshot['evidence'])
     from src.p3_ml_dashboard.structured_stego import scan
@@ -36,7 +42,11 @@ def test_real_s6():
     value = scan_upload(S6.name, S6.read_bytes())
     from src.p3_ml_dashboard.structured_stego import scan
     assert value['backend']['structured_stego'] == scan(S6)
+    assert value['backend']['structured_stego']['verdict'] == 'FAIL'
     assert value['backend']['verdict'] == 'FAIL'
+    import fitz
+    text = ''.join(p.get_text() for p in fitz.open(stream=pdf_export(value), filetype='pdf'))
+    assert 'Final verdict: FAIL' in text
     assert value['backend']['artifact']['sha256'] == hashlib.sha256(S6.read_bytes()).hexdigest()
 
 
@@ -58,7 +68,7 @@ def test_snapshot_exports(clean_snapshot):
     text = ''.join(page.get_text() for page in pdf)
     assert clean_snapshot['scan_id'] in text
     assert digest in text.replace('\n', '')
-    assert 'Final verdict: PASS' in text
+    assert 'Final verdict: '+clean_snapshot['backend']['verdict'] in text
     assert 'Diagnostic only' in text
     compact = text.replace('\n', ' ')
     detector = value['backend']['structured_stego']
@@ -121,6 +131,8 @@ def test_incomplete_or_mismatched_result_is_withheld(clean_snapshot, monkeypatch
     import scan_model
     from copy import deepcopy
     result = deepcopy(clean_snapshot['backend'])
+    result['verdict'] = result['structured_stego']['verdict']
+    result['artifact']['layer_count'] = result['artifact']['tensor_count']
     if fault == 'missing_feature':
         result['structured_stego']['features'].pop('min_window_entropy')
     elif fault == 'wrong_sha':
@@ -133,6 +145,8 @@ def test_incomplete_or_mismatched_result_is_withheld(clean_snapshot, monkeypatch
         result['structured_stego']['z_scores']['entropy'] = float('inf')
     monkeypatch.setattr(scan_model, 'run_structured_scan', lambda *a, **kw: result)
     value = scan_upload(CLEAN.name, CLEAN.read_bytes())
+    assert value['backend']['structured_status']['status'] == 'unavailable'
+    assert value['backend']['canonical']['risk_results']
     assert value['backend']['verdict'] == 'WITHHELD'
     assert value['evidence'] == []
 
@@ -153,3 +167,34 @@ def test_pages(clean_snapshot):
         assert not app.exception, (title, list(app.exception))
         assert app.session_state['snapshot']['scan_id'] == clean_snapshot['scan_id']
     assert app.session_state['report_downloads']['pdf'].startswith(b'%PDF')
+
+
+def test_downstream_failure_preserves_current_evidence(clean_snapshot, monkeypatch):
+    import scan_model
+    from copy import deepcopy
+    def failed(path, *, evidence, **kwargs):
+        evidence.update(deepcopy(clean_snapshot['backend']['canonical']))
+        evidence.pop('risk_results')
+        evidence.pop('dashboard_results')
+        evidence['stages']['behavior_risk'] = {'status':'failed', 'reason':'controlled P2 failure'}
+        raise RuntimeError('controlled P2 failure')
+    monkeypatch.setattr(scan_model, 'run_pipeline', failed)
+    value = scan_upload(CLEAN.name, CLEAN.read_bytes())
+    assert value['backend']['verdict'] == 'PASS'
+    assert value['backend']['execution_status'] == 'PARTIAL'
+    assert len(value['backend']['canonical']['features']['static_features']) == 102
+    assert value['backend']['canonical']['ml_results']['shap_attributions']
+    assert value['backend']['structured_stego']['verdict'] == 'PASS'
+    assert 'controlled P2 failure' in value['backend']['error']['message']
+
+
+def test_contribution_exposure_preserves_scores():
+    from src.p2_behavioral_risk.risk_aggregator import compute_mrs
+    for quantized in (True, False):
+        for s,p,b in ((0,0,0), (.7,.8,.4), (1,1,1)):
+            evidence = {}
+            original = compute_mrs(s,p,b,quantized)
+            exposed = compute_mrs(s,p,b,quantized,evidence=evidence)
+            assert original == exposed
+            assert round(sum(r['contribution'] for r in evidence['contributions'] if r['contribution'] is not None),2) == exposed['mrs_score']
+            if quantized: assert evidence['contributions'][-1]['contribution'] is None

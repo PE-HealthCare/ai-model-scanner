@@ -10,10 +10,9 @@ artifact progresses through the current production pipeline
 
 via the scan_model.run_pipeline() entry point.
 
-P1 and P3 must complete with schema-valid VERIFIED-REAL artifacts sharing a
-single generation_commit. The expected terminal behavior is the current P2
-guard: run_pipeline() raises ValueError("BLOCKED") and no risk_results.json
-remains.
+P1, P3 and P2 must complete with schema-valid VERIFIED-REAL artifacts sharing
+one generation_commit. The current runtime exposes behavioral observations,
+SHAP context and a risk contribution ledger without changing scoring.
 """
 
 from __future__ import annotations
@@ -45,7 +44,7 @@ def _load_and_validate(out_dir: Path, name: str, schema_name: str) -> dict:
 
 
 class TestRealPipeline(unittest.TestCase):
-    """End-to-end: REAL ResNet18 through P1 -> P3 to the P2 terminal state."""
+    """End-to-end: REAL ResNet18 through P1 -> P3 -> P2 -> dashboard."""
 
     def test_real_resnet18_progresses_p1_p3_then_reaches_p2_terminal_behavior(self):
         self.assertTrue(MODEL_PATH.exists(), f"real fixture missing: {MODEL_PATH}")
@@ -55,8 +54,8 @@ class TestRealPipeline(unittest.TestCase):
             original_output_dir = scan_model.OUTPUT_DIR
             scan_model.OUTPUT_DIR = out_dir
             try:
-                with self.assertRaisesRegex(ValueError, "BLOCKED"):
-                    scan_model.run_pipeline(MODEL_PATH, declared_architecture="resnet18")
+                runtime = {}
+                result = scan_model.run_pipeline(MODEL_PATH, declared_architecture="resnet18", evidence=runtime)
             finally:
                 scan_model.OUTPUT_DIR = original_output_dir
 
@@ -80,9 +79,15 @@ class TestRealPipeline(unittest.TestCase):
             self.assertTrue(features["generation_commit"])
             self.assertEqual(ml_results["generation_commit"], features["generation_commit"])
 
-            # P2 terminal behavior: the current P2 guard blocks, so no
-            # risk_results.json may remain.
-            self.assertFalse((out_dir / "risk_results.json").exists())
+            # Current P2 runtime completes and agrees with presentation.
+            risk = _load_and_validate(out_dir, "risk_results.json", "risk_results.schema.json")
+            self.assertEqual(risk['mock_status'], 'VERIFIED-REAL')
+            self.assertEqual(risk['generation_commit'], features['generation_commit'])
+            self.assertEqual(result['dashboard_results']['risk_summary']['mrs_score'], risk['mrs_score'])
+            self.assertEqual(runtime['p2_evidence']['behavior']['successful_probe_count'], 32)
+            self.assertTrue(math.isfinite(runtime['p2_evidence']['behavior']['h_strip']))
+            self.assertAlmostEqual(sum(x['contribution'] for x in runtime['p2_evidence']['contributions']), runtime['p2_evidence']['unrounded_mrs'])
+            self.assertAlmostEqual(runtime['explanation']['expected_value'] + sum(ml_results['shap_attributions'].values()), runtime['explanation']['raw_margin'], places=6)
 
 
 if __name__ == "__main__":

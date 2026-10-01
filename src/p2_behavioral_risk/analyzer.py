@@ -104,6 +104,7 @@ def run_assessment(
     model=None,
     mock_mode=False,
     calibration_path=None,
+    evidence=None,
 ):
 
     if output_path is None:
@@ -239,6 +240,10 @@ def run_assessment(
     s_behavior = behavioral[
         "s_behavior"
     ]
+    if evidence is not None:
+        evidence["behavior"] = dict(behavioral, status="not_applicable" if is_quantized else "complete")
+        evidence["calibration"] = calibration_data[domain]
+        evidence["provenance"] = provenance
 
     # --------------------------------------------------------
     # STEP 4 – D5/D6
@@ -263,6 +268,7 @@ def run_assessment(
         p_tamper=p_tamper,
         s_behavior=s_behavior,
         is_quantized=is_quantized,
+        evidence=evidence,
     )
 
     # --------------------------------------------------------

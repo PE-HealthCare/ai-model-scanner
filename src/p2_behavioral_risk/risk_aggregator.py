@@ -127,7 +127,7 @@ def compute_s_static_and_layer(layer_features):
 # ============================================================
 # MRS + Verdict (FROZEN)
 # ============================================================
-def compute_mrs(s_static, p_tamper, s_behavior=None, is_quantized=False):
+def compute_mrs(s_static, p_tamper, s_behavior=None, is_quantized=False, *, evidence=None):
     """
     Compute MRS and verdict. FROZEN formulas.
     Fail-closed: non-quantized without S_behavior raises error.
@@ -166,6 +166,22 @@ def compute_mrs(s_static, p_tamper, s_behavior=None, is_quantized=False):
     else:
         verdict = "FAIL"
 
+    if evidence is not None:
+        weights = (55, 45, None) if is_quantized else (40, 35, 25)
+        evidence.update({
+            "formula_id": "quantized-55-45" if is_quantized else "fp-40-35-25",
+            "thresholds": {"pass_max": 34, "review_max": 69},
+            "boundary_rule": "Verdict uses unrounded MRS: PASS <= 34; REVIEW <= 69; FAIL > 69.",
+            "unrounded_mrs": float(mrs),
+            "contributions": [
+                {"source": name, "score": score, "weight": weight,
+                 "contribution": None if weight is None else weight * score,
+                 "status": "not_applicable" if weight is None else "complete"}
+                for name, score, weight in zip(
+                    ("S_static", "P_tamper", "S_behavior"),
+                    (s_static, p_tamper, s_behavior), weights)
+            ],
+        })
     return {"mrs_score": round(mrs, 2), "verdict": verdict}
 
 # import numpy as np
